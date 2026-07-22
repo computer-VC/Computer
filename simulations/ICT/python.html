@@ -1,0 +1,1242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Valtorta College Python Explorer</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          transitionTimingFunction: {
+            'bounce': 'cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    /* Custom scrollbar for terminal/code areas */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #475569; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #64748b; }
+    
+    /* Hide scrollbar tracks on mobile for header navigation to look cleaner */
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+  </style>
+</head>
+<body class="bg-slate-900 text-slate-100 font-sans min-h-screen flex flex-col">
+
+  <!-- Application Root -->
+  <div id="app" class="flex-1 flex flex-col min-h-screen lg:h-screen lg:overflow-hidden">
+    <!-- Rendered by JS -->
+  </div>
+
+  <script>
+    // --- State Management ---
+    let studentName = "";
+    let currentLevelIdx = 0;
+    let step = 0;
+    let practiceAnswers = {};
+    let isPracticeSuccess = false;
+    let wrongBlanks = [];
+    let showSuccessModal = false;
+    let successTimeout = null;
+
+    // --- Helper: Blank Input Generator ---
+    const Blank = (id, width = "w-16") => {
+      const isWrong = wrongBlanks.includes(id);
+      const val = practiceAnswers[id] || '';
+      const baseClasses = "bg-slate-800/80 border-b-2 px-1 py-1 outline-none font-mono text-[1em] text-center mx-1 rounded-t-sm transition-all focus:ring-1 focus:ring-blue-500";
+      const errorClasses = "border-red-500 bg-red-900/40 text-red-200 focus:border-red-400 focus:bg-red-800/60";
+      const validClasses = "border-blue-400 text-yellow-300 focus:border-green-400 focus:bg-slate-700";
+      
+      return `<input type="text" data-blank-id="${id}" class="${baseClasses} ${width} ${isWrong ? errorClasses : validClasses}" value="${val}" autocomplete="off" spellcheck="false" oninput="handlePracticeInput(event, ${id})">`;
+    };
+
+    // --- Level Data ---
+    const LEVELS = [
+      {
+        id: 'variables',
+        title: '1. Variables',
+        concept: 'A variable is like a storage box. You can put data in it and change it later.',
+        maxStep: 3,
+        code: [
+          `<span><span class="text-blue-400">gold</span> = <span class="text-green-400">0</span></span>`,
+          `<span><span class="text-blue-400">gold</span> = <span class="text-green-400">3</span></span>`,
+          `<span><span class="text-blue-400">gold</span> = <span class="text-blue-300">gold</span> + <span class="text-green-400">2</span></span>`
+        ],
+        getStage: (step) => {
+          const states = [
+            { line: 0, gold: 0, msg: "Line 1: We create a variable named 'gold' and set its value to 0." },
+            { line: 1, gold: 3, msg: "Line 2: We change the value of 'gold' to 3. The old value is replaced!" },
+            { line: 2, gold: 5, msg: "Line 3: We take the current value of 'gold' (which is 3), add 2, and store it back. 3 + 2 = 5!" },
+            { line: 3, gold: 5, msg: "Program finished! Final value of gold is 5." },
+          ];
+          return states[step];
+        }
+      },
+      {
+        id: 'prac_variables',
+        type: 'practice',
+        title: '1b. Practice',
+        concept: 'Your turn! Fill in the blanks to complete the code and review Variables.',
+        task: 'Set the variable "gold" to 50, then add 10 to it.',
+        blanks: ['50', 'gold'],
+        hints: ['Assign the starting number 50 here.', 'Use the variable "gold" to add to its current value.'],
+        code: () => [
+          `<span><span class="text-blue-400">gold</span> = ${Blank(0, "w-12")}</span>`,
+          `<span><span class="text-blue-400">gold</span> = ${Blank(1, "w-16")} + <span class="text-green-400">10</span></span>`
+        ]
+      },
+      {
+        id: 'io_types',
+        title: '2. Input & Output',
+        concept: 'Programs can ask for text input, convert that text to math numbers, and print results!',
+        maxStep: 6,
+        code: [
+          `<span><span class="text-blue-400">name</span> = <span class="text-blue-300">input</span>(<span class="text-yellow-300">"Name? "</span>)</span>`,
+          `<span><span class="text-blue-400">age_text</span> = <span class="text-blue-300">input</span>(<span class="text-yellow-300">"Age? "</span>)</span>`,
+          `<span><span class="text-blue-400">age</span> = <span class="text-blue-300">int</span>(<span class="text-blue-400">age_text</span>)</span>`,
+          `<span><span class="text-blue-303">print</span>(<span class="text-blue-400">name</span>, <span class="text-yellow-300">"is"</span>, <span class="text-blue-400">age</span> + <span class="text-green-400">1</span>)</span>`
+        ],
+        getStage: (step) => {
+          const states = [
+            { line: 0, name: '-', age_text: '-', age: '-', console: "Name? ", action: 'waiting', msg: "Line 1: 'input()' asks the user a question. The program pauses and waits." },
+            { line: 0, name: '"Alice"', age_text: '-', age: '-', console: "Name? Alice", action: 'typing', msg: "Line 1: The user types Alice. It is stored as text (a String) in 'name'." },
+            { line: 1, name: '"Alice"', age_text: '-', age: '-', console: "Name? Alice\nAge? ", action: 'waiting', msg: "Line 2: Now it asks for age." },
+            { line: 1, name: '"Alice"', age_text: '"10"', age: '-', console: "Name? Alice\nAge? 10", action: 'typing', msg: "Line 2: The user types 10. BUT input() always returns text! So 'age_text' is the string \"10\", not a math number." },
+            { line: 2, name: '"Alice"', age_text: '"10"', age: 10, console: "Name? Alice\nAge? 10", action: 'converting', msg: "Line 3: 'int()' converts the text string \"10\" into the integer number 10, so we can do math with it!" },
+            { line: 3, name: '"Alice"', age_text: '"10"', age: 10, console: "Name? Alice\nAge? 10\nAlice is 11", action: 'printing', msg: "Line 4: 'print()' calculates age + 1 (10 + 1 = 11) and displays the final message on the screen." },
+            { line: 4, name: '"Alice"', age_text: '"10"', age: 10, console: "Name? Alice\nAge? 10\nAlice is 11", action: 'done', msg: "Program finished! You learned input, print, and type conversion." },
+          ];
+          return states[step];
+        }
+      },
+      {
+        id: 'prac_io_types',
+        type: 'practice',
+        title: '2b. Practice',
+        concept: 'Your turn! Fill in the blanks to complete the code and review IO & Types.',
+        task: 'Use the right functions to get user text, then convert it to a math integer.',
+        blanks: ['input', 'int'],
+        hints: ['Use the built-in function that prompts the user for text.', 'Use the built-in function that converts text into an Integer number.'],
+        code: () => [
+          `<span><span class="text-blue-400">name</span> = ${Blank(0, "w-20")}(<span class="text-yellow-300">"Name? "</span>)</span>`,
+          `<span><span class="text-blue-400">age</span> = ${Blank(1, "w-16")}(<span class="text-yellow-300">"10"</span>)</span>`
+        ]
+      },
+      {
+        id: 'for_loop',
+        title: '3. For Loop',
+        concept: 'A "for" loop repeats an action a specific number of times.',
+        maxStep: 7,
+        code: [
+          `<span><span class="text-blue-400">apples</span> = <span class="text-green-400">0</span></span>`,
+          `<span><span class="text-purple-400">for</span> <span class="text-yellow-300">i</span> <span class="text-purple-400">in</span> <span class="text-blue-300">range</span>(<span class="text-green-400">3</span>):</span>`,
+          `<span class="ml-10 border-l-2 border-slate-700 pl-4"><span class="text-blue-400">apples</span> = <span class="text-blue-400">apples</span> + <span class="text-green-400">1</span></span>`
+        ],
+        getStage: (step) => {
+          const states = [
+            { line: 0, apples: 0, i: '-', msg: "Line 1: Start with 0 apples." },
+            { line: 1, apples: 0, i: '0', msg: "Line 2: Loop starts. 'range(3)' means 'i' will be 0, 1, then 2. Right now, i = 0." },
+            { line: 2, apples: 1, i: '0', msg: "Line 3: Add 1 to apples. (0 + 1 = 1)" },
+            { line: 1, apples: 1, i: '1', msg: "Line 2: Loop goes back to start. Now i = 1." },
+            { line: 2, apples: 2, i: '1', msg: "Line 3: Add 1 to apples. (1 + 1 = 2)" },
+            { line: 1, apples: 2, i: '2', msg: "Line 2: Loop goes back to test. Now i = 2. This is the last time!" },
+            { line: 2, apples: 3, i: '2', msg: "Line 3: Add 1 to apples. (2 + 1 = 3)" },
+            { line: 3, apples: 3, i: '2', msg: "Program finished! The loop repeated 3 times." },
+          ];
+          return states[step];
+        }
+      },
+      {
+        id: 'prac_for_loop',
+        type: 'practice',
+        title: '3b. Practice',
+        concept: 'Your turn! Write a loop that repeats exactly 5 times.',
+        task: 'Use the correct keywords to setup a for loop counting from 0 to 4.',
+        blanks: ['in', 'range', '5'],
+        hints: ['The keyword that means "inside of" the sequence.', 'The function that generates a sequence of numbers starting from 0.', 'The number of times you want the loop to repeat.'],
+        code: () => [
+          `<span><span class="text-purple-400">for</span> <span class="text-yellow-300">i</span> ${Blank(0, "w-10")} ${Blank(1, "w-20")}(${Blank(2, "w-8")}):</span>`,
+          `<span class="ml-10 border-l-2 border-slate-700 pl-4"><span class="text-blue-400">apples</span> = <span class="text-blue-400">apples</span> + <span class="text-green-400">1</span></span>`
+        ]
+      },
+      {
+        id: 'while_loop',
+        title: '4. While Loop',
+        concept: 'A "while" loop repeats AS LONG AS a condition is True.',
+        maxStep: 6,
+        code: [
+          `<span><span class="text-blue-400">battery</span> = <span class="text-green-400">0</span></span>`,
+          `<span><span class="text-purple-400">while</span> <span class="text-blue-400">battery</span> &lt; <span class="text-green-400">100</span>:</span>`,
+          `<span class="ml-10 border-l-2 border-slate-700 pl-4"><span class="text-blue-400">battery</span> = <span class="text-blue-400">battery</span> + <span class="text-green-400">50</span></span>`
+        ],
+        getStage: (step) => {
+          const states = [
+            { line: 0, battery: 0, msg: "Line 1: Initialize battery at 0%." },
+            { line: 1, battery: 0, msg: "Line 2: Check condition: is battery < 100? (0 < 100 is True!)" },
+            { line: 2, battery: 50, msg: "Line 3: Add 50 to battery. It is now 50." },
+            { line: 1, battery: 50, msg: "Line 2: Loop back and check: is battery < 100? (50 < 100 is True!)" },
+            { line: 2, battery: 100, msg: "Line 3: Add 50 to battery. It is now 100." },
+            { line: 1, battery: 100, msg: "Line 2: Check condition: is battery < 100? (100 < 100 is False!) Loop stops." },
+            { line: 3, battery: 100, msg: "Program finished! Battery is fully charged." },
+          ];
+          return states[step];
+        }
+      },
+      {
+        id: 'prac_while_loop',
+        type: 'practice',
+        title: '4b. Practice',
+        concept: 'Your turn! Build a loop that runs conditionally.',
+        task: 'Set the initial value of battery to 100. Create a loop that keeps running as long as the battery is strictly more than 80, and deduct 10 for every loop.',
+        blanks: ['battery', 'while', '>', '-'],
+        hints: ['The name of the variable tracking the power level.', 'The keyword for a loop that checks a condition every cycle.', 'Use the mathematical symbol for "greater than".', 'Use the mathematical symbol for subtraction to deduct.'],
+        code: () => [
+          `<span>${Blank(0, "w-20")} = <span class="text-green-400">100</span></span>`,
+          `<span>${Blank(1, "w-20")} <span class="text-blue-400">battery</span> ${Blank(2, "w-10")} <span class="text-green-400">80</span>:</span>`,
+          `<span class="ml-10 border-l-2 border-slate-700 pl-4"><span class="text-blue-400">battery</span> = <span class="text-blue-400">battery</span> ${Blank(3, "w-8")} <span class="text-green-400">10</span></span>`
+        ]
+      },
+      {
+        id: 'total_avg',
+        title: '5. Total & Average',
+        concept: 'Using lists, loops, and math to find sum and average.',
+        maxStep: 9,
+        code: [
+          `<span><span class="text-blue-400">scores</span> = [<span class="text-green-400">80</span>, <span class="text-green-400">100</span>, <span class="text-green-400">90</span>]</span>`,
+          `<span><span class="text-blue-400">total</span> = <span class="text-green-400">0</span></span>`,
+          `<span><span class="text-purple-400">for</span> <span class="text-yellow-300">s</span> <span class="text-purple-400">in</span> <span class="text-blue-400">scores</span>:</span>`,
+          `<span class="ml-10 border-l-2 border-slate-700 pl-4"><span class="text-blue-400">total</span> = <span class="text-blue-400">total</span> + <span class="text-yellow-300">s</span></span>`,
+          `<span><span class="text-blue-400">avg</span> = <span class="text-blue-400">total</span> / <span class="text-green-400">3</span></span>`
+        ],
+        getStage: (step) => {
+          const states = [
+            { line: 0, total: 0, s: '-', avg: '-', msg: "Line 1: Create a list containing 3 test scores." },
+            { line: 1, total: 0, s: '-', avg: '-', msg: "Line 2: Create a 'total' variable starting at 0 to keep track of the sum." },
+            { line: 2, total: 0, s: '80', avg: '-', msg: "Line 3: Loop starts. 's' gets the first score in the list: 80." },
+            { line: 3, total: 80, s: '80', avg: '-', msg: "Line 4: Add 's' to total. (0 + 80 = 80)" },
+            { line: 2, total: 80, s: '100', avg: '-', msg: "Line 3: Next iteration. 's' gets the second score: 100." },
+            { line: 3, total: 180, s: '100', avg: '-', msg: "Line 4: Add 's' to total. (80 + 100 = 180)" },
+            { line: 2, total: 180, s: '90', avg: '-', msg: "Line 3: Last iteration. 's' gets the final score: 90." },
+            { line: 3, total: 270, s: '90', avg: '-', msg: "Line 4: Add 's' to total. (180 + 90 = 270)" },
+            { line: 4, total: 270, s: '90', avg: '90', msg: "Line 5: Calculate average by dividing the total (270) by 3. Result: 90." },
+            { line: 5, total: 270, s: '90', avg: '90', msg: "Program finished! You found the total and average." },
+          ];
+          return states[step];
+        }
+      },
+      {
+        id: 'prac_total_avg',
+        type: 'practice',
+        title: '5b. Practice',
+        concept: 'Your turn! Complete the loop that calculates a running total.',
+        task: 'Use the loop variable "s" to add onto the existing "total".',
+        blanks: ['s', 'total'],
+        hints: ['This is the temporary variable that holds each score during the loop.', 'We need to add onto the variable that is keeping the running sum.'],
+        code: () => [
+          `<span><span class="text-blue-400">scores</span> = [<span class="text-green-400">80</span>, <span class="text-green-400">100</span>, <span class="text-green-400">90</span>, <span class="text-green-400">85</span>, <span class="text-green-400">95</span>]</span>`,
+          `<span><span class="text-blue-400">total</span> = <span class="text-green-400">0</span></span>`,
+          `<span><span class="text-purple-400">for</span> ${Blank(0, "w-10")} <span class="text-purple-400">in</span> <span class="text-blue-400">scores</span>:</span>`,
+          `<span class="ml-10 border-l-2 border-slate-700 pl-4"><span class="text-blue-400">total</span> = ${Blank(1, "w-20")} + <span class="text-yellow-300">s</span></span>`
+        ]
+      },
+      {
+        id: 'if_else',
+        title: '6. If / Else',
+        concept: 'Make decisions! The code takes different paths based on a condition.',
+        maxStep: 4,
+        code: [
+          `<span><span class="text-blue-400">score</span> = <span class="text-green-400">45</span></span>`,
+          `<span><span class="text-purple-400">if</span> <span class="text-blue-400">score</span> &gt;= <span class="text-green-400">50</span>:</span>`,
+          `<span class="ml-10 border-l-2 border-slate-700 pl-4"><span class="text-blue-400">result</span> = <span class="text-yellow-300">"Pass"</span></span>`,
+          `<span><span class="text-purple-400">else</span>:</span>`,
+          `<span class="ml-10 border-l-2 border-slate-700 pl-4"><span class="text-blue-400">result</span> = <span class="text-yellow-300">"Fail"</span></span>`
+        ],
+        getStage: (step) => {
+          const states = [
+            { line: 0, score: 45, result: '-', msg: "Line 1: Initialize score to 45." },
+            { line: 1, score: 45, result: '-', msg: "Line 2: Check condition: is 45 >= 50? No (False)!" },
+            { line: 3, score: 45, result: '-', msg: "Line 4: Since the condition is False, we jump straight to the 'else' block." },
+            { line: 4, score: 45, result: 'Fail', msg: "Line 5: Run the 'else' block and set result to 'Fail'." },
+            { line: 4, score: 45, result: 'Fail', msg: "Program finished! The test was failed." },
+          ];
+          return states[step];
+        }
+      },
+      {
+        id: 'prac_if_else',
+        type: 'practice',
+        title: '6b. Practice',
+        concept: 'Your turn! Setup a Conditional block for a new scenario.',
+        task: 'Ask the user to input the temperature as a real number (decimal). Check if it is 30 or higher. If so, weather is "Hot", else "Cold". Finally, print the weather!',
+        blanks: ['float', 'input', 'if', 'else', 'print'],
+        hints: ['Function to convert text into a real (decimal) number.', 'Function to get text from the user.', 'The keyword used to start checking a condition.', 'The keyword for the fallback path when the condition is False.', 'Function to display the final result to the screen.'],
+        code: () => [
+          `<span><span class="text-blue-400">temp</span> = ${Blank(0, "w-16")}(${Blank(1, "w-16")}(<span class="text-yellow-300">"Temp: "</span>))</span>`,
+          `<span>${Blank(2, "w-12")} <span class="text-blue-400">temp</span> &gt;= <span class="text-green-400">30</span>:</span>`,
+          `<span class="ml-10 border-l-2 border-slate-700 pl-4"><span class="text-blue-400">weather</span> = <span class="text-yellow-300">"Hot"</span></span>`,
+          `<span>${Blank(3, "w-16")}:</span>`,
+          `<span class="ml-10 border-l-2 border-slate-700 pl-4"><span class="text-blue-400">weather</span> = <span class="text-yellow-300">"Cold"</span></span>`,
+          `<span>${Blank(4, "w-16")}(<span class="text-blue-400">weather</span>)</span>`
+        ]
+      },
+      {
+        id: 'lists',
+        title: '7. Lists & Index',
+        concept: 'Lists store multiple items. Each item has a numbered position called an index, starting at 0!',
+        maxStep: 5,
+        code: [
+          `<span><span class="text-blue-400">bag</span> = [<span class="text-yellow-300">"key"</span>, <span class="text-yellow-300">"map"</span>, <span class="text-yellow-300">"coin"</span>]</span>`,
+          `<span><span class="text-blue-400">item</span> = <span class="text-blue-400">bag</span>[<span class="text-green-400">1</span>]</span>`,
+          `<span><span class="text-blue-400">bag</span>[<span class="text-green-400">2</span>] = <span class="text-yellow-300">"gem"</span></span>`
+        ],
+        getStage: (step) => {
+          const states = [
+            { line: 0, bag: [], item: '-', target: null, msg: "Ready to create a list." },
+            { line: 0, bag: ["key", "map", "coin"], item: '-', target: null, msg: "Line 1: The list is created. Notice the indices: 0, 1, 2." },
+            { line: 1, bag: ["key", "map", "coin"], item: '-', target: 1, msg: "Line 2: We want the item at index 1. Remember, we count 0, 1, 2..." },
+            { line: 1, bag: ["key", "map", "coin"], item: 'map', target: null, msg: "Line 2: Index 1 is 'map'. We store it in the 'item' variable." },
+            { line: 2, bag: ["key", "map", "coin"], item: 'map', target: 2, msg: "Line 3: We can also change items! We target index 2 ('coin')..." },
+            { line: 2, bag: ["key", "map", "gem"], item: 'map', target: null, msg: "Line 3: Index 2 is replaced with 'gem'." },
+          ];
+          return states[step];
+        }
+      },
+      {
+        id: 'prac_lists',
+        type: 'practice',
+        title: '7b. Practice',
+        concept: 'Your turn! Access elements in the list by their Index.',
+        task: 'Assign the shield to the armor variable, and the sword to the weapon variable using their correct list indexes.',
+        blanks: ['0', '1'],
+        hints: ['The very first item in a list always starts at this index.', 'The second item in a list is at this index.'],
+        code: () => [
+          `<span><span class="text-blue-400">bag</span> = [<span class="text-yellow-300">"sword"</span>, <span class="text-yellow-300">"shield"</span>]</span>`,
+          `<span><span class="text-blue-400">armor</span> = <span class="text-blue-400">bag</span>[${Blank(1, "w-10")}]</span>`,
+          `<span><span class="text-blue-400">weapon</span> = <span class="text-blue-400">bag</span>[${Blank(0, "w-10")}]</span>`
+        ]
+      },
+      {
+        id: 'for_index',
+        title: '8. Loop with Index',
+        concept: 'Sometimes we need the index number while looping over a list. We can use range(len(list)) to loop over indices (0, 1, 2...) and modify each item!',
+        maxStep: 7,
+        code: [
+          `<span><span class="text-blue-400">prices</span> = [<span class="text-green-400">10</span>, <span class="text-green-400">20</span>, <span class="text-green-400">30</span>]</span>`,
+          `<span><span class="text-purple-400">for</span> <span class="text-yellow-300">i</span> <span class="text-purple-400">in</span> <span class="text-blue-300">range</span>(<span class="text-blue-300">len</span>(<span class="text-blue-400">prices</span>)):</span>`,
+          `<span class="ml-10 border-l-2 border-slate-700 pl-4"><span class="text-blue-400">prices</span>[<span class="text-yellow-300">i</span>] = <span class="text-blue-400">prices</span>[<span class="text-yellow-300">i</span>] + <span class="text-green-400">5</span></span>`
+        ],
+        getStage: (step) => {
+          const states = [
+            { line: 0, prices: [10, 20, 30], i: '-', prev_val: '-', active_calc: false, msg: "Line 1: Create our starting list of prices: [10, 20, 30]." },
+            { line: 1, prices: [10, 20, 30], i: 0, prev_val: '-', active_calc: false, msg: "Line 2: Loop starts! range(len(prices)) is range(3), which gives indices: 0, 1, 2. Currently, i = 0." },
+            { line: 2, prices: [15, 20, 30], i: 0, prev_val: 10, active_calc: true, msg: "Line 3: We take prices[0] (which is 10), add 5, and write it back: 10 + 5 = 15." },
+            { line: 1, prices: [15, 20, 30], i: 1, prev_val: '-', active_calc: false, msg: "Line 2: Next cycle of loop. Index i advances to 1." },
+            { line: 2, prices: [15, 25, 30], i: 1, prev_val: 20, active_calc: true, msg: "Line 3: Update prices[1] (which is 20) by adding 5: 20 + 5 = 25." },
+            { line: 1, prices: [15, 25, 30], i: 2, prev_val: '-', active_calc: false, msg: "Line 2: Last cycle of loop. Index i advances to the final index 2." },
+            { line: 2, prices: [15, 25, 35], i: 2, prev_val: 30, active_calc: true, msg: "Line 3: Update prices[2] (which is 30) by adding 5: 30 + 5 = 35." },
+            { line: 3, prices: [15, 25, 35], i: '-', prev_val: '-', active_calc: false, msg: "Program finished! Every item inside the list has been updated in place!" },
+          ];
+          return states[step];
+        }
+      },
+      {
+        id: 'prac_for_index',
+        type: 'practice',
+        title: '8b. Practice',
+        concept: 'Your turn! Complete the loop to double every number in the scores list using its index.',
+        task: 'Use the loop index variable "i" and range(len(...)) to access and double each item inside the scores list.',
+        blanks: ['in', 'range', 'i', '*'],
+        hints: ['The keyword that links our index variable to the range sequence.', 'The function that generates numbers up to the list length.', 'Use the index variable "i" inside the square brackets to access and change each item.', 'Use the multiplication operator to double the scores.'],
+        code: () => [
+          `<span><span class="text-blue-400">scores</span> = [<span class="text-green-400">15</span>, <span class="text-green-400">30</span>, <span class="text-green-400">45</span>, <span class="text-green-400">60</span>]</span>`,
+          `<span><span class="text-purple-400">for</span> <span class="text-yellow-300">i</span> ${Blank(0, "w-10")} ${Blank(1, "w-20")}(<span class="text-blue-300">len</span>(<span class="text-blue-400">scores</span>)):</span>`,
+          `<span class="ml-10 border-l-2 border-slate-700 pl-4"><span class="text-blue-400">scores</span>[${Blank(2, "w-8")}] = <span class="text-blue-400">scores</span>[<span class="text-yellow-300">i</span>] ${Blank(3, "w-8")} <span class="text-green-400">2</span></span>`
+        ]
+      },
+      {
+        id: 'counting',
+        title: '9. Counting',
+        concept: 'Counting is a common pattern in coding. We initialize a counter variable to 0, loop through our list, and add 1 to the counter whenever our condition is True!',
+        maxStep: 8,
+        code: [
+          `<span><span class="text-blue-400">scores</span> = [<span class="text-green-400">45</span>, <span class="text-green-400">80</span>, <span class="text-green-400">55</span>, <span class="text-green-400">30</span>]</span>`,
+          `<span><span class="text-blue-400">passed</span> = <span class="text-green-400">0</span></span>`,
+          `<span><span class="text-purple-400">for</span> <span class="text-yellow-300">s</span> <span class="text-purple-400">in</span> <span class="text-blue-400">scores</span>:</span>`,
+          `<span class="ml-10 border-l-2 border-slate-700 pl-4"><span class="text-purple-400">if</span> <span class="text-yellow-300">s</span> &gt;= <span class="text-green-400">50</span>:</span>`,
+          `<span class="ml-20 border-l-2 border-slate-700 pl-4"><span class="text-blue-400">passed</span> = <span class="text-blue-400">passed</span> + <span class="text-green-400">1</span></span>`
+        ],
+        getStage: (step) => {
+          const states = [
+            { line: 0, scores: [45, 80, 55, 30], passed: 0, s: '-', check: '-', msg: "Line 1: Create our scores list containing 4 values." },
+            { line: 1, scores: [45, 80, 55, 30], passed: 0, s: '-', check: '-', msg: "Line 2: Start our passed counter at 0." },
+            { line: 2, scores: [45, 80, 55, 30], passed: 0, s: '45', check: 'Checking: 45 >= 50 is False', msg: "Line 3: Loop starts. The first score is 45. Check if s >= 50. Since 45 >= 50 is False, we skip the increment!" },
+            { line: 2, scores: [45, 80, 55, 30], passed: 0, s: '80', check: 'Checking: 80 >= 50 is True', msg: "Line 3: Loop continues. s becomes 80. Since 80 >= 50 is True, we proceed inside the 'if' block." },
+            { line: 4, scores: [45, 80, 55, 30], passed: 1, s: '80', check: 'Incremented!', msg: "Line 5: Add 1 to our passed counter. passed becomes 1!" },
+            { line: 2, scores: [45, 80, 55, 30], passed: 1, s: '55', check: 'Checking: 55 >= 50 is True', msg: "Line 3: Loop continues. s becomes 55. Since 55 >= 50 is True, we proceed inside the 'if' block again." },
+            { line: 4, scores: [45, 80, 55, 30], passed: 2, s: '55', check: 'Incremented!', msg: "Line 5: Add 1 to our passed counter. passed is now 2!" },
+            { line: 2, scores: [45, 80, 55, 30], passed: 2, s: '30', check: 'Checking: 30 >= 50 is False', msg: "Line 3: Loop continues. s becomes 30. Since 30 >= 50 is False, we skip the increment." },
+            { line: 5, scores: [45, 80, 55, 30], passed: 2, s: '-', check: '-', msg: "Program finished! We successfully counted 2 passing scores." }
+          ];
+          return states[step];
+        }
+      },
+      {
+        id: 'prac_counting',
+        type: 'practice',
+        title: '9b. Practice',
+        concept: 'Your turn! Complete the code to count the number of hot days (30°C or higher).',
+        task: 'Complete the code to count the number of hot days (30°C or higher). Fill in the blanks to initialize the counter, set up the list loop, check the condition, and increment.',
+        blanks: ['0', 'in', 'if', '1'],
+        hints: ['Initialize your hot_days counter to 0 before the loop starts.', 'The loop keyword to check inside the list.', 'The conditional keyword to test the condition.', 'We add this amount to increment the counter.'],
+        code: () => [
+          `<span><span class="text-blue-400">temps</span> = [<span class="text-green-400">25</span>, <span class="text-green-400">32</span>, <span class="text-green-400">18</span>, <span class="text-green-400">35</span>, <span class="text-green-400">28</span>]</span>`,
+          `<span><span class="text-blue-400">hot_days</span> = ${Blank(0, "w-10")}</span>`,
+          `<span><span class="text-purple-400">for</span> <span class="text-yellow-300">t</span> ${Blank(1, "w-10")} <span class="text-blue-400">temps</span>:</span>`,
+          `<span class="ml-10 border-l-2 border-slate-700 pl-4">${Blank(2, "w-12")} <span class="text-yellow-300">t</span> &gt;= <span class="text-green-400">30</span>:</span>`,
+          `<span class="ml-20 border-l-2 border-slate-700 pl-4"><span class="text-blue-400">hot_days</span> = <span class="text-blue-400">hot_days</span> + ${Blank(3, "w-8")}</span>`
+        ]
+      },
+      {
+        id: 'functions',
+        title: '10. Functions',
+        concept: 'A function is a reusable machine. You give it inputs (arguments) and it returns an output.',
+        maxStep: 7,
+        code: [
+          `<span><span class="text-purple-400">def</span> <span class="text-blue-300">triple</span>(<span class="text-yellow-300">n</span>):</span>`,
+          `<span class="ml-10 border-l-2 border-slate-700 pl-4"><span class="text-purple-400">return</span> <span class="text-yellow-300">n</span> * <span class="text-green-400">3</span></span>`,
+          `<span><span class="text-blue-400">x</span> = <span class="text-blue-300">triple</span>(<span class="text-green-400">5</span>)</span>`,
+          `<span><span class="text-blue-400">y</span> = <span class="text-blue-300">triple</span>(<span class="text-green-400">10</span>)</span>`
+        ],
+        getStage: (step) => {
+          const states = [
+            { line: 0, n: '-', x: '-', y: '-', in_func: false, out: null, msg: "Line 1-2: We define a machine called 'triple'. It does nothing until called." },
+            { line: 2, n: '-', x: '-', y: '-', in_func: false, out: null, msg: "Line 3: We call the function and pass in 5 as the argument." },
+            { line: 1, n: 5, x: '-', y: '-', in_func: true, out: null, msg: "Inside 'triple': n becomes 5. We calculate 5 * 3." },
+            { line: 2, n: '-', x: 15, y: '-', in_func: false, out: 15, msg: "Line 3: The function returns 15, which gets stored in 'x'." },
+            { line: 3, n: '-', x: 15, y: '-', in_func: false, out: null, msg: "Line 4: We call the function again, this time with 10." },
+            { line: 1, n: 10, x: 15, y: '-', in_func: true, out: null, msg: "Inside 'triple': n becomes 10. We calculate 10 * 3." },
+            { line: 3, n: '-', x: 15, y: 30, in_func: false, out: 30, msg: "Line 4: The function returns 30, which gets stored in 'y'." },
+            { line: 4, n: '-', x: 15, y: 30, in_func: false, out: null, msg: "Program finished! Functions let us avoid rewriting code." },
+          ];
+          return states[step];
+        }
+      },
+      {
+        id: 'prac_functions',
+        type: 'practice',
+        title: '10b. Practice',
+        concept: 'Your turn! Complete the function definition and call it.',
+        task: 'Provide the parameter to the function setup, then call the function below.',
+        blanks: ['n', 'triple'],
+        hints: ['Look at what is being multiplied on the inside. What is the parameter named?', 'What is the exact name of the function you just defined?'],
+        code: () => [
+          `<span><span class="text-purple-400">def</span> <span class="text-blue-300">triple</span>(${Blank(0, "w-10")}):</span>`,
+          `<span class="ml-10 border-l-2 border-slate-700 pl-4"><span class="text-purple-400">return</span> <span class="text-yellow-300">n</span> * <span class="text-green-400">3</span></span>`,
+          `<span><span class="text-blue-400">output</span> = ${Blank(1, "w-24")}(<span class="text-green-400">4</span>)</span>`
+        ]
+      }
+    ];
+
+    // --- Icons HTML ---
+    const Icons = {
+      Reset: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path><path d="M3 3v5h5"></path></svg>`,
+      Next: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 4 15 12 5 20 5 4"></polygon><line x1="19" y1="5" x2="19" y2="19"></line></svg>`,
+      Prev: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="19 20 9 12 19 4 19 20"></polygon><line x1="5" y1="19" x2="5" y2="5"></line></svg>`,
+      Hint: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.9 4.9 1.4 1.4"/><path d="m17.7 17.7 1.4 1.4"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.3 17.7-1.4 1.4"/><path d="m19.1 4.9-1.4 1.4"/></svg>`,
+      Check: `<svg class="w-10 h-10 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" /></svg>`
+    };
+
+    // --- Action Handlers ---
+    function handleNext() {
+      const maxStep = LEVELS[currentLevelIdx].maxStep;
+      step = Math.min(step + 1, maxStep);
+      if (step >= maxStep) {
+        if (successTimeout) clearTimeout(successTimeout);
+        successTimeout = setTimeout(() => {
+          showSuccessModal = true;
+          renderApp();
+        }, 1000); // 1000ms delay
+      }
+      renderApp();
+    }
+
+    function handlePrev() {
+      step = Math.max(step - 1, 0);
+      showSuccessModal = false;
+      if (successTimeout) clearTimeout(successTimeout);
+      renderApp();
+    }
+
+    // --- Price visualizer for Level 8 ---
+    function visualizerForIndex(state) {
+      let pricesHTML = '';
+      state.prices.forEach((price, idx) => {
+        const isActive = state.i === idx;
+        pricesHTML += `
+          <div class="flex flex-col items-center relative">
+            ${isActive ? '<div class="absolute -top-12 text-3xl text-blue-500 animate-bounce">↓</div>' : ''}
+            <div class="w-28 h-28 rounded-xl shadow-lg border-2 flex flex-col items-center justify-center transition-all duration-500 ${isActive ? 'bg-blue-100 border-blue-400 scale-110' : 'bg-white border-slate-200'}">
+              <div class="text-xs text-slate-400 font-bold">prices[${idx}]</div>
+              <div class="text-2xl font-black text-slate-700 mt-2">$${price}</div>
+            </div>
+          </div>
+        `;
+      });
+
+      return `
+        <div class="flex flex-col items-center justify-center h-full p-8">
+          <div class="bg-white p-4 rounded-xl shadow-md border-2 border-slate-200 w-32 text-center mb-8">
+            <div class="text-sm text-slate-500 font-bold">Index i</div>
+            <div class="text-3xl font-black text-blue-500">${state.i}</div>
+          </div>
+
+          <div class="flex gap-6 mb-12">
+            ${pricesHTML}
+          </div>
+
+          <div class="h-16 flex items-center justify-center">
+            ${state.active_calc ? `
+              <div class="bg-indigo-50 border border-indigo-200 px-6 py-3 rounded-full text-indigo-800 text-lg font-bold shadow-sm">
+                prices[${state.i}] = ${state.prev_val} + 5 = ${state.prices[state.i]}
+              </div>
+            ` : `
+              <div class="text-slate-400 italic">Waiting for loop execution...</div>
+            `}
+          </div>
+        </div>
+      `;
+    }
+
+    function handleReset() {
+      step = 0;
+      showSuccessModal = false;
+      if (successTimeout) clearTimeout(successTimeout);
+      renderApp();
+    }
+
+    function changeLevel(idx) {
+      currentLevelIdx = idx;
+      step = 0;
+      practiceAnswers = {};
+      isPracticeSuccess = false;
+      wrongBlanks = [];
+      showSuccessModal = false;
+      renderApp();
+    }
+
+    function handlePracticeInput(e, id) {
+      const value = e.target.value;
+      practiceAnswers[id] = value;
+      
+      // Remove wrong marker if user modifies
+      if (wrongBlanks.includes(id)) {
+        wrongBlanks = wrongBlanks.filter(w => w !== id);
+        
+        // Manipulate classes directly to avoid losing focus
+        e.target.classList.remove('border-red-500', 'bg-red-900/40', 'text-red-200', 'focus:border-red-400', 'focus:bg-red-800/60');
+        e.target.classList.add('border-blue-400', 'text-yellow-300', 'focus:border-green-400', 'focus:bg-slate-700');
+        
+        // Re-render only the right visualizer panel to hide hints dynamically without losing input focus
+        document.getElementById('visualizer-container').innerHTML = getVisualizerHTML(LEVELS[currentLevelIdx]);
+      }
+    }
+
+    function checkPracticeAnswers() {
+      const level = LEVELS[currentLevelIdx];
+      let wrong = [];
+      level.blanks.forEach((expected, idx) => {
+        if ((practiceAnswers[idx] || '').trim() !== expected) {
+          wrong.push(idx);
+        }
+      });
+      
+      if (wrong.length === 0) {
+        wrongBlanks = [];
+        if (typeof setTimeout !== "undefined") {
+          if (successTimeout) clearTimeout(successTimeout);
+          successTimeout = setTimeout(() => {
+            isPracticeSuccess = true;
+            showSuccessModal = true;
+            renderApp();
+          }, 400); // 400ms delay
+        } else {
+          isPracticeSuccess = true;
+          showSuccessModal = true;
+        }
+      } else {
+        wrongBlanks = wrong;
+      }
+      renderApp(); // Full re-render needed for success modal or error styling
+    }
+
+    function submitStudentName() {
+      const val = document.getElementById('student-name-input').value.trim();
+      if (val) {
+        studentName = val;
+        renderApp();
+      }
+    }
+
+    // --- Visualizer Generators ---
+    
+    function renderPracticeFeedback(level) {
+      let content = '';
+      if (wrongBlanks.length > 0) {
+        content = `
+          <div class="z-10 bg-white p-6 rounded-3xl shadow-xl max-w-md w-full border-2 border-red-100 flex flex-col items-center mb-4">
+            <div class="text-5xl mb-4 animate-bounce">🤔</div>
+            <h3 class="text-xl text-red-800 font-bold mb-4 flex items-center gap-2">
+              ${Icons.Hint} Hints to help you out:
+            </h3>
+            <ul class="list-disc pl-5 text-red-700 text-sm font-medium text-left space-y-2 w-full">
+              ${wrongBlanks.map(idx => `<li>${level.hints[idx]}</li>`).join('')}
+            </ul>
+          </div>
+        `;
+      } else {
+        content = `
+          <div class="z-10 bg-white p-6 rounded-3xl shadow-xl max-w-sm w-full border-2 border-slate-100 flex flex-col items-center">
+            <div class="text-6xl mb-6">⌨️</div>
+            <h2 class="text-xl font-bold text-slate-700 mb-2">Practice Challenge</h2>
+            <p class="text-slate-500 font-medium">Fill in the blanks on the left to solve!</p>
+          </div>
+        `;
+      }
+
+      return `
+        <div class="flex flex-col items-center justify-center h-full p-8 text-center bg-slate-50 relative">
+          <div class="absolute inset-0 bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] [background-size:16px_16px] opacity-50 z-0"></div>
+          
+          <div class="z-10 bg-indigo-50 border-2 border-indigo-200 p-6 rounded-2xl shadow-sm max-w-md w-full mb-6">
+            <h2 class="text-sm font-bold text-indigo-600 mb-2 uppercase tracking-wider">Question / Task</h2>
+            <p class="text-indigo-900 text-lg font-medium">${level.task}</p>
+          </div>
+
+          ${content}
+        </div>
+      `;
+    }
+
+    function visualizerVariables(state) {
+      let coins = '';
+      for(let i=0; i<5; i++){
+        const isVisible = i < state.gold;
+        const cls = isVisible ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 -translate-y-20 scale-50';
+        coins += `
+          <div class="w-10 h-10 bg-yellow-400 rounded-full border-2 border-yellow-600 shadow-md flex items-center justify-center transition-all duration-700 ease-bounce ${cls}">
+            <div class="w-6 h-6 bg-yellow-300 rounded-full"></div>
+          </div>
+        `;
+      }
+      return `
+        <div class="flex flex-col items-center justify-center h-full relative p-8">
+          <div class="text-2xl font-bold text-slate-700 mb-8 z-10 bg-white/80 px-4 py-2 rounded-lg shadow-sm">
+            gold = ${state.gold}
+          </div>
+          <div class="relative w-48 h-40 bg-amber-700 rounded-b-xl border-4 border-amber-900 shadow-2xl flex items-end justify-center pb-4 z-10">
+            <div class="absolute -top-10 w-full h-20 bg-amber-600 rounded-t-xl rounded-[50%] border-t-4 border-amber-800 shadow-inner"></div>
+            <div class="absolute top-0 w-full h-full bg-black/20 rounded-b-xl"></div>
+            <div class="relative w-full h-full flex flex-wrap-reverse items-center justify-center gap-1 p-4">
+              ${coins}
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function visualizerIO(state) {
+      const c1 = state.name !== '-' ? 'opacity-100 translate-y-0' : 'opacity-50 translate-y-4';
+      const c2 = state.age_text !== '-' ? 'opacity-100 translate-y-0' : 'opacity-50 translate-y-4';
+      const c3 = state.age !== '-' ? 'opacity-100 translate-y-0' : 'opacity-50 translate-y-4';
+      
+      let converter = '';
+      if(state.action === 'converting'){
+        converter = `
+          <div class="bg-white px-6 py-4 rounded-full shadow-lg border-2 border-purple-300 flex items-center gap-4 animate-bounce">
+            <span class="text-green-600 font-bold text-2xl font-mono">"10"</span>
+            <span class="text-slate-400 font-bold text-xl">➔</span>
+            <span class="bg-purple-100 text-purple-700 px-3 py-1 rounded text-sm font-bold">int()</span>
+            <span class="text-slate-400 font-bold text-xl">➔</span>
+            <span class="text-blue-600 font-bold text-2xl font-mono">10</span>
+          </div>
+        `;
+      }
+
+      return `
+        <div class="flex flex-col h-full w-full p-6">
+          <div class="flex flex-wrap justify-center gap-6 mb-8 h-1/3 items-end">
+            <div class="flex flex-col items-center transition-all duration-500 ${c1}">
+              <div class="text-xs font-bold text-slate-500 mb-1">Variable (String)</div>
+              <div class="bg-green-100 border-2 border-green-400 text-green-800 rounded-lg p-3 text-center min-w-[100px] shadow-sm">
+                 <div class="font-mono text-sm border-b border-green-300 pb-1 mb-1">name</div>
+                 <div class="text-xl font-bold">${state.name !== '-' ? state.name : ''}</div>
+              </div>
+            </div>
+            <div class="flex flex-col items-center transition-all duration-500 ${c2}">
+              <div class="text-xs font-bold text-slate-500 mb-1">Variable (String)</div>
+              <div class="bg-green-100 border-2 border-green-400 text-green-800 rounded-lg p-3 text-center min-w-[100px] shadow-sm">
+                 <div class="font-mono text-sm border-b border-green-300 pb-1 mb-1">age_text</div>
+                 <div class="text-xl font-bold">${state.age_text !== '-' ? state.age_text : ''}</div>
+              </div>
+            </div>
+            <div class="flex flex-col items-center transition-all duration-500 ${c3}">
+              <div class="text-xs font-bold text-slate-500 mb-1">Variable (Integer)</div>
+              <div class="bg-blue-100 border-2 border-blue-400 text-blue-800 rounded-lg p-3 text-center min-w-[100px] shadow-sm">
+                 <div class="font-mono text-sm border-b border-green-300 pb-1 mb-1">age</div>
+                 <div class="text-xl font-bold">${state.age !== '-' ? state.age : ''}</div>
+              </div>
+            </div>
+          </div>
+          <div class="h-24 flex items-center justify-center relative mb-4">
+            ${converter}
+          </div>
+          <div class="flex-1 bg-[#1e1e1e] rounded-xl shadow-2xl border-4 border-slate-700 p-4 font-mono text-green-400 text-lg flex flex-col relative overflow-hidden">
+            <div class="absolute top-0 left-0 w-full bg-slate-800 text-slate-400 text-xs px-4 py-1 flex justify-between items-center">
+              <span>Terminal</span>
+              <div class="flex gap-1.5">
+                <div class="w-2.5 h-2.5 rounded-full bg-red-500"></div>
+                <div class="w-2.5 h-2.5 rounded-full bg-yellow-500"></div>
+                <div class="w-2.5 h-2.5 rounded-full bg-green-500"></div>
+              </div>
+            </div>
+            <div class="mt-6 whitespace-pre-wrap flex-1 overflow-y-auto">${state.console}${state.action === 'waiting' ? '<span class="animate-pulse bg-green-400 text-black w-2 h-5 inline-block align-middle ml-1">_</span>' : ''}</div>
+          </div>
+        </div>
+      `;
+    }
+
+    function visualizerForLoop(state) {
+      let applesOnTree = '';
+      let applesInBasket = '';
+      for(let idx=0; idx<3; idx++){
+        const isCollected = state.apples > idx;
+        const clsTree = isCollected ? 'translate-y-48 opacity-0' : 'translate-y-0 opacity-100';
+        const clsBasket = isCollected ? 'opacity-100 scale-100' : 'opacity-0 scale-50';
+        
+        applesOnTree += `
+          <div class="w-12 h-12 bg-red-500 rounded-full border-2 border-red-700 relative shadow-md transition-all duration-1000 ease-in-out ${clsTree}">
+            <div class="absolute -top-2 left-1/2 w-1 h-3 bg-amber-800"></div>
+            <div class="absolute top-1 right-2 w-3 h-2 bg-white/40 rounded-full rotate-45"></div>
+          </div>
+        `;
+        applesInBasket += `
+          <div class="w-10 h-10 bg-red-500 rounded-full border-2 border-red-700 relative transition-all duration-500 delay-500 ${clsBasket}">
+             <div class="absolute top-1 right-1 w-2 h-2 bg-white/40 rounded-full rotate-45"></div>
+          </div>
+        `;
+      }
+
+      return `
+        <div class="flex flex-col items-center justify-between h-full p-8">
+          <div class="flex gap-8 mb-8 z-10">
+            <div class="bg-white p-4 rounded-xl shadow-md border-2 border-slate-200 w-32 text-center">
+              <div class="text-sm text-slate-500 font-bold">apples</div>
+              <div class="text-3xl font-black text-red-500">${state.apples}</div>
+            </div>
+            <div class="bg-white p-4 rounded-xl shadow-md border-2 border-slate-200 w-32 text-center">
+              <div class="text-sm text-slate-500 font-bold">i (index)</div>
+              <div class="text-3xl font-black text-blue-500">${state.i}</div>
+            </div>
+          </div>
+
+          <div class="relative w-full max-w-md h-64 flex flex-col items-center justify-end">
+            <div class="absolute top-0 w-full h-12 bg-green-700 rounded-full shadow-lg z-10"></div>
+            <div class="absolute top-6 w-full flex justify-around px-8 z-0">
+              ${applesOnTree}
+            </div>
+            <div class="w-48 h-24 bg-amber-600 rounded-b-3xl border-4 border-amber-800 shadow-xl relative z-10 flex items-center justify-center overflow-hidden">
+               <div class="absolute top-0 w-full h-6 bg-black/30 rounded-t-full"></div>
+               <div class="flex gap-1 mt-4">
+                  ${applesInBasket}
+               </div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function visualizerWhileLoop(state) {
+      const percentage = state.battery;
+      const boltIcon = percentage > 0 ? `
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-white/80 absolute" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+        </svg>
+      ` : '';
+
+      return `
+        <div class="flex flex-col items-center justify-center h-full p-8">
+          <div class="bg-white p-4 rounded-xl shadow-md border-2 border-slate-200 w-48 text-center mb-12">
+            <div class="text-sm text-slate-500 font-bold">battery</div>
+            <div class="text-4xl font-black text-green-500">${percentage}%</div>
+          </div>
+
+          <div class="relative w-32 h-64 border-8 border-slate-700 rounded-2xl p-2 bg-slate-100 shadow-2xl flex flex-col justify-end">
+            <div class="absolute -top-6 left-1/2 -translate-x-1/2 w-12 h-6 bg-slate-700 rounded-t-lg"></div>
+            <div class="w-full bg-gradient-to-t from-green-500 to-green-400 rounded-lg transition-all duration-1000 ease-in-out relative flex items-center justify-center" style="height: ${percentage}%">
+               ${boltIcon}
+            </div>
+            <div class="absolute top-0 left-0 w-full h-full flex flex-col justify-between py-4 pointer-events-none opacity-20">
+              <div class="w-full h-px bg-black"></div>
+              <div class="w-full h-px bg-black"></div>
+              <div class="w-full h-px bg-black"></div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function visualizerTotalAvg(state) {
+      const scores = [80, 100, 90];
+      let scoresHTML = '';
+      scores.forEach((score, i) => {
+        const isProcessed = state.total >= score && (i===0 ? state.total>=80 : i===1 ? state.total>=180 : state.total>=270);
+        const isCurrent = state.s === score.toString() && !isProcessed;
+        let cls = isProcessed ? 'opacity-20 scale-90 translate-y-8 bg-blue-500' : 'opacity-100';
+        if(isCurrent) cls += ' ring-4 ring-yellow-400 scale-110 z-10 bg-blue-50';
+        
+        scoresHTML += `
+          <div class="flex-1 h-20 bg-indigo-500 rounded-xl shadow-lg border-b-4 border-indigo-700 flex items-center justify-center text-white text-2xl font-bold transition-all duration-700 ${cls}">
+            ${score}
+          </div>
+        `;
+      });
+
+      return `
+        <div class="flex flex-col items-center justify-center h-full w-full p-8">
+          <div class="w-full max-w-md mb-8">
+            <div class="text-slate-500 font-bold mb-2">scores list</div>
+            <div class="flex gap-4">
+              ${scoresHTML}
+            </div>
+          </div>
+
+          <div class="flex w-full max-w-md gap-8 items-center justify-center mb-8">
+             <div class="flex flex-col items-center">
+                <div class="text-slate-500 font-bold mb-2 text-center text-xs sm:text-sm">current 's'</div>
+                <div class="w-20 h-20 sm:w-24 sm:h-24 rounded-full border-4 border-dashed border-slate-300 flex items-center justify-center text-2xl sm:text-3xl font-black text-indigo-600 bg-white">
+                  ${state.s !== '-' ? state.s : ''}
+                </div>
+             </div>
+
+             <div class="text-3xl sm:text-4xl text-slate-300 font-bold">➔</div>
+
+             <div class="flex flex-col items-center">
+                <div class="text-slate-500 font-bold mb-2 text-center text-xs sm:text-sm">total</div>
+                <div class="w-28 h-20 sm:w-32 sm:h-24 bg-green-500 rounded-2xl shadow-inner flex items-center justify-center text-3xl sm:text-4xl font-black text-white border-b-8 border-green-700 transition-all duration-300">
+                  ${state.total}
+                </div>
+             </div>
+          </div>
+
+          <div class="w-full max-w-md pt-6 border-t-2 border-slate-200 flex flex-col items-center">
+            <div class="text-slate-500 font-bold mb-2 text-xs sm:text-sm">avg = total / 3</div>
+            <div class="w-40 h-14 sm:w-48 sm:h-16 rounded-full flex items-center justify-center text-2xl sm:text-3xl font-bold transition-all duration-1000 ${state.avg !== '-' ? 'bg-amber-400 text-amber-900 shadow-lg scale-100' : 'bg-slate-100 text-slate-300 scale-90'}">
+              ${state.avg !== '-' ? state.avg : '?'}
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function visualizerConditionals(state) {
+      const isChecking = state.score > 0 && state.result === '-';
+      const isPass = state.result === 'Pass';
+      const isFail = state.result === 'Fail';
+
+      return `
+        <div class="flex flex-col items-center justify-center h-full p-8 font-bold">
+          <div class="bg-white p-4 rounded-xl shadow-md border-2 border-slate-200 text-center mb-6">
+            <div class="text-xs sm:text-sm text-slate-500">Variable: score</div>
+            <div class="text-3xl sm:text-4xl text-blue-600">${state.score > 0 ? state.score : '?'}</div>
+          </div>
+          
+          <!-- Diamond -->
+          <div class="w-28 h-28 sm:w-32 sm:h-32 rotate-45 border-4 flex items-center justify-center transition-all duration-500
+            ${isChecking ? 'bg-yellow-200 border-yellow-500 shadow-xl scale-110' : 'bg-slate-50 border-slate-300'}">
+             <div class="-rotate-45 text-center">
+               <div class="text-[10px] sm:text-xs font-black uppercase tracking-wider transition-colors ${isChecking ? 'text-yellow-800' : 'text-slate-500'}">Condition</div>
+               <div class="text-base sm:text-lg font-bold mt-1 transition-colors ${isChecking ? 'text-indigo-700' : 'text-slate-700'}">score &gt;= 50</div>
+             </div>
+          </div>
+          
+          <!-- Branches -->
+          <div class="flex w-full max-w-md justify-between mt-12 relative">
+             <!-- Left/True Branch -->
+             <div class="flex flex-col items-center">
+               <div class="text-lg sm:text-xl mb-4 transition-colors ${isPass ? 'text-green-600' : 'text-slate-300'}">True</div>
+               <div class="w-20 h-14 sm:w-24 sm:h-16 rounded-lg flex items-center justify-center text-lg sm:text-xl transition-all duration-500 ${isPass ? 'bg-green-500 text-white shadow-lg' : 'bg-slate-100 text-slate-400 border-2 border-slate-200'}">Pass</div>
+             </div>
+             
+             <!-- Right/False Branch (Fail) -->
+             <div class="flex flex-col items-center">
+               <div class="text-lg sm:text-xl mb-4 transition-colors ${isFail ? 'text-red-600' : 'text-slate-300'}">False</div>
+               <div class="w-20 h-14 sm:w-24 sm:h-16 rounded-lg flex items-center justify-center text-lg sm:text-xl transition-all duration-500 ${isFail ? 'bg-red-500 text-white shadow-lg' : 'bg-slate-100 text-slate-400 border-2 border-slate-200'}">Fail</div>
+             </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function visualizerList(state) {
+      let bagHTML = '';
+      if (state.bag.length === 0) {
+        bagHTML = '<div class="text-slate-400 italic text-sm">List not created yet...</div>';
+      } else {
+        state.bag.forEach((val, idx) => {
+          let innerContent = val;
+          if(val === 'gem') innerContent = `<span class="text-purple-500">💎 gem</span>`;
+          if(val === 'key') innerContent = `<span class="text-amber-600">🔑 key</span>`;
+          if(val === 'map') innerContent = `<span class="text-emerald-600">🗺️ map</span>`;
+          if(val === 'coin') innerContent = `<span class="text-yellow-500">🪙 coin</span>`;
+
+          bagHTML += `
+            <div class="flex flex-col items-center relative">
+              ${state.target === idx ? '<div class="absolute -top-12 text-3xl text-red-500 animate-bounce">↓</div>' : ''}
+              <div class="w-24 h-24 rounded-xl shadow-md flex items-center justify-center text-xl sm:text-2xl font-bold transition-colors ${state.target === idx ? 'bg-yellow-300 border-4 border-yellow-500' : 'bg-white border-2 border-slate-300'}">
+                ${innerContent}
+              </div>
+              <div class="text-slate-400 font-mono mt-2 bg-slate-200 px-2.5 py-0.5 rounded-full text-xs sm:text-sm">
+                Index ${idx}
+              </div>
+            </div>
+          `;
+        });
+      }
+
+      return `
+        <div class="flex flex-col items-center justify-center h-full p-8">
+          <div class="text-slate-500 font-bold mb-4 text-sm sm:text-base">List: bag</div>
+          <div class="flex gap-2 sm:gap-4 mb-16 relative">
+            ${bagHTML}
+          </div>
+          <div class="w-full max-w-sm border-t-2 border-slate-200 pt-8 flex items-center justify-center gap-8">
+            <div class="text-slate-500 font-bold text-sm sm:text-base">Variable: item</div>
+            <div class="w-28 h-14 sm:w-32 sm:h-16 bg-white border-2 border-slate-300 rounded-lg shadow-inner flex items-center justify-center text-lg sm:text-xl font-bold text-slate-700">
+              ${state.item !== '-' ? `🗺️ ${state.item}` : ''}
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    // --- Visualizer for Level 9 Counting ---
+    function visualizerCounting(state) {
+      let scoresHTML = '';
+      const scores = [45, 80, 55, 30];
+      scores.forEach((score, idx) => {
+        const isCurrent = state.s === score.toString();
+        let cls = isCurrent ? 'ring-4 ring-blue-400 scale-110 z-10 bg-blue-50' : 'bg-white border-slate-200';
+        scoresHTML += `
+          <div class="w-16 h-16 sm:w-20 sm:h-20 rounded-xl shadow-lg border-2 flex flex-col items-center justify-center transition-all duration-500 ${cls}">
+            <div class="text-[9px] sm:text-[10px] text-slate-400 font-bold">score</div>
+            <div class="text-lg sm:text-xl font-black ${score >= 50 ? 'text-green-600' : 'text-red-500'} mt-1">${score}</div>
+          </div>
+        `;
+      });
+
+      return `
+        <div class="flex flex-col items-center justify-center h-full p-4 sm:p-8 font-bold">
+          <div class="text-slate-500 font-bold mb-4 text-sm sm:text-base">List: scores</div>
+          <div class="flex gap-2 sm:gap-4 mb-8">
+            ${scoresHTML}
+          </div>
+
+          <!-- Condition Checking Display -->
+          <div class="h-20 mb-8 flex items-center justify-center text-center">
+            ${state.check !== '-' ? `
+              <div class="bg-indigo-50 border border-indigo-200 px-4 sm:px-6 py-2 sm:py-3 rounded-full text-indigo-800 text-sm sm:text-lg font-bold shadow-sm">
+                ${state.check}
+              </div>
+            ` : `
+              <div class="text-slate-400 italic text-sm">Loop waiting to execute check...</div>
+            `}
+          </div>
+
+          <!-- Passed Counter Box -->
+          <div class="bg-white p-4 sm:p-6 rounded-2xl shadow-xl border-2 border-slate-100 flex flex-col items-center justify-center w-40 sm:w-48">
+            <div class="text-xs sm:text-sm text-slate-500 font-bold mb-2">passed (counter)</div>
+            <div class="text-4xl sm:text-5xl font-black text-blue-600 transition-all duration-300 transform scale-110">
+              ${state.passed}
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function visualizerFunctions(state) {
+      return `
+        <div class="flex flex-col items-center justify-center h-full p-4 w-full">
+           <!-- Factory block -->
+           <div class="w-full max-w-lg border-4 rounded-3xl p-4 sm:p-6 relative transition-all duration-500 flex flex-col items-center shadow-2xl ${state.in_func ? 'border-purple-500 bg-purple-50' : 'border-slate-300 bg-white'}">
+             <div class="absolute -top-4 bg-purple-600 text-white px-4 py-1 rounded-full font-bold shadow-md text-xs sm:text-sm">
+               Function: triple(n)
+             </div>
+             
+             <div class="flex items-center gap-4 sm:gap-8 mt-4">
+                <div class="flex flex-col items-center">
+                  <div class="text-xs sm:text-sm font-bold text-slate-500 mb-2">Input (n)</div>
+                  <div class="w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-slate-200 border-2 border-slate-400 flex items-center justify-center text-xl sm:text-2xl font-black text-slate-700">
+                    ${state.n !== '-' ? state.n : ''}
+                  </div>
+                </div>
+                
+                <div class="text-2xl sm:text-3xl text-purple-400 font-bold">➔</div>
+                
+                <div class="flex flex-col items-center">
+                  <div class="text-xs sm:text-sm font-bold text-slate-500 mb-2">Operation</div>
+                  <div class="bg-purple-100 text-purple-800 px-4 sm:px-6 py-3 sm:py-4 rounded-xl font-mono text-sm sm:text-xl font-bold border-2 border-purple-200">
+                    n * 3
+                  </div>
+                </div>
+             </div>
+           </div>
+           
+           <div class="flex w-full max-w-md justify-between mt-8 sm:mt-12 gap-4 sm:gap-8">
+              <div class="flex-1 bg-white p-3 sm:p-4 rounded-xl shadow-md border-2 border-slate-200 text-center">
+                <div class="text-xs sm:text-sm text-slate-500 font-bold mb-2">Variable: x</div>
+                <div class="text-3xl sm:text-4xl font-black transition-all duration-500 ${state.x !== '-' ? 'text-blue-500 scale-110' : 'text-slate-300'}">
+                  ${state.x}
+                </div>
+              </div>
+              <div class="flex-1 bg-white p-3 sm:p-4 rounded-xl shadow-md border-2 border-slate-200 text-center">
+                <div class="text-xs sm:text-sm text-slate-500 font-bold mb-2">Variable: y</div>
+                <div class="text-4xl sm:text-5xl font-black transition-all duration-500 ${state.y !== '-' ? 'text-green-500 scale-110' : 'text-slate-300'}">
+                  ${state.y}
+                </div>
+              </div>
+           </div>
+        </div>
+      `;
+    }
+
+    function getVisualizerHTML(level) {
+      const isPractice = level.type === 'practice';
+      if (isPractice) return renderPracticeFeedback(level);
+
+      const safeStep = Math.min(step, level.maxStep);
+      const state = level.getStage(safeStep) || { line: 0, msg: '' };
+
+      switch (level.id) {
+        case 'variables': return visualizerVariables(state);
+        case 'io_types': return visualizerIO(state);
+        case 'for_loop': return visualizerForLoop(state);
+        case 'while_loop': return visualizerWhileLoop(state);
+        case 'total_avg': return visualizerTotalAvg(state);
+        case 'if_else': return visualizerConditionals(state);
+        case 'lists': return visualizerList(state);
+        case 'for_index': return visualizerForIndex(state);
+        case 'counting': return visualizerCounting(state);
+        case 'functions': return visualizerFunctions(state);
+        default: return '';
+      }
+    }
+
+    // --- Main Renderer ---
+    function renderApp() {
+      // If the student's name isn't set, display the starter name prompt modal
+      if (!studentName) {
+        document.getElementById('app').innerHTML = `
+          <div class="flex-1 flex items-center justify-center bg-slate-900 p-4 relative">
+            <div class="absolute inset-0 bg-[radial-gradient(#1e293b_1px,transparent_1px)] [background-size:24px_24px] opacity-40"></div>
+            <div class="bg-slate-800/90 backdrop-blur p-8 rounded-3xl shadow-2xl border border-slate-700 max-w-md w-full text-center relative z-10">
+              <div class="bg-blue-500 text-white p-4 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-6 shadow-lg shadow-blue-500/20">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+              </div>
+              <h2 class="text-3xl font-black mb-2 text-white tracking-tight">Valtorta College</h2>
+              <p class="text-slate-400 mb-6 font-medium text-sm">Enter your name to begin the Python Explorer game!</p>
+              <input type="text" id="student-name-input" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 mb-6 text-center font-bold text-lg" placeholder="Student Name" autofocus>
+              <button onclick="submitStudentName()" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-black py-3.5 rounded-xl transition-all shadow-lg shadow-blue-500/10 hover:shadow-blue-500/20 active:scale-95">Start Explorer</button>
+            </div>
+          </div>
+        `;
+        
+        // Setup simple enter key submission handler for convenience
+        document.getElementById('student-name-input').addEventListener('keydown', (e) => {
+          if (e.key === 'Enter') submitStudentName();
+        });
+        return;
+      }
+
+      const level = LEVELS[currentLevelIdx];
+      const isPractice = level.type === 'practice';
+      const safeStep = isPractice ? 0 : Math.min(step, level.maxStep);
+      const currentState = isPractice ? null : (level.getStage(safeStep) || { line: 0, msg: '' });
+      const activeLine = isPractice ? -1 : (currentState?.line || 0);
+
+      // Distribute the levels evenly across exactly 2 rows
+      const itemsPerRow = Math.ceil(LEVELS.length / 2);
+      const row1 = LEVELS.slice(0, itemsPerRow);
+      const row2 = LEVELS.slice(itemsPerRow);
+
+      const renderRowButtons = (rowItems, startIdx) => {
+        return rowItems.map((l, idx) => {
+          const actualIdx = startIdx + idx;
+          const isActive = currentLevelIdx === actualIdx;
+          const isPrac = l.type === 'practice';
+          
+          let cls = isActive 
+            ? (isPrac ? 'bg-indigo-600 text-white shadow-md font-bold' : 'bg-blue-500 text-white shadow-md font-bold')
+            : (isPrac ? 'text-indigo-300 hover:bg-slate-800' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800');
+            
+          return `<button onclick="changeLevel(${actualIdx})" class="px-2.5 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-colors ${cls}">${l.title}</button>`;
+        }).join('');
+      };
+
+      const navButtonsHTML = `
+        <div class="flex flex-col gap-2 w-full">
+          <div class="flex gap-1.5 justify-start overflow-x-auto pb-0.5 no-scrollbar">${renderRowButtons(row1, 0)}</div>
+          <div class="flex gap-1.5 justify-start overflow-x-auto no-scrollbar">${renderRowButtons(row2, itemsPerRow)}</div>
+        </div>
+      `;
+
+      // Code Editor Render
+      let editorHTML = '';
+      if (isPractice) {
+        editorHTML = level.code().map((line, idx) => `
+          <div class="px-3 py-2 rounded ml-0 flex items-start gap-4">
+            <span class="text-slate-600 select-none min-w-[20px]">${idx + 1}</span>
+            <div class="text-slate-300 flex-1 leading-8">${line}</div>
+          </div>
+        `).join('');
+      } else {
+        editorHTML = level.code.map((line, idx) => `
+          <div class="px-3 py-1.5 rounded transition-colors duration-300 flex items-start gap-4 ${activeLine === idx ? 'bg-blue-500/20 border-l-4 border-blue-400 -ml-1' : 'ml-0 border-l-4 border-transparent'}">
+            <span class="text-slate-600 select-none min-w-[20px]">${idx + 1}</span>
+            <div class="text-slate-300 flex-1">${line}</div>
+          </div>
+        `).join('');
+      }
+
+      // Render Controls
+      let controlsHTML = '';
+      if (isPractice) {
+        controlsHTML = `
+          <div class="bg-slate-800 rounded-xl p-3 flex justify-between items-center shadow-lg border-2 border-indigo-500/30">
+             <div class="text-indigo-200 text-sm flex-1 font-bold px-2">Fill in the blanks to continue!</div>
+             <button onclick="checkPracticeAnswers()" class="p-3 px-6 text-white bg-green-600 hover:bg-green-500 rounded-lg font-bold transition-colors shadow-md flex items-center gap-2">
+               Check Code
+             </button>
+          </div>
+        `;
+      } else {
+        controlsHTML = `
+          <div class="bg-slate-800 rounded-xl p-3 flex justify-between items-center shadow-lg">
+             <button onclick="handleReset()" class="p-3 text-slate-400 hover:text-white hover:bg-slate-700 rounded-lg transition-colors" title="Reset">
+               ${Icons.Reset}
+             </button>
+             <div class="flex gap-2">
+               <button onclick="handlePrev()" ${step === 0 ? 'disabled' : ''} class="p-3 text-slate-200 bg-slate-700 hover:bg-slate-600 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg transition-colors flex items-center gap-2" title="Previous Step">
+                 ${Icons.Prev} <span class="hidden sm:inline font-semibold">Prev</span>
+               </button>
+               <button onclick="handleNext()" ${step >= level.maxStep ? 'disabled' : ''} class="p-3 text-white bg-blue-600 hover:bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg transition-colors flex items-center gap-2 shadow-md" title="Next Step">
+                 <span class="hidden sm:inline font-semibold">Next</span> ${Icons.Next}
+               </button>
+             </div>
+             <div class="text-sm font-bold text-slate-400 w-12 text-center">${step} / ${level.maxStep}</div>
+          </div>
+        `;
+      }
+
+      // Main App Layout Construction
+      const appHTML = `
+        <!-- Header -->
+        <header class="bg-slate-800 border-b border-slate-700 p-4 flex flex-col xl:flex-row items-center justify-between gap-4 shrink-0">
+          <div class="flex items-center gap-3 shrink-0">
+            <div class="bg-blue-500 text-white p-2 rounded-lg">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m18 16 4-4-4-4"/><path d="m6 8-4 4 4 4"/><path d="m14.5 4-5 16"/></svg>
+            </div>
+            <h1 class="text-xl font-black tracking-tight text-white">Valtorta College Python Explorer</h1>
+          </div>
+          
+          <div class="bg-slate-900 rounded-2xl p-2 max-w-full overflow-hidden w-full xl:w-auto">
+            ${navButtonsHTML}
+          </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="flex-1 flex flex-col lg:flex-row max-w-7xl w-full mx-auto p-4 gap-6 overflow-hidden">
+          
+          <!-- Left Column -->
+          <div class="w-full lg:w-5/12 flex flex-col gap-4 overflow-hidden shrink-0">
+            
+            <div class="border rounded-xl p-5 shadow-lg shrink-0 ${isPractice ? 'bg-indigo-900/50 border-indigo-500/50' : 'bg-slate-800 border-slate-700'} relative">
+              <h2 class="${isPractice ? 'text-indigo-300' : 'text-blue-400'} font-bold text-sm uppercase tracking-wider mb-2">
+                ${isPractice ? 'Practice Concept' : 'Current Concept'}
+              </h2>
+              <p class="text-slate-200 leading-relaxed text-lg">${level.concept}</p>
+            </div>
+
+            <div class="bg-slate-950 rounded-xl border border-slate-800 flex-1 flex flex-col min-h-[250px] shadow-2xl relative">
+              <div class="bg-slate-900 px-4 py-2 border-b border-slate-800 flex items-center gap-2 shrink-0">
+                <div class="w-3 h-3 rounded-full bg-red-500/80"></div>
+                <div class="w-3 h-3 rounded-full bg-yellow-500/80"></div>
+                <div class="w-3 h-3 rounded-full bg-green-500/80"></div>
+                <div class="ml-2 text-xs font-mono text-slate-500">{isPractice ? 'exercise.py' : 'main.py'}</div>
+              </div>
+              
+              <div class="p-4 font-mono text-lg flex-1 overflow-y-auto" id="code-container">
+                ${editorHTML}
+              </div>
+
+              ${!isPractice ? `
+                <div class="bg-slate-800/90 border-t border-slate-700 p-4 min-h-[100px] flex items-center shrink-0">
+                  <p class="text-blue-100 font-medium text-lg leading-snug">${currentState.msg}</p>
+                </div>
+              ` : ''}
+            </div>
+
+            <div class="shrink-0">
+              ${controlsHTML}
+            </div>
+          </div>
+
+          <!-- Right Column -->
+          <div class="w-full lg:w-7/12 bg-slate-100 rounded-2xl shadow-inner relative overflow-hidden flex flex-col min-h-[400px]">
+            <!-- Header bar for Visualizer -->
+            <div class="bg-slate-200 text-slate-500 text-xs font-bold uppercase tracking-widest flex items-center justify-between border-b border-slate-300 px-4 py-3 shrink-0 relative z-20">
+              <span>📊 Visualizer</span>
+              ${isPractice ? `<span class="bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-md font-mono font-bold tracking-normal uppercase text-[10px]">Student: ${studentName}</span>` : ''}
+            </div>
+            
+            <div class="flex-1 relative overflow-auto bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] [background-size:16px_16px]" id="visualizer-container">
+              ${getVisualizerHTML(level)}
+
+              ${showSuccessModal ? `
+                <div class="absolute inset-0 bg-white/40 backdrop-blur-sm flex items-center justify-center z-50">
+                  <div class="bg-white p-8 rounded-3xl shadow-2xl text-center transform hover:scale-105 transition-transform border border-slate-100">
+                    <div class="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                      ${Icons.Check}
+                    </div>
+                    <h3 class="text-3xl font-black text-slate-800 mb-2">${isPractice ? 'Practice Complete!' : 'Level Complete!'}</h3>
+                    <p class="text-slate-500 mb-6 font-medium">${isPractice ? 'Great job filling in the code correctly.' : `You successfully learned about ${level.title}.`}</p>
+                    <button onclick="currentLevelIdx < LEVELS.length - 1 ? changeLevel(currentLevelIdx + 1) : changeLevel(0)" class="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-xl font-bold shadow-lg transition-colors w-full">
+                      ${currentLevelIdx < LEVELS.length - 1 ? (isPractice ? 'Next Lesson ➔' : 'Start Practice ➔') : 'Restart Game'}
+                    </button>
+                  </div>
+                </div>
+              ` : ''}
+            </div>
+          </div>
+
+        </main>
+      `;
+
+      document.getElementById('app').innerHTML = appHTML;
+    }
+
+    // Initialize application
+    document.addEventListener("DOMContentLoaded", () => {
+      renderApp();
+    });
+  </script>
+</body>
+</html>
