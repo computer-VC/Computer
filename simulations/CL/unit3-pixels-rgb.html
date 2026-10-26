@@ -1,0 +1,1249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Unit 3 — Pixels &amp; RGB</title>
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem("f2-ai-theme");
+        document.documentElement.setAttribute("data-theme", t === "dark" ? "dark" : "light");
+      } catch (e) { document.documentElement.setAttribute("data-theme", "light"); }
+    })();
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet" />
+  <style>
+:root, [data-theme="light"] {
+  --canvas: #ffffff;
+  --surface: #f7f6f3;
+  --ink: #37352f;
+  --body: #4f4d47;
+  --muted: #787774;
+  --primary: #2383e2;
+  --primary-active: #1a6fc1;
+  --success: #0f7b3f;
+  --warning: #cb6800;
+  --danger: #d44c47;
+  --hairline: rgba(55, 53, 47, 0.09);
+  --radius: 10px;
+  --ease: cubic-bezier(0.16, 1, 0.3, 1);
+  --shadow: 0 1px 2px rgba(55, 53, 47, 0.04), 0 4px 12px rgba(55, 53, 47, 0.06);
+  --toggle-bg: #ffffff;
+  --toggle-border: rgba(55, 53, 47, 0.14);
+  --caption-bg: rgba(255, 255, 255, 0.96);
+  --caption-fg: #37352f;
+  --anim-bg: #f7f6f3;
+  --anim-panel: #ffffff;
+  --anim-soft: #e8e6e1;
+  --anim-soft-2: #ddd9d2;
+  --anim-border: #c5c1b8;
+}
+
+[data-theme="dark"] {
+  --canvas: #202020;
+  --surface: #151515;
+  --ink: #f1f0ec;
+  --body: #cfcbc4;
+  --muted: #9a968e;
+  --primary: #5ba8f5;
+  --primary-active: #7bb8f7;
+  --success: #3dcf7a;
+  --warning: #e0a04a;
+  --danger: #f07171;
+  --hairline: rgba(255, 255, 255, 0.1);
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.35), 0 4px 14px rgba(0, 0, 0, 0.28);
+  --toggle-bg: #202020;
+  --toggle-border: rgba(255, 255, 255, 0.14);
+  --caption-bg: rgba(32, 32, 32, 0.96);
+  --caption-fg: #f1f0ec;
+  --anim-bg: #1a1a1a;
+  --anim-panel: #262626;
+  --anim-soft: #333333;
+  --anim-soft-2: #3d3d3d;
+  --anim-border: #555555;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  min-height: 100vh;
+  min-height: 100dvh;
+  font-family: Inter, system-ui, sans-serif;
+  color: var(--body);
+  background: var(--surface);
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+button, a { font: inherit; }
+button:focus-visible, a:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+.app {
+  width: min(880px, calc(100% - 28px));
+  margin: 0 auto;
+  padding: 28px 0 40px;
+}
+
+header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 20px;
+}
+
+.header-top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  margin-bottom: 4px;
+}
+
+.theme-toggle {
+  display: inline-flex;
+  border: 1px solid var(--toggle-border);
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--toggle-bg);
+}
+
+.theme-toggle button {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 8px 12px;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.theme-toggle button[aria-pressed="true"] {
+  background: var(--primary);
+  color: #fff;
+}
+
+.eyebrow, .mono {
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+}
+
+.eyebrow {
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+  font-weight: 500;
+  margin-bottom: 6px;
+}
+
+h1, h2 { font-family: "Cormorant Garamond", Georgia, serif; color: var(--ink); }
+h1 { font-size: clamp(1.85rem, 4.5vw, 2.45rem); line-height: 1.15; }
+
+.progress-wrap { min-width: 160px; width: min(220px, 100%); }
+.progress-label { font-size: 0.8rem; color: var(--muted); margin-bottom: 8px; text-align: right; }
+.progress-bar { height: 3px; background: var(--hairline); overflow: hidden; }
+.progress-fill { height: 100%; width: 0; background: var(--primary); transition: width 0.36s var(--ease); }
+
+.jump-nav {
+  width: 100%;
+  display: flex;
+  gap: 7px;
+  overflow-x: auto;
+  padding: 2px 1px 7px;
+  scrollbar-width: thin;
+}
+
+.jump-btn {
+  flex: 0 0 auto;
+  border: 1px solid var(--hairline);
+  border-radius: 999px;
+  background: var(--canvas);
+  color: var(--muted);
+  padding: 6px 10px;
+  font: 600 0.66rem "JetBrains Mono", monospace;
+  cursor: pointer;
+}
+
+.jump-btn:hover { color: var(--primary); border-color: var(--primary); }
+.jump-btn.active { color: #fff; background: var(--primary); border-color: var(--primary); }
+
+.panel {
+  background: var(--canvas);
+  border: 1px solid var(--hairline);
+  border-radius: 12px;
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+
+.hidden { display: none !important; }
+
+footer.note {
+  margin-top: 14px;
+  color: var(--muted);
+  font-size: 0.78rem;
+  text-align: center;
+}
+
+
+.intro, .summary { padding: 28px 22px; }
+.intro h2, .summary h2, .section-title {
+  font-size: clamp(1.4rem, 3vw, 1.75rem);
+  margin-bottom: 10px;
+  line-height: 1.2;
+}
+
+.intro p, .summary p, .section-body {
+  line-height: 1.65;
+  margin-bottom: 12px;
+  font-size: 0.95rem;
+}
+
+strong { color: var(--ink); }
+
+.chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 17px 0 21px; }
+.chip {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 6px 10px;
+  border: 1px solid var(--hairline);
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--ink);
+}
+
+.stage {
+  padding: 18px;
+  border-bottom: 1px solid var(--hairline);
+  background: var(--surface);
+}
+
+.badge {
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+  padding: 4px 10px;
+  border: 1px solid var(--hairline);
+  border-radius: 999px;
+  font-size: 0.78rem;
+  color: var(--muted);
+  background: var(--canvas);
+  margin-bottom: 12px;
+}
+
+.badge strong { font-family: "JetBrains Mono", monospace; }
+
+.scene {
+  width: 100%;
+  min-height: 300px;
+  border: 1px solid var(--hairline);
+  border-radius: 10px;
+  background: var(--anim-bg);
+  position: relative;
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+}
+
+.scene-caption {
+  position: absolute;
+  z-index: 8;
+  left: 10px;
+  bottom: 8px;
+  max-width: 92%;
+  color: var(--caption-fg);
+  background: var(--caption-bg);
+  border: 1px solid var(--hairline);
+  border-radius: 6px;
+  padding: 4px 8px;
+  box-shadow: var(--shadow);
+  font-size: 0.7rem;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.content { padding: 20px 18px 18px; }
+
+.definition {
+  border-left: 3px solid var(--primary);
+  padding: 10px 12px;
+  margin: 12px 0 15px;
+  background: var(--surface);
+  color: var(--ink);
+  line-height: 1.55;
+  font-size: 0.92rem;
+}
+
+.definition::before {
+  content: "DEFINITION";
+  display: block;
+  font: 600 0.62rem "JetBrains Mono", monospace;
+  color: var(--primary);
+  letter-spacing: 0.05em;
+  margin-bottom: 5px;
+}
+
+.example-box {
+  border: 1px solid var(--hairline);
+  border-radius: 9px;
+  padding: 12px;
+  margin: 14px 0 4px;
+  background: var(--surface);
+  font-size: 0.88rem;
+  line-height: 1.55;
+}
+
+.example-box b {
+  display: block;
+  font: 600 0.65rem "JetBrains Mono", monospace;
+  color: var(--primary);
+  margin-bottom: 5px;
+  letter-spacing: 0.04em;
+}
+
+.nav {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 17px;
+}
+
+.btn {
+  border: 0;
+  border-radius: 8px;
+  padding: 10px 16px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: 0.18s ease;
+}
+
+.btn:hover:not(:disabled) { transform: translateY(-1px); }
+.btn-primary { color: #fff; background: var(--primary); margin-left: auto; }
+.btn-primary:hover:not(:disabled) { background: var(--primary-active); }
+.btn-ghost { color: var(--muted); background: transparent; border: 1px solid var(--hairline); }
+
+.recap-list { display: grid; gap: 7px; margin: 15px 0 18px; }
+.recap-item {
+  display: grid;
+  grid-template-columns: 118px 1fr;
+  gap: 10px;
+  padding: 9px 10px;
+  border-bottom: 1px solid var(--hairline);
+  font-size: 0.85rem;
+  line-height: 1.45;
+}
+.recap-item b {
+  font-family: "JetBrains Mono", monospace;
+  color: var(--primary);
+  font-size: 0.68rem;
+}
+
+.frame {
+  width: 100%;
+  min-height: 300px;
+  padding: 22px 18px 44px;
+  display: grid;
+  place-items: center;
+}
+
+.arrow {
+  font: 600 1.05rem "JetBrains Mono", monospace;
+  color: var(--primary);
+  animation: nudge 1.2s ease-in-out infinite;
+}
+
+.pipe {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  width: 100%;
+}
+
+.pipe-step {
+  flex: 1;
+  min-width: 90px;
+  max-width: 140px;
+  padding: 10px 8px;
+  border: 1px solid var(--anim-border);
+  border-radius: 8px;
+  background: var(--anim-panel);
+  text-align: center;
+  font: 600 0.55rem "JetBrains Mono", monospace;
+  color: var(--ink);
+  line-height: 1.35;
+  opacity: 0.45;
+}
+
+.pipe-step.on {
+  opacity: 1;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--primary) 20%, transparent);
+  animation: pulseGlow 1.8s ease-in-out infinite;
+}
+
+.pipe-step b {
+  display: block;
+  color: var(--primary);
+  font-size: 0.5rem;
+  margin-bottom: 4px;
+}
+
+.flow-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  width: min(520px, 100%);
+}
+
+.node {
+  min-width: 100px;
+  padding: 12px 10px;
+  border: 1px solid var(--anim-border);
+  border-radius: 10px;
+  background: var(--anim-panel);
+  text-align: center;
+  font: 600 0.62rem "JetBrains Mono", monospace;
+  color: var(--ink);
+}
+
+.node .mono {
+  display: block;
+  color: var(--primary);
+  font-size: 0.52rem;
+  margin-bottom: 4px;
+}
+
+.node.on {
+  border-color: var(--primary);
+  animation: pulseGlow 1.8s ease-in-out infinite;
+}
+
+.compare {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  width: min(520px, 100%);
+}
+
+.cmp {
+  border: 1px solid var(--anim-border);
+  border-radius: 8px;
+  background: var(--anim-panel);
+  padding: 10px;
+  font-size: 0.68rem;
+  line-height: 1.45;
+  color: var(--ink);
+}
+
+.cmp .mono {
+  display: block;
+  color: var(--primary);
+  margin-bottom: 6px;
+  font-size: 0.58rem;
+}
+
+.pair-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin: 12px 0;
+}
+
+.pair-card {
+  border: 1px solid var(--hairline);
+  border-radius: 8px;
+  padding: 10px;
+  background: var(--surface);
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+
+.pair-card b {
+  display: block;
+  font: 600 0.62rem "JetBrains Mono", monospace;
+  color: var(--primary);
+  margin-bottom: 5px;
+}
+
+@keyframes nudge { 50% { transform: translateX(4px); } }
+@keyframes pulseGlow {
+  0%, 100% { box-shadow: 0 0 0 2px color-mix(in srgb, var(--primary) 18%, transparent); }
+  50% { box-shadow: 0 0 0 5px color-mix(in srgb, var(--primary) 10%, transparent); }
+}
+
+@media (max-width: 560px) {
+  .compare, .pair-grid, .recap-item { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 390px) {
+  .app { width: calc(100% - 20px); padding: 18px 0 32px; }
+  .content, .intro, .summary { padding-left: 14px; padding-right: 14px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .arrow, .pipe-step.on, .node.on { animation: none !important; }
+}
+
+</style>
+  <style>
+    /* human vs computer compare */
+    .sense-compare { width: min(520px, 100%); }
+
+    /* pixel resolution compare — PPT parrot */
+    .pixel-demo {
+      width: min(540px, 100%);
+      display: grid;
+      gap: 12px;
+    }
+    .pixel-steps {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+    }
+    @media (max-width: 560px) {
+      .pixel-steps { grid-template-columns: 1fr; max-width: 280px; margin: 0 auto; }
+    }
+    .pixel-card {
+      border: 1px solid var(--anim-border);
+      border-radius: 10px;
+      background: var(--anim-panel);
+      padding: 8px;
+      text-align: center;
+      opacity: 0.45;
+    }
+    .pixel-card.on {
+      animation: pixelCardOn 6s ease-in-out infinite;
+    }
+    .pixel-card.c1 { animation-delay: 0s; }
+    .pixel-card.c2 { animation-delay: 2s; }
+    .pixel-card.c3 { animation-delay: 4s; }
+    @keyframes pixelCardOn {
+      0%, 28%, 100% { opacity: 0.4; border-color: var(--anim-border); box-shadow: none; }
+      8%, 22% {
+        opacity: 1;
+        border-color: var(--primary);
+        box-shadow: 0 0 0 2px color-mix(in srgb, var(--primary) 18%, transparent);
+      }
+    }
+    .pixel-card .cap {
+      font: 700 0.52rem "JetBrains Mono", monospace;
+      color: var(--primary);
+      margin-bottom: 6px;
+    }
+    .pixel-card .sub {
+      font: 600 0.48rem "JetBrains Mono", monospace;
+      color: var(--muted);
+      margin-top: 6px;
+      line-height: 1.35;
+    }
+    .pix-photo {
+      display: block;
+      width: 100%;
+      aspect-ratio: 1;
+      object-fit: cover;
+      border-radius: 6px;
+      background: #111;
+    }
+    .pix-photo.pixelated {
+      image-rendering: pixelated;
+      image-rendering: crisp-edges;
+    }
+    .pixel-story {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      font: 600 0.62rem "JetBrains Mono", monospace;
+      color: var(--ink);
+      padding: 8px 10px;
+      border-radius: 8px;
+      background: var(--anim-bg);
+      border: 1px solid var(--anim-border);
+    }
+    .pixel-story .arrow {
+      color: var(--primary);
+      animation: nudge 1.2s ease-in-out infinite;
+    }
+    .pixel-story b { color: var(--primary); }
+
+    /* grayscale bar */
+    .gray-stage { width: min(420px, 100%); display: grid; gap: 12px; }
+    .gray-bar {
+      display: flex;
+      height: 36px;
+      border-radius: 6px;
+      overflow: hidden;
+      border: 1px solid var(--anim-border);
+    }
+    .gray-step {
+      flex: 1;
+      animation: grayPulse 3s ease-in-out infinite;
+    }
+    .gray-step:nth-child(odd) { animation-delay: 0.2s; }
+    .gray-readout {
+      display: flex;
+      justify-content: space-between;
+      font: 600 0.58rem "JetBrains Mono", monospace;
+      color: var(--ink);
+    }
+    .gray-sample {
+      width: 64px;
+      height: 64px;
+      border-radius: 8px;
+      border: 1px solid var(--anim-border);
+      margin: 0 auto;
+      animation: graySample 4s ease-in-out infinite;
+    }
+
+    /* RGB cubes */
+    .rgb-stage { width: min(400px, 100%); display: grid; gap: 10px; justify-items: center; }
+    .rgb-pixel {
+      width: 80px;
+      height: 80px;
+      border-radius: 8px;
+      border: 2px solid var(--anim-border);
+      animation: rgbMix 4s ease-in-out infinite;
+    }
+    .rgb-triple {
+      display: flex;
+      gap: 12px;
+      width: 100%;
+      justify-content: center;
+    }
+    .rgb-channel {
+      flex: 1;
+      max-width: 100px;
+      padding: 10px 8px;
+      border: 1px solid var(--anim-border);
+      border-radius: 8px;
+      background: var(--anim-panel);
+      text-align: center;
+      font: 600 0.55rem "JetBrains Mono", monospace;
+    }
+    .rgb-channel.r { border-color: #d44c47; color: #d44c47; animation: channelR 4s ease-in-out infinite; }
+    .rgb-channel.g { border-color: #0f7b3f; color: #0f7b3f; animation: channelG 4s ease-in-out infinite; }
+    .rgb-channel.b { border-color: #2383e2; color: #2383e2; animation: channelB 4s ease-in-out infinite; }
+    .rgb-formula {
+      font: 600 0.58rem "JetBrains Mono", monospace;
+      color: var(--ink);
+      text-align: center;
+    }
+
+    /* interactive RGB colour picker */
+    .picker-stage { width: min(380px, 100%); display: grid; gap: 14px; }
+    .picker-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .picker-label {
+      width: 14px;
+      font: 700 0.65rem "JetBrains Mono", monospace;
+      flex-shrink: 0;
+    }
+    .picker-label.r { color: #d44c47; }
+    .picker-label.g { color: #0f7b3f; }
+    .picker-label.b { color: #2383e2; }
+    .picker-slider {
+      flex: 1;
+      -webkit-appearance: none;
+      appearance: none;
+      height: 10px;
+      border-radius: 5px;
+      outline: none;
+      cursor: pointer;
+      background: var(--anim-soft);
+    }
+    .picker-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: #fff;
+      border: 2px solid var(--primary);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.25);
+      cursor: grab;
+    }
+    .picker-slider::-moz-range-thumb {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: #fff;
+      border: 2px solid var(--primary);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.25);
+      cursor: grab;
+    }
+    .picker-slider.r-slider { background: linear-gradient(90deg, #000, #d44c47); }
+    .picker-slider.g-slider { background: linear-gradient(90deg, #000, #0f7b3f); }
+    .picker-slider.b-slider { background: linear-gradient(90deg, #000, #2383e2); }
+    .picker-val {
+      width: 36px;
+      font: 600 0.55rem "JetBrains Mono", monospace;
+      text-align: right;
+      color: var(--ink);
+      flex-shrink: 0;
+    }
+    .swatch {
+      width: 100%;
+      height: 88px;
+      border-radius: 10px;
+      border: 2px solid var(--anim-border);
+      display: grid;
+      place-items: center;
+      font: 600 0.7rem "JetBrains Mono", monospace;
+      color: #fff;
+      text-shadow: 0 1px 2px rgba(0,0,0,0.45);
+      transition: background 0.05s linear;
+    }
+    .picker-hint {
+      text-align: center;
+      font: 600 0.52rem "JetBrains Mono", monospace;
+      color: var(--muted);
+    }
+
+    /* number tables */
+    .table-stage { width: min(480px, 100%); display: grid; gap: 10px; }
+    .table-row-label {
+      font: 600 0.55rem "JetBrains Mono", monospace;
+      color: var(--primary);
+      text-align: center;
+    }
+    .num-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 4px;
+      max-width: 180px;
+      margin: 0 auto;
+    }
+    .num-grid.wide { max-width: 100%; grid-template-columns: repeat(3, 1fr); }
+    .num-cell {
+      padding: 8px 4px;
+      border: 1px solid var(--anim-border);
+      border-radius: 4px;
+      background: var(--anim-panel);
+      text-align: center;
+      font: 600 0.62rem "JetBrains Mono", monospace;
+      color: var(--ink);
+      animation: cellPop 0.5s ease both;
+    }
+    .num-cell.r-cell { border-color: color-mix(in srgb, #d44c47 50%, var(--anim-border)); }
+    .num-cell.g-cell { border-color: color-mix(in srgb, #0f7b3f 50%, var(--anim-border)); }
+    .num-cell.b-cell { border-color: color-mix(in srgb, #2383e2 50%, var(--anim-border)); }
+    .big-count {
+      text-align: center;
+      padding: 10px;
+      border: 1px dashed var(--primary);
+      border-radius: 8px;
+      font: 700 0.65rem "JetBrains Mono", monospace;
+      color: var(--primary);
+      animation: pulseGlow 2s ease-in-out infinite;
+    }
+    .mini-image {
+      display: grid;
+      grid-template-columns: repeat(3, 28px);
+      grid-template-rows: repeat(3, 28px);
+      gap: 2px;
+      margin: 0 auto 8px;
+    }
+    .mini-pixel { border-radius: 2px; border: 1px solid var(--anim-border); }
+    .table-parrot {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      align-items: center;
+      max-width: 280px;
+      margin: 0 auto 6px;
+    }
+    .table-parrot img {
+      width: 100%;
+      aspect-ratio: 1;
+      object-fit: cover;
+      border-radius: 8px;
+      border: 1px solid var(--anim-border);
+      image-rendering: pixelated;
+      image-rendering: crisp-edges;
+      background: #111;
+    }
+    .table-parrot .patch-wrap {
+      display: grid;
+      gap: 6px;
+      justify-items: center;
+    }
+    .table-parrot .patch-label {
+      font: 600 0.48rem "JetBrains Mono", monospace;
+      color: var(--muted);
+      text-align: center;
+    }
+
+    @keyframes grayPulse { 50% { filter: brightness(1.15); } }
+    @keyframes graySample {
+      0%, 100% { background: #000; }
+      50% { background: #fff; }
+    }
+    @keyframes rgbMix {
+      0%, 100% { background: rgb(200, 120, 60); }
+      33% { background: rgb(80, 160, 200); }
+      66% { background: rgb(140, 80, 180); }
+    }
+    @keyframes channelR { 50% { transform: scale(1.05); } }
+    @keyframes channelG { 50% { transform: scale(1.05); } }
+    @keyframes channelB { 50% { transform: scale(1.05); } }
+    @keyframes cellPop { from { opacity: 0; transform: scale(0.8); } to { opacity: 1; transform: none; } }
+
+    @media (prefers-reduced-motion: reduce) {
+      .pixel-card.on, .gray-sample, .rgb-pixel, .pixel-story .arrow { animation: none !important; }
+      .pixel-card { opacity: 1; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app" id="app"></div>
+  <script>
+(function () {
+  "use strict";
+
+  function $(id) {
+    return document.getElementById(id);
+  }
+
+  function caption(text) {
+    return `<div class="scene-caption">${text}</div>`;
+  }
+
+  function applyTheme(theme) {
+    const next = theme === "dark" ? "dark" : "light";
+    document.documentElement.setAttribute("data-theme", next);
+    try {
+      localStorage.setItem("f2-ai-theme", next);
+    } catch (e) {}
+    const light = $("lightBtn");
+    const dark = $("darkBtn");
+    if (light) light.setAttribute("aria-pressed", next === "light" ? "true" : "false");
+    if (dark) dark.setAttribute("aria-pressed", next === "dark" ? "true" : "false");
+  }
+
+  function initTheme() {
+    let t = "light";
+    try {
+      const saved = localStorage.getItem("f2-ai-theme");
+      if (saved === "dark" || saved === "light") t = saved;
+    } catch (e) {}
+    applyTheme(t);
+    $("lightBtn") && $("lightBtn").addEventListener("click", () => applyTheme("light"));
+    $("darkBtn") && $("darkBtn").addEventListener("click", () => applyTheme("dark"));
+  }
+
+  function mount(config) {
+    const sections = config.sections || [];
+    const jumpLabels = config.jumpLabels || sections.map((s) => s.name);
+    const summaryItems = (config.summary && config.summary.items) || [];
+    let index = 0;
+
+    const root = $("app");
+    if (!root) return;
+
+    root.innerHTML = `
+      <header>
+        <div class="header-top">
+          <div class="theme-toggle" role="group" aria-label="Colour theme">
+            <button type="button" id="lightBtn" aria-pressed="true">Light</button>
+            <button type="button" id="darkBtn" aria-pressed="false">Dark</button>
+          </div>
+          <div class="progress-wrap">
+            <div class="progress-label" id="progressText">Ready</div>
+            <div class="progress-bar" aria-hidden="true"><div class="progress-fill" id="progressFill"></div></div>
+          </div>
+        </div>
+        <div>
+          <p class="eyebrow">${config.eyebrow || ""}</p>
+          <h1>${config.title || ""}</h1>
+        </div>
+        <nav class="jump-nav" id="jumpNav" aria-label="Jump to a section"></nav>
+      </header>
+
+      <main class="panel">
+        <section class="intro" id="intro">
+          <h2>${(config.intro && config.intro.h2) || ""}</h2>
+          <p>${(config.intro && config.intro.p) || ""}</p>
+          <div class="chips" aria-label="Topics">${(config.intro && config.intro.chips || [])
+            .map((c) => `<span class="chip">${c}</span>`)
+            .join("")}</div>
+          <div class="nav"><span></span><button class="btn btn-primary" id="startBtn" type="button">Start exploring</button></div>
+        </section>
+
+        <section id="mainScreen" class="hidden">
+          <div class="stage">
+            <span class="badge"><strong id="sectionCode">01</strong><span id="sectionName"></span></span>
+            <div class="scene" id="scene" aria-live="polite"></div>
+          </div>
+          <div class="content">
+            <h2 class="section-title" id="sectionTitle"></h2>
+            <div class="definition" id="definition"></div>
+            <p class="section-body" id="sectionBody"></p>
+            <div id="extra"></div>
+            <div class="nav">
+              <button class="btn btn-ghost" id="backBtn" type="button">Back</button>
+              <button class="btn btn-primary" id="nextBtn" type="button">Next</button>
+            </div>
+          </div>
+        </section>
+
+        <section class="summary hidden" id="summary">
+          <h2>${(config.summary && config.summary.title) || "Learning summary"}</h2>
+          <p>${(config.summary && config.summary.p) || ""}</p>
+          <div class="recap-list">
+            ${summaryItems
+              .map((it) => `<div class="recap-item"><b>${it.b}</b><span>${it.span}</span></div>`)
+              .join("")}
+          </div>
+          <div class="nav">
+            <button class="btn btn-ghost" id="reviewBtn" type="button">Review from start</button>
+            <button class="btn btn-primary" id="restartBtn" type="button">Restart</button>
+          </div>
+        </section>
+      </main>
+      <footer class="note">Based on EDB Booklet 2 Unit 3.1 · Pixels &amp; RGB (Figure 3.1) by Valtorta College</footer>
+    `;
+
+    initTheme();
+
+    const els = {
+      intro: $("intro"),
+      main: $("mainScreen"),
+      summary: $("summary"),
+      scene: $("scene"),
+      code: $("sectionCode"),
+      name: $("sectionName"),
+      title: $("sectionTitle"),
+      definition: $("definition"),
+      body: $("sectionBody"),
+      extra: $("extra"),
+      back: $("backBtn"),
+      next: $("nextBtn"),
+      progress: $("progressFill"),
+      progressText: $("progressText"),
+      jumpNav: $("jumpNav")
+    };
+
+    function show(which) {
+      els.intro.classList.toggle("hidden", which !== "intro");
+      els.main.classList.toggle("hidden", which !== "main");
+      els.summary.classList.toggle("hidden", which !== "summary");
+    }
+
+    function updateProgress() {
+      els.progress.style.width = `${((index + 1) / sections.length) * 100}%`;
+      els.progressText.textContent = `Section ${index + 1} of ${sections.length}`;
+    }
+
+    function updateJumpNav(active) {
+      els.jumpNav.querySelectorAll(".jump-btn").forEach((b, i) => {
+        b.classList.toggle("active", i === active);
+      });
+    }
+
+    function loadSection(i) {
+      index = i;
+      const s = sections[i];
+      show("main");
+      updateProgress();
+      updateJumpNav(i);
+      els.code.textContent = s.code;
+      els.name.textContent = s.name;
+      els.title.textContent = s.title;
+      els.definition.innerHTML = s.definition;
+      els.body.innerHTML = s.body;
+      els.extra.innerHTML = s.extra || "";
+      els.next.textContent = i === sections.length - 1 ? "See summary" : "Next";
+      if (typeof s.render === "function") s.render(els.scene, caption);
+    }
+
+    function showSummary() {
+      show("summary");
+      els.progress.style.width = "100%";
+      els.progressText.textContent = "Complete";
+      updateJumpNav(sections.length);
+    }
+
+    const allLabels = jumpLabels.concat([(config.summary && config.summary.jump) || "Sum"]);
+    els.jumpNav.innerHTML = allLabels
+      .map((label, i) => `<button type="button" class="jump-btn" data-jump="${i}">${label}</button>`)
+      .join("");
+
+    els.jumpNav.querySelectorAll(".jump-btn").forEach((button) => {
+      button.addEventListener("click", () => {
+        const t = Number(button.dataset.jump);
+        if (t === sections.length) showSummary();
+        else loadSection(t);
+      });
+    });
+
+    $("startBtn").addEventListener("click", () => loadSection(0));
+    els.next.addEventListener("click", () =>
+      index === sections.length - 1 ? showSummary() : loadSection(index + 1)
+    );
+    els.back.addEventListener("click", () => {
+      if (index === 0) {
+        show("intro");
+        updateJumpNav(-1);
+        els.progress.style.width = "0";
+        els.progressText.textContent = "Ready";
+      } else loadSection(index - 1);
+    });
+    $("restartBtn").addEventListener("click", () => loadSection(0));
+    $("reviewBtn").addEventListener("click", () => {
+      show("intro");
+      updateJumpNav(-1);
+      els.progress.style.width = "0";
+      els.progressText.textContent = "Ready";
+    });
+  }
+
+  window.F2Lesson = { mount, caption, applyTheme };
+})();
+
+</script>
+  <script>
+    (function () {
+      // PPT Fig 3.1 — same parrot at three resolutions
+      var parrotHi = "../F2 AI assets/img/parrot-hi.png";
+      var parrotMid = "../F2 AI assets/img/parrot-mid.png";
+      var parrotLo = "../F2 AI assets/img/parrot-lo.png";
+
+      F2Lesson.mount({
+        eyebrow: "EDB Booklet 2 · Unit 3.1",
+        title: "How Computers See Images",
+        intro: {
+          h2: "From shapes to numbers",
+          p: "Humans recognise faces, fruit, and scenery instantly. Computers have no eyes — they only receive <strong>lists of numbers</strong>. This lesson zooms from a photo down to pixels, then to the RGB values that vision AI actually processes.",
+          chips: ["PIXELS", "GRAYSCALE", "RGB", "NUMBERS", "RESOLUTION"]
+        },
+        jumpLabels: ["Human vs AI", "Pixels", "Gray", "RGB", "Picker", "Tables"],
+        sections: [
+          {
+            code: "01",
+            name: "Human vs AI",
+            title: "Humans see shapes and colours — computers see numbers",
+            definition: "Human vision integrates light into meaningful objects (a face, a banana). A computer receives a digital image as a structured array of numeric values — no inherent understanding of “banana” until a program interprets the numbers.",
+            body: "When you glance at a photo, your brain assembles <strong>shapes, colours, and context</strong>. A computer receives a file of integers. Computer vision AI must <strong>learn patterns in those numbers</strong> — that is why Unit 3 starts here, not at “recognise the object”.",
+            extra: `<div class="compare"><div class="cmp"><span class="mono">HUMAN</span>Sees a red apple on a table — instant meaning.</div><div class="cmp"><span class="mono">COMPUTER</span>Receives a 700×700 grid of (R,G,B) triples — no label yet.</div></div>`,
+            render: function (scene, caption) {
+              scene.innerHTML = `<div class="frame"><div class="sense-compare compare">
+                <div class="cmp"><span class="mono">HUMAN INPUT</span>Shapes · colours · objects<br><strong>“That is a banana.”</strong></div>
+                <div class="cmp"><span class="mono">COMPUTER INPUT</span>01001101…<br><strong>[[142,98,45], [143,99,46], …]</strong></div>
+              </div></div>` + caption("Same picture — two completely different representations.");
+            }
+          },
+          {
+            code: "02",
+            name: "Pixels",
+            title: "Pixels — zoom the parrot and see the squares",
+            definition: "A pixel (picture element) is the smallest square of a digital image. Booklet Figure 3.1 shows the same parrot with many pixels, then fewer pixels — the picture turns into visible coloured squares.",
+            body: "Left: the parrot looks smooth (many pixels). Middle: fewer pixels — the grid starts to show. Right: even fewer — each square is clearly one pixel. <strong>Computers store the image as these squares.</strong>",
+            extra: `<div class="example-box"><b>EXAMPLE</b>Same parrot · three resolutions (e.g. about 700×700 → 36×36 → 18×18). Zooming / reducing pixels makes each square easy to see.</div>`,
+            render: function (scene, caption) {
+              scene.innerHTML = `<div class="frame"><div class="pixel-demo">
+                <div class="pixel-story">
+                  <span>Parrot looks smooth</span>
+                  <span class="arrow">→</span>
+                  <span>Fewer pixels</span>
+                  <span class="arrow">→</span>
+                  <span><b>See square pixels</b></span>
+                </div>
+                <div class="pixel-steps">
+                  <div class="pixel-card on c1">
+                    <div class="cap">MANY PIXELS</div>
+                    <img class="pix-photo" src="` + parrotHi + `" alt="Parrot — high resolution" width="200" height="200" />
+                    <div class="sub">Fine detail<br>squares hard to see</div>
+                  </div>
+                  <div class="pixel-card on c2">
+                    <div class="cap">FEWER PIXELS</div>
+                    <img class="pix-photo pixelated" src="` + parrotMid + `" alt="Parrot — medium resolution" width="200" height="200" />
+                    <div class="sub">Grid appears<br>still a parrot</div>
+                  </div>
+                  <div class="pixel-card on c3">
+                    <div class="cap">VERY FEW PIXELS</div>
+                    <img class="pix-photo pixelated" src="` + parrotLo + `" alt="Parrot — low resolution" width="200" height="200" />
+                    <div class="sub">Big squares<br>each square = 1 pixel</div>
+                  </div>
+                </div>
+              </div></div>` + caption("PPT parrot example: same bird, three resolutions — pixels become visible.");
+            }
+          },
+          {
+            code: "03",
+            name: "Gray",
+            title: "Grayscale — one number per pixel",
+            definition: "In a grayscale image, each pixel stores a single intensity value from 0 (black) to 255 (white). Two hundred and fifty-six steps capture shades of grey without any colour information.",
+            body: "Black-and-white photos use <strong>one channel</strong>: brightness only. Value <span class='mono'>0</span> = pure black, <span class='mono'>255</span> = pure white, <span class='mono'>128</span> = mid-grey. Many AI preprocessing steps convert colour images to grayscale to simplify early analysis.",
+            extra: `<div class="example-box"><b>RANGE</b>0 → 255 is standard 8-bit grayscale. Each step is one integer — easy for a computer to store and compare.</div>`,
+            render: function (scene, caption) {
+              var steps = "";
+              for (var i = 0; i <= 10; i++) {
+                var v = Math.round(i * 255 / 10);
+                steps += '<div class="gray-step" style="background:rgb(' + v + ',' + v + ',' + v + ')"></div>';
+              }
+              scene.innerHTML = `<div class="frame"><div class="gray-stage">
+                <div class="gray-bar">` + steps + `</div>
+                <div class="gray-readout"><span>0 · black</span><span>128 · mid</span><span>255 · white</span></div>
+                <div class="gray-sample"></div>
+              </div></div>` + caption("Grayscale bar sweeps from 0 (black) to 255 (white).");
+            }
+          },
+          {
+            code: "04",
+            name: "RGB",
+            title: "Colour — each pixel is an (R, G, B) triple",
+            definition: "Colour digital images store three values per pixel: Red, Green, and Blue, each ranging from 0 to 255. Mixing the three channels produces the full colour we see on screen.",
+            body: "Your screen lights up tiny red, green, and blue sub-pixels. A colour pixel might be <span class='mono'>(200, 120, 60)</span> — strong red, moderate green, low blue → an orange tone. <strong>Three numbers, one colour.</strong>",
+            extra: `<div class="example-box"><b>FORMULA</b>Pixel colour = (R, G, B) where each channel ∈ [0, 255]. Pure red = (255, 0, 0). Pure white = (255, 255, 255).</div>`,
+            render: function (scene, caption) {
+              scene.innerHTML = `<div class="frame"><div class="rgb-stage">
+                <div class="rgb-pixel"></div>
+                <div class="rgb-triple">
+                  <div class="rgb-channel r"><span class="mono">R</span>0–255</div>
+                  <div class="rgb-channel g"><span class="mono">G</span>0–255</div>
+                  <div class="rgb-channel b"><span class="mono">B</span>0–255</div>
+                </div>
+                <div class="rgb-formula">(R, G, B) → one coloured pixel</div>
+              </div></div>` + caption("Three channels mix into the swatch — each pixel holds an RGB triple.");
+            }
+          },
+          {
+            code: "05",
+            name: "Picker",
+            title: "Mix your own colour with RGB sliders",
+            definition: "Interactive colour pickers adjust R, G, and B sliders independently. The preview swatch updates in real time — exactly how a computer stores the resulting pixel value.",
+            body: "Drag the three sliders yourself. Move <strong>R up</strong> → more red. Lower <strong>G and B</strong> → darker, warmer tone. The swatch is not magic — it is just the visual form of three integers from 0 to 255.",
+            extra: `<div class="example-box"><b>TRY IT</b>Start at R=180, G=100, B=50 (orange-brown). Then try pure red (255,0,0), white (255,255,255), or black (0,0,0).</div>`,
+            render: function (scene, caption) {
+              scene.innerHTML = `<div class="frame"><div class="picker-stage">
+                <div class="picker-hint">DRAG THE SLIDERS → WATCH THE SWATCH</div>
+                <div class="picker-row">
+                  <span class="picker-label r">R</span>
+                  <input class="picker-slider r-slider" id="pickR" type="range" min="0" max="255" value="180" aria-label="Red 0 to 255" />
+                  <span class="picker-val" id="valR">180</span>
+                </div>
+                <div class="picker-row">
+                  <span class="picker-label g">G</span>
+                  <input class="picker-slider g-slider" id="pickG" type="range" min="0" max="255" value="100" aria-label="Green 0 to 255" />
+                  <span class="picker-val" id="valG">100</span>
+                </div>
+                <div class="picker-row">
+                  <span class="picker-label b">B</span>
+                  <input class="picker-slider b-slider" id="pickB" type="range" min="0" max="255" value="50" aria-label="Blue 0 to 255" />
+                  <span class="picker-val" id="valB">50</span>
+                </div>
+                <div class="swatch" id="pickSwatch">rgb(180, 100, 50)</div>
+              </div></div>` + caption("Your mix → three numbers → one pixel colour. Try it.");
+
+              var rEl = document.getElementById("pickR");
+              var gEl = document.getElementById("pickG");
+              var bEl = document.getElementById("pickB");
+              var vR = document.getElementById("valR");
+              var vG = document.getElementById("valG");
+              var vB = document.getElementById("valB");
+              var sw = document.getElementById("pickSwatch");
+
+              function update() {
+                var r = +rEl.value, g = +gEl.value, b = +bEl.value;
+                vR.textContent = r;
+                vG.textContent = g;
+                vB.textContent = b;
+                var css = "rgb(" + r + ", " + g + ", " + b + ")";
+                sw.style.background = css;
+                sw.textContent = css;
+                // light text on dark swatches, dark text on light ones
+                var lum = 0.299 * r + 0.587 * g + 0.114 * b;
+                sw.style.color = lum > 160 ? "#111" : "#fff";
+                sw.style.textShadow = lum > 160 ? "none" : "0 1px 2px rgba(0,0,0,0.45)";
+              }
+
+              rEl.addEventListener("input", update);
+              gEl.addEventListener("input", update);
+              bEl.addEventListener("input", update);
+              update();
+            }
+          },
+          {
+            code: "06",
+            name: "Tables",
+            title: "An image is a table of numbers",
+            definition: "A small 3×3 colour crop contains 9 pixels. Each pixel has R, G, and B values — 27 numbers total. Scale up and the count grows fast: a 700×700 RGB image holds 1,470,000 individual channel values.",
+            body: "Take a tiny patch from the <strong>parrot</strong> (near the beak). Split it into <strong>three tables</strong> — R, G, and B. This is what “seeing an image” means to a computer. CNN models in the next lesson learn patterns across these number tables.",
+            extra: `<div class="example-box"><b>EXAMPLE</b>3×3×3 = 27 numbers from the parrot patch. A full 700×700 RGB photo = <strong>1,470,000</strong> numbers.</div>`,
+            render: function (scene, caption) {
+              // 3×3 patch sampled from parrot beak / face
+              var parrotPix = [
+                [185,178,162],[107,69,58],[189,152,160],
+                [248,249,243],[178,129,86],[227,179,139],
+                [253,254,249],[136,112,74],[208,174,103]
+              ];
+              var rVals = parrotPix.map(function (p) { return p[0]; });
+              var gVals = parrotPix.map(function (p) { return p[1]; });
+              var bVals = parrotPix.map(function (p) { return p[2]; });
+              function grid(vals, cls, delay) {
+                return vals.map(function (v, i) {
+                  return '<div class="num-cell ' + cls + '" style="animation-delay:' + (delay + i * 0.05) + 's">' + v + '</div>';
+                }).join("");
+              }
+              var mini = parrotPix.map(function (p) {
+                return '<div class="mini-pixel" style="background:rgb(' + p[0] + ',' + p[1] + ',' + p[2] + ')"></div>';
+              }).join("");
+              scene.innerHTML = `<div class="frame"><div class="table-stage">
+                <div class="table-parrot">
+                  <div class="patch-wrap">
+                    <img src="` + parrotLo + `" alt="Parrot at low resolution" width="120" height="120" />
+                    <div class="patch-label">PARROT</div>
+                  </div>
+                  <div class="patch-wrap">
+                    <div class="mini-image">` + mini + `</div>
+                    <div class="patch-label">3×3 PATCH (BEAK)</div>
+                  </div>
+                </div>
+                <div class="table-row-label">R TABLE</div>
+                <div class="num-grid">` + grid(rVals, "r-cell", 0) + `</div>
+                <div class="table-row-label">G TABLE</div>
+                <div class="num-grid">` + grid(gVals, "g-cell", 0.3) + `</div>
+                <div class="table-row-label">B TABLE</div>
+                <div class="num-grid">` + grid(bVals, "b-cell", 0.6) + `</div>
+                <div class="big-count">700 × 700 × 3 = 1,470,000 numbers</div>
+              </div></div>` + caption("Parrot → 3×3 beak patch → R / G / B tables (27 numbers).");
+            }
+          }
+        ],
+        summary: {
+          title: "Unit 3.1 learning summary",
+          p: "Computers do not “see” like humans. They read grids of numeric pixel values — grayscale (one number) or RGB (three numbers per pixel). Every vision AI starts here.",
+          jump: "Sum",
+          items: [
+            { b: "PIXELS", span: "Same parrot at fewer pixels → coloured squares become visible." },
+            { b: "GRAYSCALE", span: "One value 0–255 per pixel for brightness." },
+            { b: "RGB", span: "Colour pixels store (R, G, B) each 0–255." },
+            { b: "PICKER", span: "Adjusting sliders changes the stored numbers and the colour." },
+            { b: "SCALE", span: "A 700×700 RGB image = 1,470,000 channel values." }
+          ]
+        }
+      });
+    })();
+  </script>
+  </body>
+</html>

@@ -1,0 +1,1705 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Unit 1 Task 6 — AI Used in Recommendation Functions</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    :root, [data-theme="light"] {
+      --bg: #f7f6f3;
+      --surface: #ffffff;
+      --text: #37352f;
+      --muted: #787774;
+      --accent: #2383e2;
+      --primary: #2383e2;
+      --line: #e9e9e7;
+      --line-strong: #d3d1cb;
+      --ok: #0f7b6c;
+      --ok-bg: #e8f5f2;
+      --danger: #e03e3e;
+      --danger-bg: #fdebec;
+      --warn: #9a6700;
+      --tile-movie: #4a6fa5;
+      --tile-song: #3d8b7a;
+      --tile-pref: #c4841d;
+      --radius: 10px;
+      --radius-sm: 8px;
+      --shadow: 0 1px 2px rgba(55, 53, 47, 0.04), 0 4px 16px rgba(55, 53, 47, 0.06);
+      --toggle-bg: #ffffff;
+      --toggle-border: rgba(55, 53, 47, 0.14);
+      --caption-bg: rgba(255, 255, 255, 0.96);
+      --caption-fg: #37352f;
+      --anim-bg: #f7f6f3;
+      --anim-panel: #ffffff;
+      --anim-soft: #e8e6e1;
+      --anim-soft-2: #ddd9d2;
+      --anim-border: #c5c1b8;
+      --rec-soft: #eef5fc;
+      --rec-soft-2: #ddebf8;
+      --rec-border: #c9dff5;
+      --brain-border: #a8cceb;
+    }
+
+    [data-theme="dark"] {
+      --bg: #151515;
+      --surface: #202020;
+      --text: #f1f0ec;
+      --muted: #9a968e;
+      --accent: #5ba8f5;
+      --primary: #5ba8f5;
+      --line: rgba(255, 255, 255, 0.1);
+      --line-strong: rgba(255, 255, 255, 0.16);
+      --ok: #3dcf7a;
+      --ok-bg: rgba(61, 207, 122, 0.14);
+      --danger: #f07171;
+      --danger-bg: rgba(240, 113, 113, 0.14);
+      --warn: #e0a04a;
+      --tile-movie: #5a7fb8;
+      --tile-song: #4ea090;
+      --tile-pref: #d4a04a;
+      --shadow: 0 1px 2px rgba(0, 0, 0, 0.35), 0 4px 16px rgba(0, 0, 0, 0.28);
+      --toggle-bg: #202020;
+      --toggle-border: rgba(255, 255, 255, 0.14);
+      --caption-bg: rgba(32, 32, 32, 0.96);
+      --caption-fg: #f1f0ec;
+      --anim-bg: #1a1a1a;
+      --anim-panel: #262626;
+      --anim-soft: #333333;
+      --anim-soft-2: #3d3d3d;
+      --anim-border: #555555;
+      --rec-soft: #243040;
+      --rec-soft-2: #1e2a38;
+      --rec-border: #3a5570;
+      --brain-border: #4a6a88;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      min-height: 100vh;
+      font-family: Inter, system-ui, sans-serif;
+      color: var(--text);
+      background: var(--bg);
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .app {
+      width: min(920px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 28px 0 40px;
+    }
+
+    header {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 14px;
+      margin-bottom: 20px;
+      animation: fadeUp 0.5s ease both;
+    }
+
+    .header-top {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      width: 100%;
+      margin-bottom: 4px;
+    }
+
+    .theme-toggle {
+      display: inline-flex;
+      border: 1px solid var(--toggle-border);
+      border-radius: 8px;
+      overflow: hidden;
+      background: var(--toggle-bg);
+      flex-shrink: 0;
+    }
+
+    .theme-toggle button {
+      appearance: none;
+      border: 0;
+      background: transparent;
+      color: var(--muted);
+      font: inherit;
+      font-size: 0.78rem;
+      font-weight: 600;
+      padding: 8px 12px;
+      cursor: pointer;
+      line-height: 1;
+    }
+
+    .theme-toggle button[aria-pressed="true"] {
+      background: var(--primary);
+      color: #fff;
+    }
+
+    .theme-toggle button:focus-visible {
+      outline: 2px solid var(--primary);
+      outline-offset: 2px;
+    }
+
+    .eyebrow {
+      font-family: "JetBrains Mono", ui-monospace, monospace;
+      font-size: 0.72rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--accent);
+      font-weight: 500;
+      margin-bottom: 8px;
+    }
+
+    h1 {
+      font-family: "Cormorant Garamond", Georgia, serif;
+      font-size: clamp(2rem, 4.5vw, 2.75rem);
+      font-weight: 600;
+      line-height: 1.12;
+      letter-spacing: -0.01em;
+      color: var(--text);
+    }
+
+    .progress-wrap {
+      min-width: 160px;
+      width: min(220px, 100%);
+    }
+
+    .progress-label {
+      font-family: "JetBrains Mono", ui-monospace, monospace;
+      font-size: 0.72rem;
+      color: var(--muted);
+      margin-bottom: 8px;
+      text-align: right;
+    }
+
+    .progress-bar {
+      height: 4px;
+      border-radius: 2px;
+      background: var(--line);
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      width: 0%;
+      border-radius: inherit;
+      background: var(--accent);
+      transition: width 0.45s ease;
+    }
+
+    .jump-nav {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin: -8px 0 16px;
+    }
+
+    .jump-nav button {
+      appearance: none;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: var(--surface);
+      color: var(--muted);
+      padding: 5px 9px;
+      font-family: "JetBrains Mono", ui-monospace, monospace;
+      font-size: 0.68rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .jump-nav button:hover,
+    .jump-nav button[aria-current="step"] {
+      border-color: var(--accent);
+      background: var(--rec-soft);
+      color: var(--accent);
+    }
+
+    .panel {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      animation: fadeUp 0.55s ease both;
+    }
+
+    .stage {
+      padding: 20px 22px 18px;
+      border-bottom: 1px solid var(--line);
+      min-height: 280px;
+      display: grid;
+      place-items: center;
+      background: var(--bg);
+    }
+
+    .stage-title {
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 5px 10px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--line);
+      font-family: "JetBrains Mono", ui-monospace, monospace;
+      font-size: 0.72rem;
+      color: var(--muted);
+      background: var(--bg);
+    }
+
+    .badge strong { color: var(--text); font-weight: 600; }
+
+    .content { padding: 24px 22px; }
+
+    .question {
+      font-family: "Cormorant Garamond", Georgia, serif;
+      font-size: clamp(1.35rem, 2.8vw, 1.7rem);
+      font-weight: 600;
+      margin-bottom: 8px;
+      line-height: 1.25;
+      letter-spacing: -0.01em;
+    }
+
+    .hint {
+      color: var(--muted);
+      font-size: 0.92rem;
+      margin-bottom: 18px;
+      line-height: 1.55;
+    }
+
+    .choices {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+
+    .choice {
+      appearance: none;
+      border: 1px solid var(--line);
+      background: var(--surface);
+      color: var(--text);
+      border-radius: var(--radius);
+      padding: 14px 16px;
+      font: inherit;
+      font-weight: 500;
+      font-size: 0.95rem;
+      cursor: pointer;
+      text-align: left;
+      line-height: 1.45;
+      transition: transform 0.18s ease, border-color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .choice:hover:not(:disabled) {
+      transform: translateY(-1px);
+      border-color: var(--accent);
+      background: var(--rec-soft);
+      box-shadow: 0 2px 8px rgba(35, 131, 226, 0.08);
+    }
+
+    .choice:disabled { cursor: default; }
+
+    .choice.correct {
+      border-color: var(--ok);
+      background: var(--ok-bg);
+      animation: scalePop 0.35s ease;
+    }
+
+    .choice.wrong {
+      border-color: var(--danger);
+      background: var(--danger-bg);
+    }
+
+    .explain {
+      display: none;
+      margin-top: 18px;
+      padding-top: 18px;
+      border-top: 1px solid var(--line);
+      animation: fadeUp 0.45s ease;
+    }
+
+    .explain.show { display: block; }
+
+    .verdict {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 5px 10px;
+      border-radius: var(--radius-sm);
+      font-family: "JetBrains Mono", ui-monospace, monospace;
+      font-size: 0.72rem;
+      font-weight: 600;
+      margin-bottom: 12px;
+      border: 1px solid transparent;
+    }
+
+    .verdict.ok {
+      background: var(--ok-bg);
+      color: var(--ok);
+      border-color: #c5e8e1;
+    }
+
+    .verdict.bad {
+      background: var(--danger-bg);
+      color: var(--danger);
+      border-color: #f5c4c4;
+    }
+
+    .verdict.info {
+      background: var(--rec-soft);
+      color: var(--accent);
+      border-color: var(--rec-border);
+    }
+
+    .explain h3 {
+      font-family: "Cormorant Garamond", Georgia, serif;
+      font-size: 1.25rem;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+
+    .explain p {
+      color: var(--muted);
+      line-height: 1.65;
+      margin-bottom: 10px;
+      font-size: 0.95rem;
+    }
+
+    .explain p strong { color: var(--text); font-weight: 600; }
+
+    .nav {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      margin-top: 20px;
+    }
+
+    .btn {
+      appearance: none;
+      border: 0;
+      border-radius: var(--radius);
+      padding: 11px 18px;
+      font: inherit;
+      font-weight: 600;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: transform 0.15s ease, opacity 0.15s ease, background 0.2s ease;
+    }
+
+    .btn:hover:not(:disabled) { transform: translateY(-1px); }
+    .btn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+    .btn-ghost {
+      background: transparent;
+      color: var(--muted);
+      border: 1px solid var(--line);
+    }
+
+    .btn-ghost:hover:not(:disabled) {
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #fff;
+      margin-left: auto;
+    }
+
+    .btn-primary:hover:not(:disabled) {
+      background: #1a6fc7;
+    }
+
+    .intro, .summary, .finale {
+      padding: 32px 28px;
+    }
+
+    .intro h2, .summary h2, .finale h2 {
+      font-family: "Cormorant Garamond", Georgia, serif;
+      font-size: clamp(1.6rem, 3vw, 2rem);
+      font-weight: 600;
+      margin-bottom: 12px;
+      letter-spacing: -0.01em;
+    }
+
+    .intro p, .summary p, .finale p {
+      color: var(--muted);
+      line-height: 1.65;
+      margin-bottom: 12px;
+      font-size: 0.98rem;
+    }
+
+    .intro-pills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin: 18px 0 10px;
+    }
+
+    .pill {
+      padding: 6px 12px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--line);
+      font-family: "JetBrains Mono", ui-monospace, monospace;
+      font-size: 0.72rem;
+      font-weight: 500;
+      color: var(--accent);
+      background: var(--rec-soft);
+    }
+
+    .score-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+      gap: 10px;
+      margin: 20px 0;
+    }
+
+    .score-card {
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 14px;
+      background: var(--bg);
+      animation: scalePop 0.4s ease both;
+    }
+
+    .score-card:nth-child(2) { animation-delay: 0.06s; }
+    .score-card:nth-child(3) { animation-delay: 0.12s; }
+
+    .score-card span {
+      display: block;
+      color: var(--muted);
+      font-family: "JetBrains Mono", ui-monospace, monospace;
+      font-size: 0.68rem;
+      margin-bottom: 6px;
+    }
+
+    .score-card strong {
+      font-family: "Cormorant Garamond", Georgia, serif;
+      font-size: 1.75rem;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .recap {
+      margin-top: 8px;
+      display: grid;
+      gap: 10px;
+    }
+
+    .recap-item {
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 14px 16px;
+      background: var(--bg);
+      animation: fadeUp 0.45s ease both;
+    }
+
+    .recap-item:nth-child(2) { animation-delay: 0.08s; }
+    .recap-item:nth-child(3) { animation-delay: 0.16s; }
+
+    .recap-item h4 {
+      font-family: "Cormorant Garamond", Georgia, serif;
+      font-size: 1.15rem;
+      font-weight: 600;
+      color: var(--accent);
+      margin-bottom: 6px;
+    }
+
+    .recap-item p {
+      margin-bottom: 0;
+      font-size: 0.92rem;
+    }
+
+    .scene {
+      width: min(100%, 820px);
+      aspect-ratio: 16 / 8.2;
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      background: var(--anim-bg);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .scene-caption {
+      position: absolute;
+      left: 12px;
+      bottom: 10px;
+      z-index: 8;
+      font-family: "JetBrains Mono", ui-monospace, monospace;
+      font-size: 0.65rem;
+      font-weight: 600;
+      color: var(--caption-fg);
+      background: var(--caption-bg);
+      border: 1px solid var(--line);
+      padding: 4px 8px;
+      border-radius: 6px;
+      max-width: min(90%, 420px);
+      pointer-events: none;
+    }
+
+    .scene-tag {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      z-index: 8;
+      font-family: "JetBrains Mono", ui-monospace, monospace;
+      font-size: 0.65rem;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      padding: 4px 8px;
+      border-radius: 6px;
+      background: var(--caption-bg);
+      border: 1px solid var(--line);
+      color: var(--caption-fg);
+    }
+
+    /* ===== Shared media tiles ===== */
+    .tile {
+      position: absolute;
+      width: 54px;
+      height: 72px;
+      border-radius: var(--radius-sm);
+      border: 1px solid rgba(55, 53, 47, 0.12);
+      box-shadow: 0 2px 8px rgba(55, 53, 47, 0.1);
+      display: grid;
+      place-items: end center;
+      padding-bottom: 6px;
+      font-size: 0.62rem;
+      font-weight: 600;
+      color: #fff;
+      letter-spacing: 0.02em;
+    }
+
+    .tile.movie { background: linear-gradient(160deg, #5a7fb8, var(--tile-movie)); }
+    .tile.song { background: linear-gradient(160deg, #4ea090, var(--tile-song)); }
+    .tile.pref {
+      background: linear-gradient(160deg, #d4a04a, var(--tile-pref));
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      place-items: center;
+      padding: 0;
+    }
+
+    /* ===== Big Data animation ===== */
+    .bd-scene .tile {
+      opacity: 0;
+      transform: translateY(-40px) scale(0.85);
+      animation: tileFall 4.8s ease-in-out infinite;
+    }
+
+    .bd-scene .t1 { left: 12%; top: 18%; animation-delay: 0s; }
+    .bd-scene .t2 { left: 28%; top: 12%; animation-delay: 0.35s; }
+    .bd-scene .t3 { left: 44%; top: 16%; animation-delay: 0.7s; }
+    .bd-scene .t4 { left: 18%; top: 38%; animation-delay: 1.05s; }
+    .bd-scene .t5 { left: 36%; top: 34%; animation-delay: 1.4s; }
+    .bd-scene .t6 { left: 52%; top: 40%; animation-delay: 1.75s; }
+
+    .data-pile {
+      position: absolute;
+      right: 8%;
+      bottom: 18%;
+      width: 34%;
+      height: 58%;
+      border-radius: 12px;
+      background: linear-gradient(180deg, var(--rec-soft), var(--rec-soft-2));
+      border: 1px solid var(--rec-border);
+      overflow: hidden;
+    }
+
+    .data-pile::before {
+      content: "BIG DATA";
+      position: absolute;
+      left: 0; right: 0;
+      top: 10px;
+      text-align: center;
+      font-family: "JetBrains Mono", ui-monospace, monospace;
+      font-size: 0.68rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      color: var(--accent);
+    }
+
+    .pile-stack {
+      position: absolute;
+      inset: 36px 12px 12px;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
+      align-content: end;
+    }
+
+    .pile-stack span {
+      height: 18px;
+      border-radius: 4px;
+      background: linear-gradient(90deg, #7eb8eb, var(--accent));
+      opacity: 0;
+      animation: pileGrow 4.8s ease-in-out infinite;
+    }
+
+    .pile-stack span:nth-child(1) { animation-delay: 0.4s; }
+    .pile-stack span:nth-child(2) { animation-delay: 0.7s; }
+    .pile-stack span:nth-child(3) { animation-delay: 1s; }
+    .pile-stack span:nth-child(4) { animation-delay: 1.3s; }
+    .pile-stack span:nth-child(5) { animation-delay: 1.6s; }
+    .pile-stack span:nth-child(6) { animation-delay: 1.9s; }
+    .pile-stack span:nth-child(7) { animation-delay: 2.2s; }
+    .pile-stack span:nth-child(8) { animation-delay: 2.5s; }
+    .pile-stack span:nth-child(9) { animation-delay: 2.8s; }
+
+    @keyframes tileFall {
+      0% { opacity: 0; transform: translateY(-36px) scale(0.8); }
+      18% { opacity: 1; transform: translateY(0) scale(1); }
+      55% { opacity: 1; transform: translate(min(28vw, 120px), 70px) scale(0.55); }
+      72%, 100% { opacity: 0; transform: translate(min(34vw, 150px), 90px) scale(0.3); }
+    }
+
+    @keyframes pileGrow {
+      0%, 20% { opacity: 0; transform: scaleY(0.3); }
+      40%, 75% { opacity: 1; transform: scaleY(1); }
+      100% { opacity: 0.35; }
+    }
+
+    /* ===== ML animation ===== */
+    .ml-scene .hist-rail {
+      position: absolute;
+      left: 6%;
+      top: 18%;
+      bottom: 18%;
+      width: 28%;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      justify-content: center;
+    }
+
+    .ml-scene .hist-rail .tile {
+      position: relative;
+      left: auto; top: auto;
+      width: 100%;
+      height: 34px;
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+      padding: 0 10px;
+      font-size: 0.7rem;
+      animation: histPulse 2.4s ease-in-out infinite;
+    }
+
+    .ml-scene .hist-rail .tile:nth-child(2) { animation-delay: 0.25s; }
+    .ml-scene .hist-rail .tile:nth-child(3) { animation-delay: 0.5s; }
+    .ml-scene .hist-rail .tile:nth-child(4) { animation-delay: 0.75s; }
+
+    .beam {
+      position: absolute;
+      left: 34%;
+      width: 22%;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--accent), #7eb8eb);
+      border-radius: 2px;
+      opacity: 0;
+      animation: beamShoot 2.8s ease-in-out infinite;
+    }
+
+    .beam.b1 { top: 28%; animation-delay: 0s; }
+    .beam.b2 { top: 46%; animation-delay: 0.35s; }
+    .beam.b3 { top: 64%; animation-delay: 0.7s; }
+
+    .brain {
+      position: absolute;
+      right: 10%;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 28%;
+      aspect-ratio: 1;
+      border-radius: 50%;
+      background: linear-gradient(160deg, var(--rec-soft), var(--rec-soft-2));
+      border: 1.5px solid var(--brain-border);
+      display: grid;
+      place-items: center;
+      animation: brainPulse 2.8s ease-in-out infinite;
+    }
+
+    .brain strong {
+      font-family: "JetBrains Mono", ui-monospace, monospace;
+      font-size: 0.72rem;
+      letter-spacing: 0.06em;
+      text-align: center;
+      color: var(--accent);
+      line-height: 1.3;
+      font-weight: 600;
+    }
+
+    .pattern {
+      position: absolute;
+      right: 12%;
+      bottom: 22%;
+      display: flex;
+      gap: 6px;
+      z-index: 4;
+    }
+
+    .pattern i {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: var(--warn);
+      opacity: 0.25;
+      animation: patternPop 2.8s ease-in-out infinite;
+    }
+
+    .pattern i:nth-child(2) { animation-delay: 0.2s; background: var(--accent); }
+    .pattern i:nth-child(3) { animation-delay: 0.4s; background: var(--tile-song); }
+    .pattern i:nth-child(4) { animation-delay: 0.6s; background: var(--ok); }
+
+    @keyframes histPulse {
+      0%, 100% { filter: brightness(1); transform: translateX(0); }
+      50% { filter: brightness(1.08); transform: translateX(4px); }
+    }
+
+    @keyframes beamShoot {
+      0%, 10% { opacity: 0; transform: scaleX(0.2); transform-origin: left; }
+      35%, 55% { opacity: 1; transform: scaleX(1); }
+      80%, 100% { opacity: 0; transform: scaleX(1); }
+    }
+
+    @keyframes brainPulse {
+      0%, 100% { transform: translateY(-50%) scale(1); border-color: var(--brain-border); }
+      50% { transform: translateY(-50%) scale(1.04); border-color: var(--accent); }
+    }
+
+    @keyframes patternPop {
+      0%, 40% { opacity: 0.2; transform: scale(0.8); }
+      60%, 80% { opacity: 1; transform: scale(1.25); }
+      100% { opacity: 0.35; transform: scale(1); }
+    }
+
+    /* ===== Cloud animation ===== */
+    .cloud-rack {
+      position: absolute;
+      left: 8%;
+      top: 16%;
+      width: 36%;
+      height: 62%;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .server {
+      flex: 1;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--line-strong);
+      background: var(--surface);
+      position: relative;
+      overflow: hidden;
+      padding: 8px 12px;
+    }
+
+    .server::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(90deg, transparent, rgba(35, 131, 226, 0.1), transparent);
+      transform: translateX(-100%);
+      animation: computeSweep 2.2s ease-in-out infinite;
+    }
+
+    .server:nth-child(2)::before { animation-delay: 0.35s; }
+    .server:nth-child(3)::before { animation-delay: 0.7s; }
+
+    .server .leds {
+      display: flex;
+      gap: 5px;
+      margin-bottom: 6px;
+    }
+
+    .server .leds i {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--ok);
+      animation: blink 1.2s ease-in-out infinite;
+    }
+
+    .server .leds i:nth-child(2) {
+      animation-delay: 0.2s;
+      background: var(--accent);
+    }
+
+    .server .leds i:nth-child(3) {
+      animation-delay: 0.4s;
+      background: var(--warn);
+    }
+
+    .server label {
+      font-family: "JetBrains Mono", ui-monospace, monospace;
+      font-size: 0.62rem;
+      color: var(--muted);
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .pred-flow {
+      position: absolute;
+      left: 46%;
+      top: 50%;
+      width: 12%;
+      height: 2px;
+      background: linear-gradient(90deg, var(--accent), #7eb8eb);
+      transform: translateY(-50%);
+      animation: pushPulse 2.2s ease-in-out infinite;
+    }
+
+    .rec-cards {
+      position: absolute;
+      right: 6%;
+      top: 18%;
+      bottom: 18%;
+      width: 34%;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .rec-card {
+      flex: 1;
+      border-radius: var(--radius);
+      border: 1px solid var(--rec-border);
+      background: var(--rec-soft);
+      padding: 10px 12px;
+      opacity: 0;
+      transform: translateX(24px);
+      animation: cardIn 2.8s ease-in-out infinite;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 4px;
+    }
+
+    .rec-card:nth-child(2) { animation-delay: 0.35s; }
+    .rec-card:nth-child(3) { animation-delay: 0.7s; }
+
+    .rec-card strong {
+      font-family: "Cormorant Garamond", Georgia, serif;
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .rec-card span {
+      font-family: "JetBrains Mono", ui-monospace, monospace;
+      font-size: 0.62rem;
+      color: var(--muted);
+    }
+
+    @keyframes computeSweep {
+      0% { transform: translateX(-100%); }
+      55%, 100% { transform: translateX(100%); }
+    }
+
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+
+    @keyframes pushPulse {
+      0%, 100% { opacity: 0.25; transform: translateY(-50%) scaleX(0.6); transform-origin: left; }
+      45% { opacity: 1; transform: translateY(-50%) scaleX(1); }
+    }
+
+    @keyframes cardIn {
+      0%, 15% { opacity: 0; transform: translateX(28px); }
+      40%, 75% { opacity: 1; transform: translateX(0); }
+      100% { opacity: 0.5; transform: translateX(0); }
+    }
+
+    /* ===== Combined finale ===== */
+    .combo-scene {
+      aspect-ratio: 16 / 9.2;
+    }
+
+    .combo-steps {
+      position: absolute;
+      inset: 12px 12px 40px;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      align-items: stretch;
+    }
+
+    .combo-step {
+      border-radius: var(--radius);
+      border: 1px solid var(--line);
+      background: var(--surface);
+      padding: 10px;
+      position: relative;
+      overflow: hidden;
+      opacity: 0.35;
+      transform: translateY(8px);
+      animation: stepReveal 8s ease-in-out infinite;
+    }
+
+    .combo-step:nth-child(1) { animation-delay: 0s; }
+    .combo-step:nth-child(2) { animation-delay: 1.6s; }
+    .combo-step:nth-child(3) { animation-delay: 3.2s; }
+    .combo-step:nth-child(4) { animation-delay: 4.8s; }
+
+    .combo-step h5 {
+      font-family: "JetBrains Mono", ui-monospace, monospace;
+      font-size: 0.62rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 8px;
+      font-weight: 600;
+    }
+
+    .combo-mini {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .mini-tile {
+      height: 22px;
+      border-radius: 5px;
+      background: var(--tile-movie);
+      border: 1px solid rgba(55, 53, 47, 0.1);
+      font-size: 0.6rem;
+      display: flex;
+      align-items: center;
+      padding: 0 6px;
+      color: #fff;
+      font-weight: 600;
+    }
+
+    .mini-tile.s2 { background: var(--tile-song); }
+    .mini-tile.s3 { background: var(--tile-pref); }
+
+    .combo-brain {
+      margin: 8px auto 0;
+      width: 54px;
+      height: 54px;
+      border-radius: 50%;
+      border: 1.5px solid var(--brain-border);
+      background: var(--rec-soft);
+      display: grid;
+      place-items: center;
+      font-family: "JetBrains Mono", ui-monospace, monospace;
+      font-size: 0.62rem;
+      font-weight: 600;
+      color: var(--accent);
+      animation: brainPulseSolo 2s ease-in-out infinite;
+    }
+
+    .combo-servers {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      margin-top: 4px;
+    }
+
+    .combo-servers i {
+      height: 16px;
+      border-radius: 4px;
+      background: var(--bg);
+      border: 1px solid var(--line-strong);
+      position: relative;
+      overflow: hidden;
+      display: block;
+    }
+
+    .combo-servers i::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(90deg, transparent, rgba(35, 131, 226, 0.2), transparent);
+      animation: computeSweep 1.6s ease-in-out infinite;
+    }
+
+    .netflix-box { margin-top: 4px; }
+
+    .because {
+      font-size: 0.65rem;
+      color: var(--muted);
+      margin-bottom: 6px;
+      line-height: 1.35;
+    }
+
+    .because em {
+      color: var(--text);
+      font-style: normal;
+      font-weight: 600;
+    }
+
+    .playlist {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    .playlist .row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      opacity: 0;
+      animation: playlistIn 8s ease-in-out infinite;
+    }
+
+    .playlist .row:nth-child(1) { animation-delay: 5.1s; }
+    .playlist .row:nth-child(2) { animation-delay: 5.4s; }
+    .playlist .row:nth-child(3) { animation-delay: 5.7s; }
+
+    .playlist .dot {
+      width: 16px;
+      height: 16px;
+      border-radius: 4px;
+      background: var(--accent);
+      flex-shrink: 0;
+    }
+
+    .playlist .txt {
+      font-size: 0.62rem;
+      font-weight: 600;
+      color: var(--text);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .rec-banner {
+      position: absolute;
+      left: 12px;
+      right: 12px;
+      bottom: 10px;
+      z-index: 6;
+      text-align: center;
+      font-family: "Cormorant Garamond", Georgia, serif;
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--accent);
+      opacity: 0;
+      animation: bannerIn 8s ease-in-out infinite;
+    }
+
+    @keyframes stepReveal {
+      0%, 5% { opacity: 0.3; transform: translateY(8px); }
+      12%, 85% { opacity: 1; transform: translateY(0); border-color: #a8cceb; }
+      100% { opacity: 0.55; transform: translateY(0); }
+    }
+
+    @keyframes playlistIn {
+      0%, 62% { opacity: 0; transform: translateY(8px); }
+      70%, 90% { opacity: 1; transform: translateY(0); }
+      100% { opacity: 0.6; }
+    }
+
+    @keyframes bannerIn {
+      0%, 62% { opacity: 0; }
+      72%, 90% { opacity: 1; }
+      100% { opacity: 0.5; }
+    }
+
+    @keyframes brainPulseSolo {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes scalePop {
+      0% { opacity: 0; transform: scale(0.94); }
+      70% { transform: scale(1.02); }
+      100% { opacity: 1; transform: scale(1); }
+    }
+
+    .hidden { display: none !important; }
+
+    footer.note {
+      margin-top: 18px;
+      color: var(--muted);
+      font-family: "JetBrains Mono", ui-monospace, monospace;
+      font-size: 0.68rem;
+      text-align: center;
+    }
+
+    @media (max-width: 760px) {
+      .app { width: calc(100% - 24px); padding: 24px 0 40px; }
+      .intro, .summary, .finale { padding: 24px 18px; }
+      .content { padding: 18px 16px; }
+      .scene { aspect-ratio: 16 / 10; }
+      .combo-steps { grid-template-columns: 1fr 1fr; gap: 6px; }
+      .combo-scene { aspect-ratio: 16 / 12; min-height: 320px; }
+      .data-pile { width: 42%; right: 6%; }
+      .brain { width: 34%; right: 8%; }
+      .bd-scene .t3, .bd-scene .t6 { left: 40%; }
+      .pattern { bottom: 26%; }
+      h1 { font-size: 1.75rem; }
+    }
+  </style>
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem("f1-ai-theme");
+        if (t !== "light" && t !== "dark") t = "light";
+        document.documentElement.setAttribute("data-theme", t);
+      } catch (e) {
+        document.documentElement.setAttribute("data-theme", "light");
+      }
+    })();
+  </script>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <div class="header-top">
+        <div class="theme-toggle" role="group" aria-label="Colour mode">
+          <button type="button" id="themeLightBtn" aria-pressed="true">Light</button>
+          <button type="button" id="themeDarkBtn" aria-pressed="false">Dark</button>
+        </div>
+      </div>
+      <div>
+        <div class="eyebrow">Booklet 1 · Unit 1 · Task 6</div>
+        <h1>AI Used in Recommendation Functions</h1>
+      </div>
+      <div class="progress-wrap" id="progressWrap">
+        <div class="progress-label"><span id="progressText">Ready</span></div>
+        <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+      </div>
+    </header>
+
+    <nav class="jump-nav" id="jumpNav" aria-label="Jump to component">
+      <button type="button" data-index="0">1 · Big Data</button>
+      <button type="button" data-index="1">2 · ML</button>
+      <button type="button" data-index="2">3 · Cloud</button>
+      <button type="button" data-finale>Combined</button>
+      <button type="button" data-summary>Summary</button>
+    </nav>
+
+    <section class="panel" id="introScreen">
+      <div class="intro">
+        <h2>How do streaming apps know what you’ll like?</h2>
+        <p>
+          Online streaming platforms (movies, music, series) use AI to build
+          <strong style="color:var(--text)">personalised recommendations</strong> —
+          playlists and “Because you watched…” rows tailored to each user.
+        </p>
+        <p>
+          In Task 5 you identified the three AI components in a chatbot.
+          Here the components are already named — your job is to match each one to its
+          <strong style="color:var(--text)">function in a recommender</strong>.
+          Watch out: some options reuse chatbot wording from Task 5!
+        </p>
+        <div class="intro-pills">
+          <span class="pill">Big Data</span>
+          <span class="pill">Machine Learning</span>
+          <span class="pill">Cloud Computing</span>
+        </div>
+        <div class="nav">
+          <button class="btn btn-primary" id="startBtn">Start Task 6</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel hidden" id="quizScreen">
+      <div class="stage">
+        <div class="stage-title">
+          <span class="badge">Component <strong id="componentCode">1</strong></span>
+          <span class="badge" id="componentName">Big Data</span>
+        </div>
+        <div id="animationRoot" style="width:100%;display:grid;place-items:center"></div>
+      </div>
+      <div class="content">
+        <div class="question" id="questionText"></div>
+        <p class="hint" id="questionHint">Choose the function that matches this component in a streaming recommender.</p>
+        <div class="choices" id="choices"></div>
+        <div class="explain" id="explain">
+          <div class="verdict" id="verdict"></div>
+          <h3 id="explainTitle"></h3>
+          <div id="explainBody"></div>
+        </div>
+        <div class="nav">
+          <button class="btn btn-ghost" id="backBtn" disabled>Back</button>
+          <button class="btn btn-primary" id="nextBtn">Next</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel hidden" id="finaleScreen">
+      <div class="finale">
+        <h2>Putting it together</h2>
+        <p>
+          Watch the full pipeline: watch history feeds the model, cloud power generates predictions,
+          and a Netflix-style “Recommended for you” row appears.
+        </p>
+        <div id="finaleAnim" style="width:100%;margin:16px 0 8px;display:grid;place-items:center"></div>
+        <div class="nav">
+          <button class="btn btn-ghost" id="finaleBackBtn">Back</button>
+          <button class="btn btn-primary" id="finaleNextBtn">See summary</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel hidden" id="summaryScreen">
+      <div class="summary">
+        <h2>Task complete</h2>
+        <p>Great work matching AI components to recommendation functions.</p>
+        <div class="score-grid">
+          <div class="score-card"><span>Correct first try</span><strong id="scoreCorrect">0</strong></div>
+          <div class="score-card"><span>Total components</span><strong>3</strong></div>
+          <div class="score-card"><span>Accuracy</span><strong id="scorePct">0%</strong></div>
+        </div>
+        <p>
+          Key takeaway: recommenders need
+          <strong style="color:var(--text)">user history &amp; preferences (big data)</strong>,
+          a model that <strong style="color:var(--text)">learns patterns (machine learning)</strong>,
+          and <strong style="color:var(--text)">cloud power</strong> to process data and generate predictions.
+        </p>
+
+        <h2 style="margin-top:22px;font-size:1.5rem">Part B · Learning recap</h2>
+        <p>Brief definitions that support Tasks 5 and 6:</p>
+        <div class="recap">
+          <div class="recap-item">
+            <h4>Big Data</h4>
+            <p>Massive amounts of data and information that can be used for AI model training and testing.</p>
+          </div>
+          <div class="recap-item">
+            <h4>Machine Learning</h4>
+            <p>Algorithms that produce models for input processing and output generation, enabling the AI system to learn and improve automatically from data. A trained model can then perform tasks on new data it has never seen before.</p>
+          </div>
+          <div class="recap-item">
+            <h4>Cloud Computing</h4>
+            <p>Computational resources to support AI technologies — fast, scalable processing for training and prediction.</p>
+          </div>
+        </div>
+
+        <div class="nav">
+          <button class="btn btn-ghost" id="reviewBtn">Review again</button>
+          <button class="btn btn-primary" id="restartBtn">Restart</button>
+        </div>
+      </div>
+    </section>
+
+    <footer class="note">Based on EDB Booklet 1 Unit 1 · Task 6 (Figure 1.8) · Complements Task 5 by Valtorta College</footer>
+  </div>
+
+  <script>
+    const components = [
+      {
+        id: "BD",
+        code: "1",
+        name: "Big Data",
+        question: "What is the function of Big Data in a streaming recommendation system?",
+        hint: "Think about what raw material the recommender collects from users — not chatbot route questions.",
+        options: [
+          {
+            id: "correct",
+            label: "History of users’ movie/song selections and user-reported preferences.",
+          },
+          {
+            id: "distract5",
+            label: "User inquiries on route-planning (including users’ questions and expected answers).",
+          },
+          {
+            id: "distractMix",
+            label: "The AI model is often a neural network that can generate an appropriate output response for a given input user query.",
+          },
+        ],
+        correct: "correct",
+        explainTitle: "Big Data stores what you watched & liked",
+        explainHtml: `
+          <p>In streaming platforms, <strong>big data</strong> is the history of users’ movie/song selections and user-reported preferences (likes, ratings, skips).</p>
+          <p>That is different from a chatbot’s big data, which is mainly <em>route-planning inquiries and expected answers</em>.</p>
+        `,
+        renderQuestion(root) {
+          root.innerHTML = `
+            <div class="scene bd-scene">
+              <div class="scene-tag">Big Data</div>
+              <div class="tile movie t1">Film</div>
+              <div class="tile song t2">Song</div>
+              <div class="tile movie t3">Series</div>
+              <div class="tile pref t4">★</div>
+              <div class="tile song t5">Track</div>
+              <div class="tile movie t6">Clip</div>
+              <div class="data-pile">
+                <div class="pile-stack">
+                  <span></span><span></span><span></span>
+                  <span></span><span></span><span></span>
+                  <span></span><span></span><span></span>
+                </div>
+              </div>
+              <div class="scene-caption">History tiles stack into a big data pile</div>
+            </div>`;
+        },
+        renderExplain(root) {
+          this.renderQuestion(root);
+        },
+      },
+      {
+        id: "ML",
+        code: "2",
+        name: "Machine Learning",
+        question: "What is the function of Machine Learning in a streaming recommendation system?",
+        hint: "The model should analyse viewing/listening history — not generate chatbot replies.",
+        options: [
+          {
+            id: "distract5",
+            label: "The AI model is often a neural network that can generate an appropriate output response for a given input user query.",
+          },
+          {
+            id: "correct",
+            label: "AI model analyses previous user selections of movies/songs and user-reported preferences.",
+          },
+          {
+            id: "distractMix",
+            label: "User inquiries on route-planning (including users’ questions and expected answers).",
+          },
+        ],
+        correct: "correct",
+        explainTitle: "Machine Learning finds preference patterns",
+        explainHtml: `
+          <p><strong>Machine learning</strong> analyses previous user selections of movies/songs and user-reported preferences to learn what you are likely to enjoy next.</p>
+          <p>Chatbot ML focuses on generating a response to a query — useful, but a different function.</p>
+        `,
+        renderQuestion(root) {
+          root.innerHTML = `
+            <div class="scene ml-scene">
+              <div class="scene-tag">Machine Learning</div>
+              <div class="hist-rail">
+                <div class="tile movie">Watched · Sci-fi</div>
+                <div class="tile song">Liked · Jazz</div>
+                <div class="tile movie">Rewatched · Drama</div>
+                <div class="tile pref">Rated ★★★★</div>
+              </div>
+              <div class="beam b1"></div>
+              <div class="beam b2"></div>
+              <div class="beam b3"></div>
+              <div class="brain"><strong>AI<br>MODEL</strong></div>
+              <div class="pattern"><i></i><i></i><i></i><i></i></div>
+              <div class="scene-caption">Beams from history → model learns preference patterns</div>
+            </div>`;
+        },
+        renderExplain(root) {
+          this.renderQuestion(root);
+        },
+      },
+      {
+        id: "CC",
+        code: "3",
+        name: "Cloud Computing",
+        question: "What is the function of Cloud Computing in a streaming recommendation system?",
+        hint: "Focus on processing selections/preferences and generating predictions for recommendations.",
+        options: [
+          {
+            id: "distract5",
+            label: "Computational resources that support data processing and machine learning in training an AI model, as well as applying it to new data.",
+          },
+          {
+            id: "distractMix",
+            label: "History of users’ movie/song selections and user-reported preferences.",
+          },
+          {
+            id: "correct",
+            label: "Computational power supports the processing of user selections and preferences, as well as the generation of predictions.",
+          },
+        ],
+        correct: "correct",
+        explainTitle: "Cloud Computing powers prediction at scale",
+        explainHtml: `
+          <p><strong>Cloud computing</strong> provides the computational power to process user selections and preferences and to generate predictions — the ranked “Recommended for you” list.</p>
+          <p>Task 5’s cloud wording is related but written for chatbot training/application; here the teacher answer emphasises processing selections and generating predictions.</p>
+        `,
+        renderQuestion(root) {
+          root.innerHTML = `
+            <div class="scene">
+              <div class="scene-tag">Cloud Computing</div>
+              <div class="cloud-rack">
+                <div class="server"><div class="leds"><i></i><i></i><i></i></div><label>Process history</label></div>
+                <div class="server"><div class="leds"><i></i><i></i><i></i></div><label>Run model</label></div>
+                <div class="server"><div class="leds"><i></i><i></i><i></i></div><label>Predict ranks</label></div>
+              </div>
+              <div class="pred-flow"></div>
+              <div class="rec-cards">
+                <div class="rec-card"><strong>Neon Drift</strong><span>Predicted match 94%</span></div>
+                <div class="rec-card"><strong>Midnight Jazz Live</strong><span>Predicted match 91%</span></div>
+                <div class="rec-card"><strong>Harbor Stories</strong><span>Predicted match 88%</span></div>
+              </div>
+              <div class="scene-caption">Servers compute → push recommendation cards</div>
+            </div>`;
+        },
+        renderExplain(root) {
+          this.renderQuestion(root);
+        },
+      },
+    ];
+
+    function renderFinale(root) {
+      root.innerHTML = `
+        <div class="scene combo-scene">
+          <div class="scene-tag">Full pipeline</div>
+          <div class="combo-steps">
+            <div class="combo-step">
+              <h5>1 · Watch history</h5>
+              <div class="combo-mini">
+                <div class="mini-tile">Sci-fi trilogy</div>
+                <div class="mini-tile s2">Jazz playlist</div>
+                <div class="mini-tile s3">Rated ★★★★</div>
+              </div>
+            </div>
+            <div class="combo-step">
+              <h5>2 · Model learns</h5>
+              <div class="combo-brain">ML</div>
+              <p style="font-size:0.68rem;color:var(--muted);margin-top:8px;line-height:1.35">Analyses selections &amp; preferences</p>
+            </div>
+            <div class="combo-step">
+              <h5>3 · Cloud predicts</h5>
+              <div class="combo-servers"><i></i><i></i><i></i></div>
+              <p style="font-size:0.68rem;color:var(--muted);margin-top:8px;line-height:1.35">Compute → ranked predictions</p>
+            </div>
+            <div class="combo-step">
+              <h5>4 · For you</h5>
+              <div class="netflix-box">
+                <div class="because">Because you watched <em>Neon Drift</em></div>
+                <div class="playlist">
+                  <div class="row"><span class="dot"></span><span class="txt">Orbit City</span></div>
+                  <div class="row"><span class="dot"></span><span class="txt">Signal Lost</span></div>
+                  <div class="row"><span class="dot"></span><span class="txt">Deep Horizon</span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="rec-banner">Recommended for you</div>
+        </div>`;
+    }
+
+    const els = {
+      intro: document.getElementById("introScreen"),
+      quiz: document.getElementById("quizScreen"),
+      finale: document.getElementById("finaleScreen"),
+      summary: document.getElementById("summaryScreen"),
+      startBtn: document.getElementById("startBtn"),
+      backBtn: document.getElementById("backBtn"),
+      nextBtn: document.getElementById("nextBtn"),
+      finaleBackBtn: document.getElementById("finaleBackBtn"),
+      finaleNextBtn: document.getElementById("finaleNextBtn"),
+      restartBtn: document.getElementById("restartBtn"),
+      reviewBtn: document.getElementById("reviewBtn"),
+      progressText: document.getElementById("progressText"),
+      progressFill: document.getElementById("progressFill"),
+      componentCode: document.getElementById("componentCode"),
+      componentName: document.getElementById("componentName"),
+      animationRoot: document.getElementById("animationRoot"),
+      finaleAnim: document.getElementById("finaleAnim"),
+      questionText: document.getElementById("questionText"),
+      questionHint: document.getElementById("questionHint"),
+      choices: document.getElementById("choices"),
+      explain: document.getElementById("explain"),
+      verdict: document.getElementById("verdict"),
+      explainTitle: document.getElementById("explainTitle"),
+      explainBody: document.getElementById("explainBody"),
+      scoreCorrect: document.getElementById("scoreCorrect"),
+      scorePct: document.getElementById("scorePct"),
+      jumpNav: document.getElementById("jumpNav"),
+    };
+
+    let index = 0;
+    let answered = false;
+    let firstTryCorrect = 0;
+    let attempts = {};
+    let lastCorrect = false;
+
+    function show(screen) {
+      els.intro.classList.toggle("hidden", screen !== "intro");
+      els.quiz.classList.toggle("hidden", screen !== "quiz");
+      els.finale.classList.toggle("hidden", screen !== "finale");
+      els.summary.classList.toggle("hidden", screen !== "summary");
+      updateJumpNav(screen);
+    }
+
+    function updateJumpNav(screen = "quiz") {
+      els.jumpNav.querySelectorAll("button").forEach((btn) => {
+        const active = screen === "summary"
+          ? btn.hasAttribute("data-summary")
+          : screen === "finale"
+            ? btn.hasAttribute("data-finale")
+            : screen === "quiz" && Number(btn.dataset.index) === index;
+        if (active) btn.setAttribute("aria-current", "step");
+        else btn.removeAttribute("aria-current");
+      });
+    }
+
+    function updateProgress(mode) {
+      const totalSteps = components.length + 1; // + finale
+      if (mode === "finale") {
+        els.progressFill.style.width = `${(components.length / totalSteps) * 100}%`;
+        els.progressText.textContent = "Combined view";
+        return;
+      }
+      if (mode === "summary") {
+        els.progressFill.style.width = "100%";
+        els.progressText.textContent = "Complete";
+        return;
+      }
+      const pct = (index / totalSteps) * 100;
+      els.progressFill.style.width = `${pct}%`;
+      els.progressText.textContent = `Component ${Math.min(index + 1, components.length)} of ${components.length}`;
+    }
+
+    function loadComponent(i) {
+      index = i;
+      answered = false;
+      lastCorrect = false;
+      const c = components[i];
+      updateProgress("quiz");
+      els.componentCode.textContent = c.code;
+      els.componentName.textContent = c.name;
+      els.questionText.textContent = c.question;
+      els.questionHint.textContent = c.hint;
+      els.explain.classList.remove("show");
+      els.backBtn.disabled = i === 0;
+      els.nextBtn.textContent = i === components.length - 1 ? "See combined animation" : "Next component";
+      updateJumpNav();
+
+      c.renderQuestion(els.animationRoot);
+
+      els.choices.innerHTML = "";
+      c.options.forEach((opt) => {
+        const btn = document.createElement("button");
+        btn.className = "choice";
+        btn.type = "button";
+        btn.dataset.id = opt.id;
+        btn.textContent = opt.label;
+        btn.addEventListener("click", () => onChoose(opt.id, btn));
+        els.choices.appendChild(btn);
+      });
+    }
+
+    function onChoose(optionId, btn) {
+      const c = components[index];
+      const buttons = [...els.choices.querySelectorAll(".choice")];
+      const isCorrect = optionId === c.correct;
+      lastCorrect = isCorrect;
+
+      if (!attempts[c.id]) {
+        attempts[c.id] = true;
+        if (isCorrect) firstTryCorrect += 1;
+      }
+
+      buttons.forEach((b) => {
+        b.disabled = true;
+        if (b.dataset.id === c.correct) b.classList.add("correct");
+        else if (b === btn && !isCorrect) b.classList.add("wrong");
+      });
+
+      els.verdict.className = `verdict ${isCorrect ? "ok" : "bad"}`;
+      els.verdict.textContent = isCorrect ? "Correct" : "Not quite — see the teacher answer";
+      els.explainTitle.textContent = c.explainTitle;
+      els.explainBody.innerHTML = c.explainHtml;
+      if (!isCorrect) {
+        els.explainBody.innerHTML += `<p style="color:var(--accent)">Correct function: <strong>${c.options.find((o) => o.id === c.correct).label}</strong></p>`;
+      }
+
+      c.renderExplain(els.animationRoot);
+      els.explain.classList.add("show");
+      els.nextBtn.disabled = false;
+      answered = true;
+    }
+
+    function showFinale() {
+      show("finale");
+      updateProgress("finale");
+      renderFinale(els.finaleAnim);
+    }
+
+    function showSummary() {
+      show("summary");
+      updateProgress("summary");
+      els.scoreCorrect.textContent = String(firstTryCorrect);
+      els.scorePct.textContent = `${Math.round((firstTryCorrect / components.length) * 100)}%`;
+    }
+
+    els.startBtn.addEventListener("click", () => {
+      firstTryCorrect = 0;
+      attempts = {};
+      show("quiz");
+      loadComponent(0);
+    });
+
+    els.nextBtn.addEventListener("click", () => {
+      if (index >= components.length - 1) showFinale();
+      else loadComponent(index + 1);
+    });
+
+    els.jumpNav.addEventListener("click", (event) => {
+      const btn = event.target.closest("button");
+      if (!btn) return;
+      if (btn.hasAttribute("data-summary")) {
+        showSummary();
+      } else if (btn.hasAttribute("data-finale")) {
+        showFinale();
+      } else {
+        show("quiz");
+        loadComponent(Number(btn.dataset.index));
+      }
+    });
+
+    els.backBtn.addEventListener("click", () => {
+      if (index > 0) loadComponent(index - 1);
+    });
+
+    els.finaleBackBtn.addEventListener("click", () => {
+      show("quiz");
+      loadComponent(components.length - 1);
+    });
+
+    els.finaleNextBtn.addEventListener("click", () => {
+      showSummary();
+    });
+
+    els.restartBtn.addEventListener("click", () => {
+      firstTryCorrect = 0;
+      attempts = {};
+      show("quiz");
+      loadComponent(0);
+    });
+
+    els.reviewBtn.addEventListener("click", () => {
+      show("quiz");
+      loadComponent(0);
+    });
+
+    function applyTheme(theme) {
+      const next = theme === "dark" ? "dark" : "light";
+      document.documentElement.setAttribute("data-theme", next);
+      try { localStorage.setItem("f1-ai-theme", next); } catch (e) {}
+      const lightBtn = document.getElementById("themeLightBtn");
+      const darkBtn = document.getElementById("themeDarkBtn");
+      if (lightBtn && darkBtn) {
+        lightBtn.setAttribute("aria-pressed", next === "light" ? "true" : "false");
+        darkBtn.setAttribute("aria-pressed", next === "dark" ? "true" : "false");
+      }
+    }
+
+    document.getElementById("themeLightBtn").addEventListener("click", () => applyTheme("light"));
+    document.getElementById("themeDarkBtn").addEventListener("click", () => applyTheme("dark"));
+    applyTheme(document.documentElement.getAttribute("data-theme") || "light");
+  </script>
+</body>
+</html>

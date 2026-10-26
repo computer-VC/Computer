@@ -1,0 +1,1590 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Unit 1 Task 5 — AI Used in Customer Service Chatbot</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    :root, [data-theme="light"] {
+      --bg: #f7f6f3;
+      --panel: #ffffff;
+      --ink: #37352f;
+      --body: #4f4d47;
+      --muted: #787774;
+      --primary: #2383e2;
+      --primary-active: #1a6fc1;
+      --hairline: rgba(55, 53, 47, 0.09);
+      --hairline-strong: rgba(55, 53, 47, 0.16);
+      --success: #0f7b3f;
+      --warning: #cb6800;
+      --danger: #d44c47;
+      --bd: #0f7b3f;
+      --ml: #2383e2;
+      --cc: #cb6800;
+      --radius: 10px;
+      --radius-sm: 8px;
+      --shadow: 0 1px 2px rgba(55, 53, 47, 0.04), 0 8px 24px rgba(55, 53, 47, 0.06);
+      --font-display: "Cormorant Garamond", Georgia, serif;
+      --font-body: "Inter", system-ui, sans-serif;
+      --font-mono: "JetBrains Mono", ui-monospace, monospace;
+      --toggle-bg: #ffffff;
+      --toggle-border: rgba(55, 53, 47, 0.14);
+      --caption-bg: rgba(255, 255, 255, 0.96);
+      --caption-fg: #37352f;
+      --anim-bg: #f7f6f3;
+      --anim-panel: #ffffff;
+      --anim-soft: #e8e6e1;
+      --anim-soft-2: #ddd9d2;
+      --anim-border: #c5c1b8;
+    }
+
+    [data-theme="dark"] {
+      --bg: #151515;
+      --panel: #202020;
+      --ink: #f1f0ec;
+      --body: #cfcbc4;
+      --muted: #9a968e;
+      --primary: #5ba8f5;
+      --primary-active: #7bb8f7;
+      --hairline: rgba(255, 255, 255, 0.1);
+      --hairline-strong: rgba(255, 255, 255, 0.16);
+      --success: #3dcf7a;
+      --warning: #e0a04a;
+      --danger: #f07171;
+      --bd: #3dcf7a;
+      --ml: #5ba8f5;
+      --cc: #e0a04a;
+      --shadow: 0 1px 2px rgba(0, 0, 0, 0.35), 0 8px 24px rgba(0, 0, 0, 0.28);
+      --toggle-bg: #202020;
+      --toggle-border: rgba(255, 255, 255, 0.14);
+      --caption-bg: rgba(32, 32, 32, 0.96);
+      --caption-fg: #f1f0ec;
+      --anim-bg: #1a1a1a;
+      --anim-panel: #262626;
+      --anim-soft: #333333;
+      --anim-soft-2: #3d3d3d;
+      --anim-border: #555555;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      min-height: 100vh;
+      font-family: var(--font-body);
+      color: var(--ink);
+      background:
+        radial-gradient(900px 420px at 8% -8%, rgba(35, 131, 226, 0.05), transparent 55%),
+        radial-gradient(700px 360px at 96% 4%, rgba(15, 123, 63, 0.04), transparent 50%),
+        var(--bg);
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .app {
+      width: min(920px, calc(100% - 28px));
+      margin: 0 auto;
+      padding: 28px 0 40px;
+    }
+
+    header {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 14px;
+      margin-bottom: 20px;
+      padding-bottom: 18px;
+      border-bottom: 1px solid var(--hairline);
+    }
+
+    .header-top {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      width: 100%;
+      margin-bottom: 4px;
+    }
+
+    .theme-toggle {
+      display: inline-flex;
+      border: 1px solid var(--toggle-border);
+      border-radius: 8px;
+      overflow: hidden;
+      background: var(--toggle-bg);
+      flex-shrink: 0;
+    }
+
+    .theme-toggle button {
+      appearance: none;
+      border: 0;
+      background: transparent;
+      color: var(--muted);
+      font: inherit;
+      font-size: 0.78rem;
+      font-weight: 600;
+      padding: 8px 12px;
+      cursor: pointer;
+      line-height: 1;
+    }
+
+    .theme-toggle button[aria-pressed="true"] {
+      background: var(--primary);
+      color: #fff;
+    }
+
+    .theme-toggle button:focus-visible {
+      outline: 2px solid var(--primary);
+      outline-offset: 2px;
+    }
+
+    .eyebrow {
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      letter-spacing: 0.04em;
+      color: var(--primary);
+      font-weight: 500;
+      margin-bottom: 8px;
+    }
+
+    h1 {
+      font-family: var(--font-display);
+      font-size: clamp(1.85rem, 3.4vw, 2.45rem);
+      font-weight: 600;
+      line-height: 1.12;
+      letter-spacing: -0.01em;
+      color: var(--ink);
+    }
+
+    .progress-wrap { min-width: 160px; width: min(220px, 100%); }
+
+    .progress-label {
+      font-size: 0.8rem;
+      color: var(--muted);
+      margin-bottom: 8px;
+      font-weight: 500;
+      text-align: right;
+    }
+
+    .progress-bar {
+      height: 6px;
+      border-radius: 3px;
+      background: rgba(55, 53, 47, 0.08);
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      width: 0%;
+      border-radius: inherit;
+      background: var(--primary);
+      transition: width 0.4s ease;
+    }
+
+    .jump-nav {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin: -8px 0 16px;
+    }
+
+    .jump-nav button {
+      appearance: none;
+      border: 1px solid var(--hairline);
+      border-radius: 999px;
+      background: var(--panel);
+      color: var(--muted);
+      padding: 5px 9px;
+      font-family: var(--font-mono);
+      font-size: 0.68rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .jump-nav button:hover,
+    .jump-nav button[aria-current="step"] {
+      border-color: var(--primary);
+      background: rgba(35, 131, 226, 0.08);
+      color: var(--primary);
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--hairline);
+      border-radius: 12px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .stage {
+      padding: 20px 20px 16px;
+      border-bottom: 1px solid var(--hairline);
+      min-height: 268px;
+      display: grid;
+      place-items: center;
+      background: var(--bg);
+    }
+
+    .stage-title {
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 10px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--hairline);
+      font-size: 0.78rem;
+      color: var(--muted);
+      background: var(--bg);
+      font-weight: 500;
+    }
+
+    .badge strong { color: var(--ink); font-weight: 600; }
+
+    .content { padding: 22px; }
+
+    .question {
+      font-family: var(--font-display);
+      font-size: clamp(1.28rem, 2.5vw, 1.55rem);
+      font-weight: 600;
+      margin-bottom: 6px;
+      letter-spacing: -0.01em;
+    }
+
+    .hint {
+      color: var(--muted);
+      font-size: 0.92rem;
+      margin-bottom: 16px;
+      line-height: 1.55;
+    }
+
+    .func-card {
+      border: 1px solid var(--hairline);
+      border-radius: var(--radius);
+      padding: 14px 16px;
+      background: var(--bg);
+      margin-bottom: 16px;
+      line-height: 1.55;
+      color: var(--body);
+    }
+
+    .func-card span {
+      display: block;
+      font-family: var(--font-mono);
+      font-size: 0.68rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--primary);
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+
+    .choices {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(176px, 1fr));
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+
+    .choice {
+      appearance: none;
+      border: 1px solid var(--hairline-strong);
+      background: var(--panel);
+      color: var(--ink);
+      border-radius: var(--radius);
+      padding: 13px 14px;
+      font: inherit;
+      font-weight: 600;
+      cursor: pointer;
+      text-align: left;
+      transition: border-color 0.18s ease, background 0.18s ease, transform 0.15s ease;
+    }
+
+    .choice:hover:not(:disabled) {
+      transform: translateY(-1px);
+      border-color: rgba(35, 131, 226, 0.45);
+      background: rgba(35, 131, 226, 0.04);
+    }
+
+    .choice:disabled { cursor: default; }
+
+    .choice.correct {
+      border-color: rgba(15, 123, 63, 0.45);
+      background: rgba(15, 123, 63, 0.08);
+    }
+
+    .choice.wrong {
+      border-color: rgba(212, 76, 71, 0.4);
+      background: rgba(212, 76, 71, 0.07);
+    }
+
+    .choice .sub {
+      display: block;
+      margin-top: 4px;
+      font-size: 0.78rem;
+      font-weight: 400;
+      color: var(--muted);
+    }
+
+    .explain {
+      display: none;
+      margin-top: 18px;
+      padding-top: 18px;
+      border-top: 1px solid var(--hairline);
+      animation: fadeUp 0.35s ease;
+    }
+
+    .explain.show { display: block; }
+
+    .verdict {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 10px;
+      border-radius: var(--radius-sm);
+      font-size: 0.78rem;
+      font-weight: 600;
+      margin-bottom: 12px;
+      border: 1px solid transparent;
+    }
+
+    .verdict.bd {
+      background: rgba(15, 123, 63, 0.08);
+      color: var(--bd);
+      border-color: rgba(15, 123, 63, 0.18);
+    }
+    .verdict.ml {
+      background: rgba(35, 131, 226, 0.08);
+      color: var(--ml);
+      border-color: rgba(35, 131, 226, 0.18);
+    }
+    .verdict.cc {
+      background: rgba(203, 104, 0, 0.08);
+      color: var(--cc);
+      border-color: rgba(203, 104, 0, 0.18);
+    }
+    .verdict.ok {
+      background: rgba(15, 123, 63, 0.08);
+      color: var(--success);
+      border-color: rgba(15, 123, 63, 0.18);
+    }
+
+    .explain h3 {
+      font-family: var(--font-display);
+      font-size: 1.2rem;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+
+    .explain p {
+      color: var(--body);
+      line-height: 1.6;
+      margin-bottom: 10px;
+      font-size: 0.94rem;
+    }
+
+    .explain p strong { color: var(--ink); font-weight: 600; }
+
+    .nav {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      margin-top: 18px;
+    }
+
+    .btn {
+      appearance: none;
+      border: 0;
+      border-radius: var(--radius-sm);
+      padding: 11px 16px;
+      font: inherit;
+      font-weight: 600;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: background 0.15s ease, border-color 0.15s ease, opacity 0.15s ease;
+    }
+
+    .btn:disabled { opacity: 0.38; cursor: not-allowed; }
+
+    .btn-ghost {
+      background: transparent;
+      color: var(--muted);
+      border: 1px solid var(--hairline-strong);
+    }
+
+    .btn-ghost:hover:not(:disabled) {
+      color: var(--ink);
+      border-color: rgba(55, 53, 47, 0.28);
+      background: var(--bg);
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      color: #fff;
+      margin-left: auto;
+    }
+
+    .btn-primary:hover:not(:disabled) { background: var(--primary-active); }
+
+    .intro, .summary { padding: 28px 24px; }
+
+    .intro h2, .summary h2 {
+      font-family: var(--font-display);
+      font-size: 1.7rem;
+      font-weight: 600;
+      margin-bottom: 10px;
+      letter-spacing: -0.01em;
+    }
+
+    .intro p, .summary p {
+      color: var(--body);
+      line-height: 1.65;
+      margin-bottom: 12px;
+      font-size: 0.95rem;
+    }
+
+    .pillars {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 10px;
+      margin: 16px 0 8px;
+    }
+
+    .pillar {
+      border: 1px solid var(--hairline);
+      border-radius: var(--radius);
+      padding: 14px;
+      background: var(--bg);
+    }
+
+    .pillar strong {
+      display: block;
+      font-family: var(--font-display);
+      margin-bottom: 6px;
+      font-size: 1.15rem;
+      font-weight: 600;
+    }
+
+    .pillar.bd strong { color: var(--bd); }
+    .pillar.ml strong { color: var(--ml); }
+    .pillar.cc strong { color: var(--cc); }
+
+    .pillar span {
+      color: var(--muted);
+      font-size: 0.86rem;
+      line-height: 1.45;
+    }
+
+    .score-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+      gap: 10px;
+      margin: 18px 0;
+    }
+
+    .score-card {
+      border: 1px solid var(--hairline);
+      border-radius: var(--radius);
+      padding: 14px;
+      background: var(--bg);
+    }
+
+    .score-card span {
+      display: block;
+      color: var(--muted);
+      font-size: 0.78rem;
+      margin-bottom: 4px;
+      font-weight: 500;
+    }
+
+    .score-card strong {
+      font-family: var(--font-display);
+      font-size: 1.55rem;
+      font-weight: 600;
+    }
+
+    .anim-box {
+      width: min(100%, 820px);
+      height: 320px;
+      position: relative;
+      border-radius: var(--radius);
+      border: 2px solid var(--anim-border);
+      background: var(--anim-bg);
+      color: var(--ink);
+      overflow: hidden;
+    }
+
+    .anim-box.tall { height: 370px; }
+
+    .scene-caption {
+      position: absolute;
+      left: 14px;
+      right: 14px;
+      bottom: 12px;
+      z-index: 20;
+      font-size: 0.84rem;
+      font-weight: 700;
+      line-height: 1.35;
+      color: var(--caption-fg);
+      background: var(--caption-bg);
+      border: 1.5px solid var(--anim-border);
+      padding: 7px 10px;
+      border-radius: 8px;
+      pointer-events: none;
+    }
+
+    .scene-label {
+      position: absolute;
+      top: 12px;
+      left: 14px;
+      z-index: 20;
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      padding: 5px 9px;
+      border-radius: 7px;
+      border: 1.5px solid var(--anim-border);
+    }
+
+    .scene-label.bd {
+      background: color-mix(in srgb, var(--bd) 18%, var(--anim-panel));
+      color: var(--bd);
+      border-color: var(--bd);
+    }
+    .scene-label.ml {
+      background: color-mix(in srgb, var(--ml) 18%, var(--anim-panel));
+      color: var(--ml);
+      border-color: var(--ml);
+    }
+    .scene-label.cc {
+      background: color-mix(in srgb, var(--cc) 18%, var(--anim-panel));
+      color: var(--cc);
+      border-color: var(--cc);
+    }
+    .scene-label.pipe {
+      background: var(--caption-bg);
+      color: var(--caption-fg);
+      border-color: var(--anim-border);
+    }
+
+    .storyboard {
+      position: absolute;
+      inset: 54px 18px 62px;
+      display: grid;
+      align-items: stretch;
+      gap: 14px;
+    }
+
+    .story-panel {
+      min-width: 0;
+      border: 2px solid var(--anim-border);
+      border-radius: 12px;
+      background: var(--anim-panel);
+      color: var(--ink);
+      padding: 12px;
+    }
+
+    .story-title {
+      font-family: var(--font-mono);
+      font-size: 0.76rem;
+      line-height: 1.2;
+      font-weight: 800;
+      letter-spacing: 0.045em;
+      text-align: center;
+      color: var(--ink);
+      margin-bottom: 10px;
+    }
+
+    /* ===== Big Data storyboard ===== */
+    .bd-story { grid-template-columns: minmax(0, 1.2fr) 44px minmax(0, 1fr); }
+    .bd-questions { border-color: var(--bd); }
+    .bd-question {
+      padding: 7px 9px;
+      margin-top: 7px;
+      border-radius: 7px;
+      border: 1.5px solid var(--bd);
+      background: color-mix(in srgb, var(--bd) 12%, var(--anim-panel));
+      color: var(--ink);
+      font-size: 0.76rem;
+      font-weight: 650;
+      line-height: 1.3;
+      animation: questionMove 5.8s ease-in-out infinite;
+    }
+    .bd-question:nth-child(3) { animation-delay: 0.65s; }
+    .bd-question:nth-child(4) { animation-delay: 1.3s; }
+    .bd-question b { color: var(--bd); }
+    .story-arrow {
+      align-self: center;
+      text-align: center;
+      color: var(--bd);
+      font-size: 2.3rem;
+      font-weight: 800;
+      animation: arrowGlow 5.8s ease-in-out infinite;
+    }
+    .bd-lake {
+      position: relative;
+      border-color: var(--bd);
+      background: color-mix(in srgb, var(--bd) 10%, var(--anim-panel));
+      overflow: hidden;
+    }
+    .lake-bars {
+      position: absolute;
+      left: 16px;
+      right: 16px;
+      top: 48px;
+      bottom: 42px;
+      display: flex;
+      flex-direction: column-reverse;
+      justify-content: flex-start;
+      gap: 7px;
+    }
+    .lake-bars i {
+      display: block;
+      height: 18px;
+      border-radius: 5px;
+      border: 1.5px solid var(--bd);
+      background: color-mix(in srgb, var(--bd) 46%, var(--anim-panel));
+      transform-origin: left;
+      animation: lakeFill 5.8s ease-in-out infinite;
+    }
+    .lake-bars i:nth-child(2) { width: 88%; animation-delay: 0.65s; }
+    .lake-bars i:nth-child(3) { width: 72%; animation-delay: 1.3s; }
+    .lake-bars i:nth-child(4) { width: 94%; animation-delay: 1.95s; }
+    .lake-label {
+      position: absolute;
+      left: 10px;
+      right: 10px;
+      bottom: 10px;
+      text-align: center;
+      color: var(--ink);
+      font-size: 0.76rem;
+      font-weight: 700;
+    }
+    @keyframes questionMove {
+      0%, 8% { opacity: 0.35; transform: translateX(-8px); }
+      18%, 68% { opacity: 1; transform: translateX(0); }
+      82%, 100% { opacity: 0.55; transform: translateX(8px); }
+    }
+    @keyframes lakeFill {
+      0%, 18% { opacity: 0.15; transform: scaleX(0.15); }
+      35%, 82% { opacity: 1; transform: scaleX(1); }
+      100% { opacity: 0.45; transform: scaleX(1); }
+    }
+
+    /* ===== Machine Learning storyboard ===== */
+    .ml-story { grid-template-columns: minmax(0, 0.9fr) minmax(240px, 1.35fr) minmax(0, 0.9fr); }
+    .io-box {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      border-color: var(--ml);
+      font-size: 0.9rem;
+      line-height: 1.45;
+      font-weight: 650;
+      color: var(--ink);
+    }
+    .io-box strong {
+      display: block;
+      margin-bottom: 10px;
+      font-family: var(--font-mono);
+      font-size: 0.78rem;
+      letter-spacing: 0.05em;
+      color: var(--ml);
+    }
+    .io-box.in { animation: inputGlow 5.8s ease-in-out infinite; }
+    .io-box.out {
+      background: color-mix(in srgb, var(--ml) 12%, var(--anim-panel));
+      animation: outputReveal 5.8s ease-in-out infinite;
+    }
+    .ml-model {
+      position: relative;
+      border-color: var(--ml);
+      padding: 42px 8px 8px;
+    }
+    .ml-model > .story-title {
+      position: absolute;
+      top: 11px;
+      left: 8px;
+      right: 8px;
+      color: var(--ml);
+    }
+    .nn-labels {
+      position: absolute;
+      top: 37px;
+      left: 12px;
+      right: 12px;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      z-index: 2;
+      text-align: center;
+      font-family: var(--font-mono);
+      font-size: 0.68rem;
+      font-weight: 800;
+      color: var(--ink);
+    }
+    .nn-svg {
+      width: 100%;
+      height: 100%;
+      min-height: 128px;
+      overflow: visible;
+    }
+    .nn-svg line {
+      stroke: var(--ml);
+      stroke-width: 2.5;
+      opacity: 0.62;
+      animation: lineFlow 5.8s ease-in-out infinite;
+    }
+    .nn-svg circle {
+      fill: var(--anim-panel);
+      stroke: var(--ml);
+      stroke-width: 3;
+      animation: nodePulse 5.8s ease-in-out infinite;
+    }
+    .nn-svg .hidden-node { animation-delay: 0.7s; }
+    .nn-svg .out-node { animation-delay: 1.4s; }
+    @keyframes inputGlow {
+      0%, 12%, 100% { box-shadow: none; }
+      18%, 35% { box-shadow: 0 0 0 4px color-mix(in srgb, var(--ml) 28%, transparent); }
+    }
+    @keyframes nodePulse {
+      0%, 22%, 72%, 100% { fill: var(--anim-panel); transform: scale(1); transform-origin: center; }
+      34%, 54% { fill: var(--ml); transform: scale(1.12); transform-origin: center; }
+    }
+    @keyframes lineFlow {
+      0%, 20%, 100% { opacity: 0.3; }
+      34%, 68% { opacity: 0.9; }
+    }
+    @keyframes outputReveal {
+      0%, 48% { opacity: 0.3; transform: translateX(8px); }
+      62%, 90% { opacity: 1; transform: translateX(0); }
+      100% { opacity: 0.5; }
+    }
+
+    /* ===== Cloud Computing storyboard ===== */
+    .cloud-story {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      padding-top: 34px;
+    }
+    .cloud-heading {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      text-align: center;
+      color: var(--cc);
+      font-family: var(--font-mono);
+      font-size: 0.9rem;
+      font-weight: 800;
+      letter-spacing: 0.07em;
+    }
+    .server-card {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      border-color: var(--cc);
+      background: color-mix(in srgb, var(--cc) 10%, var(--anim-panel));
+      color: var(--ink);
+    }
+    .server-card strong {
+      color: var(--cc);
+      font-family: var(--font-mono);
+      font-size: 0.92rem;
+      letter-spacing: 0.05em;
+      margin: 10px 0 6px;
+    }
+    .server-card p {
+      font-size: 0.78rem;
+      line-height: 1.35;
+      font-weight: 650;
+      color: var(--ink);
+    }
+    .server-leds { display: flex; gap: 9px; }
+    .server-leds i {
+      width: 14px;
+      height: 14px;
+      display: block;
+      border-radius: 50%;
+      border: 2px solid var(--caption-fg);
+      background: var(--anim-soft);
+      animation: serverBlink 5.4s ease-in-out infinite;
+    }
+    .server-card:nth-child(3) .server-leds i { animation-delay: 0.65s; }
+    .server-card:nth-child(4) .server-leds i { animation-delay: 1.3s; }
+    .server-leds i:nth-child(2) { animation-delay: 0.35s; }
+    .server-leds i:nth-child(3) { animation-delay: 0.7s; }
+    @keyframes serverBlink {
+      0%, 18%, 100% { background: var(--anim-soft); transform: scale(1); }
+      34%, 64% {
+        background: color-mix(in srgb, var(--cc) 72%, var(--anim-panel));
+        transform: scale(1.15);
+      }
+    }
+
+    /* ===== Combined pipeline storyboard ===== */
+    .pipe {
+      grid-template-columns: minmax(0, 1fr) 28px minmax(0, 1fr) 28px minmax(0, 1fr) 28px minmax(0, 1.25fr);
+      gap: 7px;
+      padding-bottom: 4px;
+    }
+    .pipe-step {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      text-align: center;
+      border: 2px solid var(--anim-border);
+      border-radius: 11px;
+      background: var(--anim-panel);
+      padding: 11px 8px;
+      color: var(--ink);
+      opacity: 0.48;
+      animation: pipeStep 6s ease-in-out infinite;
+    }
+    .pipe-step:nth-of-type(3) { animation-delay: 1.1s; }
+    .pipe-step:nth-of-type(5) { animation-delay: 2.2s; }
+    .pipe-step:nth-of-type(7) { animation-delay: 3.3s; }
+    .pipe-step.bd { border-color: var(--bd); }
+    .pipe-step.cc { border-color: var(--cc); }
+    .pipe-step.ml, .pipe-step.reply { border-color: var(--ml); }
+    .pipe-step h4 {
+      font-family: var(--font-mono);
+      font-size: 0.77rem;
+      line-height: 1.25;
+      margin-bottom: 9px;
+      font-weight: 800;
+    }
+    .pipe-step.bd h4 { color: var(--bd); }
+    .pipe-step.cc h4 { color: var(--cc); }
+    .pipe-step.ml h4, .pipe-step.reply h4 { color: var(--ml); }
+    .pipe-icon {
+      font-size: 1.75rem;
+      line-height: 1;
+      margin-bottom: 8px;
+      color: var(--ink);
+    }
+    .pipe-step p {
+      font-size: 0.73rem;
+      line-height: 1.35;
+      font-weight: 650;
+      color: var(--ink);
+    }
+    .pipe-arrow {
+      align-self: center;
+      text-align: center;
+      color: var(--caption-fg);
+      font-size: 1.65rem;
+      font-weight: 800;
+      animation: arrowGlow 6s ease-in-out infinite;
+    }
+    .pipe-arrow:nth-of-type(2) { animation-delay: 0.75s; }
+    .pipe-arrow:nth-of-type(4) { animation-delay: 1.85s; }
+    .pipe-arrow:nth-of-type(6) { animation-delay: 2.95s; }
+    .pipe-chat .bubble {
+      padding: 7px 8px;
+      border-radius: 8px;
+      border: 1.5px solid var(--anim-border);
+      background: var(--anim-bg);
+      color: var(--ink);
+      font-size: 0.72rem;
+      line-height: 1.35;
+      font-weight: 650;
+      text-align: left;
+    }
+    .pipe-chat .bubble + .bubble {
+      margin-top: 7px;
+      margin-left: 12px;
+      border-color: var(--ml);
+      background: color-mix(in srgb, var(--ml) 14%, var(--anim-panel));
+    }
+    @keyframes pipeStep {
+      0%, 12%, 100% { opacity: 0.48; transform: translateY(3px); }
+      20%, 42% { opacity: 1; transform: translateY(0); box-shadow: 0 0 0 3px var(--anim-border); }
+      55%, 90% { opacity: 0.72; transform: translateY(0); }
+    }
+    @keyframes arrowGlow {
+      0%, 18%, 100% { opacity: 0.35; transform: translateX(-3px); }
+      32%, 62% { opacity: 1; transform: translateX(3px); }
+    }
+
+    /* Idle preview on quiz before answer */
+    .idle-phone {
+      position: absolute;
+      left: 50%;
+      top: 51%;
+      transform: translate(-50%, -50%);
+      width: 230px;
+      height: 210px;
+      border-radius: 20px;
+      border: 2px solid var(--anim-border);
+      background: var(--anim-panel);
+      padding: 22px 15px 14px;
+      box-shadow: 0 10px 28px color-mix(in srgb, var(--caption-fg) 12%, transparent);
+    }
+    .idle-phone::before {
+      content: "";
+      position: absolute;
+      top: 9px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 42px;
+      height: 5px;
+      border-radius: 999px;
+      background: var(--anim-soft-2);
+    }
+    .idle-phone .app-bar {
+      font-family: var(--font-mono);
+      font-size: 0.73rem;
+      font-weight: 800;
+      color: var(--ml);
+      margin-bottom: 13px;
+      text-align: center;
+      letter-spacing: 0.04em;
+    }
+    .idle-phone .b {
+      padding: 10px 11px;
+      border-radius: 10px;
+      font-size: 0.8rem;
+      line-height: 1.35;
+      font-weight: 650;
+      color: var(--ink);
+      margin-bottom: 10px;
+      opacity: 0;
+      animation: chatIn 5.4s ease infinite;
+      border: 1.5px solid var(--anim-border);
+    }
+    .idle-phone .b.u {
+      background: var(--anim-bg);
+      margin-left: 20px;
+      animation-delay: 0.2s;
+    }
+    .idle-phone .b.t {
+      background: color-mix(in srgb, var(--ml) 14%, var(--anim-panel));
+      border-color: var(--ml);
+      margin-right: 20px;
+      animation-delay: 1.2s;
+    }
+    @keyframes chatIn {
+      0%, 8% { opacity: 0; transform: translateY(6px); }
+      18%, 84% { opacity: 1; transform: translateY(0); }
+      100% { opacity: 0; }
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .hidden { display: none !important; }
+
+    footer.note {
+      margin-top: 16px;
+      color: var(--muted);
+      font-size: 0.78rem;
+      text-align: center;
+    }
+
+    @media (max-width: 640px) {
+      .app { width: calc(100% - 20px); padding: 22px 0 40px; }
+      .content, .intro, .summary { padding: 18px 16px; }
+      .stage { padding: 14px; min-height: 240px; }
+      .anim-box { height: 340px; }
+      .anim-box.bd-box { height: 650px; }
+      .anim-box.ml-box { height: 720px; }
+      .anim-box.cloud-box { height: 670px; }
+      .anim-box.tall { height: 810px; }
+      .scene-caption { font-size: 0.8rem; }
+      .storyboard { inset: 54px 12px 68px; }
+      .bd-story, .ml-story, .cloud-story, .pipe {
+        grid-template-columns: 1fr;
+        gap: 10px;
+      }
+      .story-arrow, .pipe-arrow {
+        transform: rotate(90deg);
+        font-size: 1.65rem;
+        line-height: 1;
+        animation: none;
+      }
+      .story-title { font-size: 0.74rem; }
+      .bd-question, .server-card p, .pipe-step p,
+      .pipe-chat .bubble { font-size: 0.74rem; }
+      .ml-model { min-height: 210px; }
+      .cloud-story { padding-top: 34px; }
+      .pipe-step { min-height: 120px; }
+      .pipe-step.reply { min-height: 165px; }
+      .progress-wrap { text-align: left; width: 100%; }
+      header { align-items: start; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+  </style>
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem("f1-ai-theme");
+        if (t !== "light" && t !== "dark") t = "light";
+        document.documentElement.setAttribute("data-theme", t);
+      } catch (e) {
+        document.documentElement.setAttribute("data-theme", "light");
+      }
+    })();
+  </script>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <div class="header-top">
+        <div class="theme-toggle" role="group" aria-label="Colour mode">
+          <button type="button" id="themeLightBtn" aria-pressed="true">Light</button>
+          <button type="button" id="themeDarkBtn" aria-pressed="false">Dark</button>
+        </div>
+      </div>
+      <div>
+        <div class="eyebrow">Booklet 1 · Unit 1 · Task 5</div>
+        <h1>AI Used in Customer Service Chatbot</h1>
+      </div>
+      <div class="progress-wrap" id="progressWrap">
+        <div class="progress-label"><span id="progressText">Ready</span></div>
+        <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+      </div>
+    </header>
+
+    <nav class="jump-nav" id="jumpNav" aria-label="Jump to question">
+      <button type="button" data-index="0">Q1 · Big Data</button>
+      <button type="button" data-index="1">Q2 · ML</button>
+      <button type="button" data-index="2">Q3 · Cloud</button>
+      <button type="button" data-pipeline>Pipeline</button>
+      <button type="button" data-summary>Summary</button>
+    </nav>
+
+    <section class="panel" id="introScreen">
+      <div class="intro">
+        <h2>Match each function to an AI component</h2>
+        <p>
+          A transportation system mobile app uses an AI-powered customer service chatbot for route planning.
+          Identify which of the <strong style="color:var(--ink)">three empowering bases of AI</strong>
+          each function describes.
+        </p>
+        <div class="pillars">
+          <div class="pillar bd">
+            <strong>Big Data</strong>
+            <span>Huge volumes of examples the system can learn from.</span>
+          </div>
+          <div class="pillar ml">
+            <strong>Machine Learning</strong>
+            <span>Models that learn patterns and produce useful outputs.</span>
+          </div>
+          <div class="pillar cc">
+            <strong>Cloud Computing</strong>
+            <span>Scalable compute power for training and serving models.</span>
+          </div>
+        </div>
+        <p>
+          You will see <strong style="color:var(--ink)">three function descriptions</strong>, one at a time.
+          After each answer, watch how that component fits into the chatbot pipeline.
+        </p>
+        <div class="nav">
+          <button class="btn btn-primary" id="startBtn">Start Task 5</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel hidden" id="quizScreen">
+      <div class="stage">
+        <div class="stage-title">
+          <span class="badge">Question <strong id="qNum">1</strong> of 3</span>
+          <span class="badge" id="stageName">Function match</span>
+        </div>
+        <div id="animationRoot" style="width:100%;display:grid;place-items:center"></div>
+      </div>
+      <div class="content">
+        <div class="question" id="questionText">Which AI component does this describe?</div>
+        <p class="hint" id="questionHint">Read the function carefully, then choose Big Data, Machine Learning, or Cloud Computing.</p>
+        <div class="func-card" id="funcCard">
+          <span>Function description</span>
+          <div id="funcText"></div>
+        </div>
+        <div class="choices" id="choices"></div>
+        <div class="explain" id="explain">
+          <div class="verdict" id="verdict"></div>
+          <h3 id="explainTitle"></h3>
+          <div id="explainBody"></div>
+        </div>
+        <div class="nav">
+          <button class="btn btn-ghost" id="backBtn" disabled>Back</button>
+          <button class="btn btn-primary" id="nextBtn">Next</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel hidden" id="pipelineScreen">
+      <div class="stage">
+        <div class="stage-title">
+          <span class="badge">Final <strong>pipeline</strong></span>
+          <span class="badge">All three components together</span>
+        </div>
+        <div id="pipelineRoot" style="width:100%;display:grid;place-items:center"></div>
+      </div>
+      <div class="content">
+        <div class="question">From data to reply: the full chatbot pipeline</div>
+        <p class="hint">
+          Big Data supplies route-planning Q&amp;A. Cloud Computing powers training and inference.
+          Machine Learning turns a new question into a helpful answer.
+        </p>
+        <div class="explain show">
+          <div class="verdict ok">Pipeline complete</div>
+          <h3>How a transport chatbot answers you</h3>
+          <p>
+            <strong>Big Data</strong> collects past user inquiries and expected answers about route planning.
+            <strong>Cloud Computing</strong> provides the computational resources to process that data, train the model,
+            and apply it to new queries. <strong>Machine Learning</strong> (often a neural network) maps an input
+            query to an appropriate output response.
+          </p>
+          <p>
+            Example: a rider asks <strong>“How do I go to Central?”</strong> — the trained model replies with a route.
+          </p>
+        </div>
+        <div class="nav">
+          <button class="btn btn-ghost" id="pipeBackBtn">Back</button>
+          <button class="btn btn-primary" id="pipeNextBtn">See score</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel hidden" id="summaryScreen">
+      <div class="summary">
+        <h2>Task complete</h2>
+        <p>Great work. Here is how you did on matching chatbot AI components.</p>
+        <div class="score-grid">
+          <div class="score-card"><span>Correct first try</span><strong id="scoreCorrect">0</strong></div>
+          <div class="score-card"><span>Total questions</span><strong>3</strong></div>
+          <div class="score-card"><span>Accuracy</span><strong id="scorePct">0%</strong></div>
+        </div>
+        <p>
+          Key takeaway: a customer service chatbot is not just “a chat window” —
+          it rests on <strong style="color:var(--ink)">Big Data + Machine Learning + Cloud Computing</strong>
+          working together.
+        </p>
+        <div class="nav">
+          <button class="btn btn-ghost" id="reviewBtn">Review again</button>
+          <button class="btn btn-primary" id="restartBtn">Restart</button>
+        </div>
+      </div>
+    </section>
+
+    <footer class="note">Based on EDB Booklet 1 Unit 1 · Task 5 — AI in a transportation customer service chatbot by Valtorta College</footer>
+  </div>
+
+  <script>
+    const OPTIONS = [
+      { id: "bd", label: "Big Data", sub: "Large-scale training examples" },
+      { id: "ml", label: "Machine Learning", sub: "Model that maps input → output" },
+      { id: "cc", label: "Cloud Computing", sub: "Compute for train &amp; infer" },
+    ];
+
+    const questions = [
+      {
+        id: 1,
+        name: "Route-planning inquiries",
+        functionText: "User inquiries on route-planning (including users’ questions and expected answers).",
+        correct: "bd",
+        verdict: { type: "bd", text: "Big Data" },
+        explainTitle: "Big Data feeds the chatbot",
+        explainHtml: `
+          <p><strong>Big Data</strong> here means the large collection of past route-planning questions and the answers users expect.</p>
+          <p>Those Q&amp;A pairs become the training material that teaches the chatbot how people ask for directions — and what a good reply looks like.</p>
+        `,
+        renderIdle: renderIdlePhone,
+        renderExplain: renderBigData,
+      },
+      {
+        id: 2,
+        name: "Neural network response",
+        functionText: "The AI model is often a neural network that can generate an appropriate output response for a given input user query.",
+        correct: "ml",
+        verdict: { type: "ml", text: "Machine Learning" },
+        explainTitle: "Machine Learning turns questions into answers",
+        explainHtml: `
+          <p><strong>Machine Learning</strong> is the AI model itself — often a <strong>neural network</strong>.</p>
+          <p>Given an input user query, the network activates layer by layer and generates an appropriate output response (for example, a suggested route).</p>
+        `,
+        renderIdle: renderIdlePhone,
+        renderExplain: renderMachineLearning,
+      },
+      {
+        id: 3,
+        name: "Training &amp; inference power",
+        functionText: "Computational resources that support data processing and machine learning in training an AI model, as well as applying it to new data.",
+        correct: "cc",
+        verdict: { type: "cc", text: "Cloud Computing" },
+        explainTitle: "Cloud Computing powers training and inference",
+        explainHtml: `
+          <p><strong>Cloud Computing</strong> supplies the computational resources behind the scenes.</p>
+          <p>It supports processing the data, <strong>training</strong> the AI model, and later <strong>applying</strong> (inferring on) new user queries — without needing a supercomputer on every phone.</p>
+        `,
+        renderIdle: renderIdlePhone,
+        renderExplain: renderCloud,
+      },
+    ];
+
+    function renderIdlePhone(root) {
+      root.innerHTML = `
+        <div class="anim-box">
+          <div class="scene-label pipe">Transport app · chatbot</div>
+          <div class="idle-phone">
+            <div class="app-bar">CITY TRANSIT</div>
+            <div class="b u">How do I go to Central?</div>
+            <div class="b t">Take MTR Line 1 to Central · 18 min</div>
+          </div>
+          <div class="scene-caption">Preview: customer service chatbot in a transit app</div>
+        </div>`;
+    }
+
+    function renderBigData(root) {
+      root.innerHTML = `
+        <div class="anim-box bd-box">
+          <div class="scene-label bd">Big Data</div>
+          <div class="storyboard bd-story">
+            <div class="story-panel bd-questions">
+              <div class="story-title">PAST USER QUESTIONS</div>
+              <div class="bd-question"><b>Q:</b> Bus to airport? <b>A:</b> Take A21.</div>
+              <div class="bd-question"><b>Q:</b> Fastest to TST? <b>A:</b> MTR.</div>
+              <div class="bd-question"><b>Q:</b> Night route? <b>A:</b> Take N21.</div>
+            </div>
+            <div class="story-arrow" aria-hidden="true">→</div>
+            <div class="story-panel bd-lake">
+              <div class="story-title">BIG DATA LAKE</div>
+              <div class="lake-bars"><i></i><i></i><i></i><i></i></div>
+              <div class="lake-label">route-planning inquiries</div>
+            </div>
+          </div>
+          <div class="scene-caption">Many past questions and answers become Big Data.</div>
+        </div>`;
+    }
+
+    function renderMachineLearning(root) {
+      root.innerHTML = `
+        <div class="anim-box ml-box">
+          <div class="scene-label ml">Machine Learning</div>
+          <div class="storyboard ml-story">
+            <div class="story-panel io-box in">
+              <strong>INPUT</strong>
+              How do I go to Central?
+            </div>
+            <div class="story-panel ml-model">
+              <div class="story-title">MODEL (NEURAL NETWORK)</div>
+              <div class="nn-labels"><span>IN</span><span>HIDDEN</span><span>OUT</span></div>
+              <svg class="nn-svg" viewBox="0 0 240 140" role="img" aria-label="Three-column neural network">
+                <g fill="none">
+                  <line x1="35" y1="44" x2="120" y2="32"/><line x1="35" y1="44" x2="120" y2="70"/>
+                  <line x1="35" y1="96" x2="120" y2="70"/><line x1="35" y1="96" x2="120" y2="108"/>
+                  <line x1="120" y1="32" x2="205" y2="50"/><line x1="120" y1="70" x2="205" y2="50"/>
+                  <line x1="120" y1="70" x2="205" y2="90"/><line x1="120" y1="108" x2="205" y2="90"/>
+                </g>
+                <circle cx="35" cy="44" r="8"/><circle cx="35" cy="96" r="8"/>
+                <circle class="hidden-node" cx="120" cy="32" r="8"/><circle class="hidden-node" cx="120" cy="70" r="8"/>
+                <circle class="hidden-node" cx="120" cy="108" r="8"/>
+                <circle class="out-node" cx="205" cy="50" r="8"/><circle class="out-node" cx="205" cy="90" r="8"/>
+              </svg>
+            </div>
+            <div class="story-panel io-box out">
+              <strong>OUTPUT</strong>
+              Take MTR Line 1 to Central · 18 min · Exit A
+            </div>
+          </div>
+          <div class="scene-caption">The model turns a new question into an answer.</div>
+        </div>`;
+    }
+
+    function renderCloud(root) {
+      root.innerHTML = `
+        <div class="anim-box cloud-box">
+          <div class="scene-label cc">Cloud Computing</div>
+          <div class="storyboard cloud-story">
+            <div class="cloud-heading">CLOUD COMPUTING</div>
+            <div class="story-panel server-card">
+              <div class="server-leds"><i></i><i></i><i></i></div>
+              <strong>TRAIN</strong>
+              <p>update the model</p>
+            </div>
+            <div class="story-panel server-card">
+              <div class="server-leds"><i></i><i></i><i></i></div>
+              <strong>STORE</strong>
+              <p>keep data &amp; model</p>
+            </div>
+            <div class="story-panel server-card">
+              <div class="server-leds"><i></i><i></i><i></i></div>
+              <strong>REPLY</strong>
+              <p>answer new questions</p>
+            </div>
+          </div>
+          <div class="scene-caption">Cloud computers provide the power to train and run the AI.</div>
+        </div>`;
+    }
+
+    function renderPipeline(root) {
+      root.innerHTML = `
+        <div class="anim-box tall">
+          <div class="scene-label pipe">Full pipeline</div>
+          <div class="storyboard pipe">
+            <div class="pipe-step bd">
+              <h4>Big Data</h4>
+              <div class="pipe-icon" aria-hidden="true">▤</div>
+              <p>past route Q&amp;A</p>
+            </div>
+            <div class="pipe-arrow" aria-hidden="true">→</div>
+            <div class="pipe-step cc">
+              <h4>Cloud</h4>
+              <div class="pipe-icon" aria-hidden="true">▦</div>
+              <p>store + power</p>
+            </div>
+            <div class="pipe-arrow" aria-hidden="true">→</div>
+            <div class="pipe-step ml">
+              <h4>ML model</h4>
+              <div class="pipe-icon" aria-hidden="true">●—●</div>
+              <p>make an answer</p>
+            </div>
+            <div class="pipe-arrow" aria-hidden="true">→</div>
+            <div class="pipe-step reply">
+              <h4>Chatbot reply</h4>
+              <div class="pipe-chat">
+                <div class="bubble">Q: How do I go to Central?</div>
+                <div class="bubble">A: Take MTR Line 1 · 18 min.</div>
+              </div>
+            </div>
+          </div>
+          <div class="scene-caption">Big Data + Cloud + ML model → chatbot reply.</div>
+        </div>`;
+    }
+
+    const els = {
+      intro: document.getElementById("introScreen"),
+      quiz: document.getElementById("quizScreen"),
+      pipeline: document.getElementById("pipelineScreen"),
+      summary: document.getElementById("summaryScreen"),
+      startBtn: document.getElementById("startBtn"),
+      backBtn: document.getElementById("backBtn"),
+      nextBtn: document.getElementById("nextBtn"),
+      pipeBackBtn: document.getElementById("pipeBackBtn"),
+      pipeNextBtn: document.getElementById("pipeNextBtn"),
+      restartBtn: document.getElementById("restartBtn"),
+      reviewBtn: document.getElementById("reviewBtn"),
+      progressText: document.getElementById("progressText"),
+      progressFill: document.getElementById("progressFill"),
+      qNum: document.getElementById("qNum"),
+      stageName: document.getElementById("stageName"),
+      animationRoot: document.getElementById("animationRoot"),
+      pipelineRoot: document.getElementById("pipelineRoot"),
+      questionText: document.getElementById("questionText"),
+      questionHint: document.getElementById("questionHint"),
+      funcText: document.getElementById("funcText"),
+      choices: document.getElementById("choices"),
+      explain: document.getElementById("explain"),
+      verdict: document.getElementById("verdict"),
+      explainTitle: document.getElementById("explainTitle"),
+      explainBody: document.getElementById("explainBody"),
+      scoreCorrect: document.getElementById("scoreCorrect"),
+      scorePct: document.getElementById("scorePct"),
+      jumpNav: document.getElementById("jumpNav"),
+    };
+
+    let index = 0;
+    let answered = false;
+    let firstTryCorrect = 0;
+    let attempts = {};
+    const TOTAL_STEPS = questions.length + 1; // 3 Qs + pipeline
+
+    function show(screen) {
+      els.intro.classList.toggle("hidden", screen !== "intro");
+      els.quiz.classList.toggle("hidden", screen !== "quiz");
+      els.pipeline.classList.toggle("hidden", screen !== "pipeline");
+      els.summary.classList.toggle("hidden", screen !== "summary");
+      updateJumpNav(screen);
+    }
+
+    function updateJumpNav(screen = "quiz") {
+      els.jumpNav.querySelectorAll("button").forEach((btn) => {
+        const active = screen === "summary"
+          ? btn.hasAttribute("data-summary")
+          : screen === "pipeline"
+            ? btn.hasAttribute("data-pipeline")
+            : screen === "quiz" && Number(btn.dataset.index) === index;
+        if (active) btn.setAttribute("aria-current", "step");
+        else btn.removeAttribute("aria-current");
+      });
+    }
+
+    function updateProgress(step) {
+      const pct = (step / TOTAL_STEPS) * 100;
+      els.progressFill.style.width = `${pct}%`;
+      if (step <= questions.length) {
+        els.progressText.textContent = `Question ${step} of ${questions.length}`;
+      } else if (step === questions.length + 1) {
+        els.progressText.textContent = "Pipeline review";
+      } else {
+        els.progressText.textContent = "Complete";
+      }
+    }
+
+    function loadQuestion(i) {
+      index = i;
+      answered = false;
+      const q = questions[i];
+      updateProgress(i + 1);
+      els.qNum.textContent = String(q.id);
+      els.stageName.textContent = q.name;
+      els.questionText.textContent = "Which AI component does this describe?";
+      els.questionHint.textContent = "Choose Big Data, Machine Learning, or Cloud Computing. Then watch the explanation animation.";
+      els.funcText.textContent = q.functionText;
+      els.explain.classList.remove("show");
+      els.backBtn.disabled = i === 0;
+      els.nextBtn.textContent = i === questions.length - 1 ? "See full pipeline" : "Next";
+      updateJumpNav();
+
+      q.renderIdle(els.animationRoot);
+
+      els.choices.innerHTML = "";
+      OPTIONS.forEach((opt) => {
+        const btn = document.createElement("button");
+        btn.className = "choice";
+        btn.type = "button";
+        btn.dataset.id = opt.id;
+        btn.innerHTML = `${opt.label}<span class="sub">${opt.sub}</span>`;
+        btn.addEventListener("click", () => onChoose(opt.id, btn));
+        els.choices.appendChild(btn);
+      });
+    }
+
+    function onChoose(optionId, btn) {
+      const q = questions[index];
+      const buttons = [...els.choices.querySelectorAll(".choice")];
+      const isCorrect = optionId === q.correct;
+
+      if (!attempts[q.id]) {
+        attempts[q.id] = true;
+        if (isCorrect) firstTryCorrect += 1;
+      }
+
+      buttons.forEach((b) => {
+        b.disabled = true;
+        if (b.dataset.id === q.correct) b.classList.add("correct");
+        else if (b === btn && !isCorrect) b.classList.add("wrong");
+      });
+
+      els.verdict.className = `verdict ${q.verdict.type}`;
+      els.verdict.textContent = isCorrect ? `Correct — ${q.verdict.text}` : `Answer — ${q.verdict.text}`;
+      els.explainTitle.textContent = q.explainTitle;
+      els.explainBody.innerHTML = q.explainHtml;
+      if (!isCorrect) {
+        els.explainBody.innerHTML += `<p style="color:var(--warning)">Your pick was not right this time — the function matches <strong>${q.verdict.text}</strong>.</p>`;
+      }
+
+      q.renderExplain(els.animationRoot);
+      els.explain.classList.add("show");
+      els.nextBtn.disabled = false;
+      answered = true;
+    }
+
+    function showPipeline() {
+      show("pipeline");
+      updateProgress(questions.length + 1);
+      renderPipeline(els.pipelineRoot);
+    }
+
+    function showSummary() {
+      show("summary");
+      els.progressFill.style.width = "100%";
+      els.progressText.textContent = "Complete";
+      els.scoreCorrect.textContent = String(firstTryCorrect);
+      els.scorePct.textContent = `${Math.round((firstTryCorrect / questions.length) * 100)}%`;
+    }
+
+    function resetScore() {
+      firstTryCorrect = 0;
+      attempts = {};
+    }
+
+    els.startBtn.addEventListener("click", () => {
+      resetScore();
+      show("quiz");
+      loadQuestion(0);
+    });
+
+    els.nextBtn.addEventListener("click", () => {
+      if (index >= questions.length - 1) showPipeline();
+      else loadQuestion(index + 1);
+    });
+
+    els.jumpNav.addEventListener("click", (event) => {
+      const btn = event.target.closest("button");
+      if (!btn) return;
+      if (btn.hasAttribute("data-summary")) {
+        showSummary();
+      } else if (btn.hasAttribute("data-pipeline")) {
+        showPipeline();
+      } else {
+        show("quiz");
+        loadQuestion(Number(btn.dataset.index));
+      }
+    });
+
+    els.backBtn.addEventListener("click", () => {
+      if (index > 0) loadQuestion(index - 1);
+    });
+
+    els.pipeBackBtn.addEventListener("click", () => {
+      show("quiz");
+      loadQuestion(questions.length - 1);
+    });
+
+    els.pipeNextBtn.addEventListener("click", showSummary);
+
+    els.restartBtn.addEventListener("click", () => {
+      resetScore();
+      show("quiz");
+      loadQuestion(0);
+    });
+
+    els.reviewBtn.addEventListener("click", () => {
+      show("quiz");
+      loadQuestion(0);
+    });
+
+    function applyTheme(theme) {
+      const next = theme === "dark" ? "dark" : "light";
+      document.documentElement.setAttribute("data-theme", next);
+      try { localStorage.setItem("f1-ai-theme", next); } catch (e) {}
+      const lightBtn = document.getElementById("themeLightBtn");
+      const darkBtn = document.getElementById("themeDarkBtn");
+      if (lightBtn && darkBtn) {
+        lightBtn.setAttribute("aria-pressed", next === "light" ? "true" : "false");
+        darkBtn.setAttribute("aria-pressed", next === "dark" ? "true" : "false");
+      }
+    }
+
+    document.getElementById("themeLightBtn").addEventListener("click", () => applyTheme("light"));
+    document.getElementById("themeDarkBtn").addEventListener("click", () => applyTheme("dark"));
+    applyTheme(document.documentElement.getAttribute("data-theme") || "light");
+  </script>
+</body>
+</html>

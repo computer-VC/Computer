@@ -1,0 +1,1022 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Unit 4 — Word Embeddings &amp; NLP</title>
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem("f2-ai-theme");
+        document.documentElement.setAttribute("data-theme", t === "dark" ? "dark" : "light");
+      } catch (e) { document.documentElement.setAttribute("data-theme", "light"); }
+    })();
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet" />
+  <style>
+:root, [data-theme="light"] {
+  --canvas: #ffffff;
+  --surface: #f7f6f3;
+  --ink: #37352f;
+  --body: #4f4d47;
+  --muted: #787774;
+  --primary: #2383e2;
+  --primary-active: #1a6fc1;
+  --success: #0f7b3f;
+  --warning: #cb6800;
+  --danger: #d44c47;
+  --hairline: rgba(55, 53, 47, 0.09);
+  --radius: 10px;
+  --ease: cubic-bezier(0.16, 1, 0.3, 1);
+  --shadow: 0 1px 2px rgba(55, 53, 47, 0.04), 0 4px 12px rgba(55, 53, 47, 0.06);
+  --toggle-bg: #ffffff;
+  --toggle-border: rgba(55, 53, 47, 0.14);
+  --caption-bg: rgba(255, 255, 255, 0.96);
+  --caption-fg: #37352f;
+  --anim-bg: #f7f6f3;
+  --anim-panel: #ffffff;
+  --anim-soft: #e8e6e1;
+  --anim-soft-2: #ddd9d2;
+  --anim-border: #c5c1b8;
+}
+
+[data-theme="dark"] {
+  --canvas: #202020;
+  --surface: #151515;
+  --ink: #f1f0ec;
+  --body: #cfcbc4;
+  --muted: #9a968e;
+  --primary: #5ba8f5;
+  --primary-active: #7bb8f7;
+  --success: #3dcf7a;
+  --warning: #e0a04a;
+  --danger: #f07171;
+  --hairline: rgba(255, 255, 255, 0.1);
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.35), 0 4px 14px rgba(0, 0, 0, 0.28);
+  --toggle-bg: #202020;
+  --toggle-border: rgba(255, 255, 255, 0.14);
+  --caption-bg: rgba(32, 32, 32, 0.96);
+  --caption-fg: #f1f0ec;
+  --anim-bg: #1a1a1a;
+  --anim-panel: #262626;
+  --anim-soft: #333333;
+  --anim-soft-2: #3d3d3d;
+  --anim-border: #555555;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  min-height: 100vh;
+  min-height: 100dvh;
+  font-family: Inter, system-ui, sans-serif;
+  color: var(--body);
+  background: var(--surface);
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+button, a { font: inherit; }
+button:focus-visible, a:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+.app {
+  width: min(880px, calc(100% - 28px));
+  margin: 0 auto;
+  padding: 28px 0 40px;
+}
+
+header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 20px;
+}
+
+.header-top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  margin-bottom: 4px;
+}
+
+.theme-toggle {
+  display: inline-flex;
+  border: 1px solid var(--toggle-border);
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--toggle-bg);
+}
+
+.theme-toggle button {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 8px 12px;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.theme-toggle button[aria-pressed="true"] {
+  background: var(--primary);
+  color: #fff;
+}
+
+.eyebrow, .mono {
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+}
+
+.eyebrow {
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+  font-weight: 500;
+  margin-bottom: 6px;
+}
+
+h1, h2 { font-family: "Cormorant Garamond", Georgia, serif; color: var(--ink); }
+h1 { font-size: clamp(1.85rem, 4.5vw, 2.45rem); line-height: 1.15; }
+
+.progress-wrap { min-width: 160px; width: min(220px, 100%); }
+.progress-label { font-size: 0.8rem; color: var(--muted); margin-bottom: 8px; text-align: right; }
+.progress-bar { height: 3px; background: var(--hairline); overflow: hidden; }
+.progress-fill { height: 100%; width: 0; background: var(--primary); transition: width 0.36s var(--ease); }
+
+.jump-nav {
+  width: 100%;
+  display: flex;
+  gap: 7px;
+  overflow-x: auto;
+  padding: 2px 1px 7px;
+  scrollbar-width: thin;
+}
+
+.jump-btn {
+  flex: 0 0 auto;
+  border: 1px solid var(--hairline);
+  border-radius: 999px;
+  background: var(--canvas);
+  color: var(--muted);
+  padding: 6px 10px;
+  font: 600 0.66rem "JetBrains Mono", monospace;
+  cursor: pointer;
+}
+
+.jump-btn:hover { color: var(--primary); border-color: var(--primary); }
+.jump-btn.active { color: #fff; background: var(--primary); border-color: var(--primary); }
+
+.panel {
+  background: var(--canvas);
+  border: 1px solid var(--hairline);
+  border-radius: 12px;
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+
+.hidden { display: none !important; }
+
+footer.note {
+  margin-top: 14px;
+  color: var(--muted);
+  font-size: 0.78rem;
+  text-align: center;
+}
+
+
+.intro, .summary { padding: 28px 22px; }
+.intro h2, .summary h2, .section-title {
+  font-size: clamp(1.4rem, 3vw, 1.75rem);
+  margin-bottom: 10px;
+  line-height: 1.2;
+}
+
+.intro p, .summary p, .section-body {
+  line-height: 1.65;
+  margin-bottom: 12px;
+  font-size: 0.95rem;
+}
+
+strong { color: var(--ink); }
+
+.chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 17px 0 21px; }
+.chip {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 6px 10px;
+  border: 1px solid var(--hairline);
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--ink);
+}
+
+.stage {
+  padding: 18px;
+  border-bottom: 1px solid var(--hairline);
+  background: var(--surface);
+}
+
+.badge {
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+  padding: 4px 10px;
+  border: 1px solid var(--hairline);
+  border-radius: 999px;
+  font-size: 0.78rem;
+  color: var(--muted);
+  background: var(--canvas);
+  margin-bottom: 12px;
+}
+
+.badge strong { font-family: "JetBrains Mono", monospace; }
+
+.scene {
+  width: 100%;
+  min-height: 300px;
+  border: 1px solid var(--hairline);
+  border-radius: 10px;
+  background: var(--anim-bg);
+  position: relative;
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+}
+
+.scene-caption {
+  position: absolute;
+  z-index: 8;
+  left: 10px;
+  bottom: 8px;
+  max-width: 92%;
+  color: var(--caption-fg);
+  background: var(--caption-bg);
+  border: 1px solid var(--hairline);
+  border-radius: 6px;
+  padding: 4px 8px;
+  box-shadow: var(--shadow);
+  font-size: 0.7rem;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.content { padding: 20px 18px 18px; }
+
+.definition {
+  border-left: 3px solid var(--primary);
+  padding: 10px 12px;
+  margin: 12px 0 15px;
+  background: var(--surface);
+  color: var(--ink);
+  line-height: 1.55;
+  font-size: 0.92rem;
+}
+
+.definition::before {
+  content: "DEFINITION";
+  display: block;
+  font: 600 0.62rem "JetBrains Mono", monospace;
+  color: var(--primary);
+  letter-spacing: 0.05em;
+  margin-bottom: 5px;
+}
+
+.example-box {
+  border: 1px solid var(--hairline);
+  border-radius: 9px;
+  padding: 12px;
+  margin: 14px 0 4px;
+  background: var(--surface);
+  font-size: 0.88rem;
+  line-height: 1.55;
+}
+
+.example-box b {
+  display: block;
+  font: 600 0.65rem "JetBrains Mono", monospace;
+  color: var(--primary);
+  margin-bottom: 5px;
+  letter-spacing: 0.04em;
+}
+
+.nav {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 17px;
+}
+
+.btn {
+  border: 0;
+  border-radius: 8px;
+  padding: 10px 16px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: 0.18s ease;
+}
+
+.btn:hover:not(:disabled) { transform: translateY(-1px); }
+.btn-primary { color: #fff; background: var(--primary); margin-left: auto; }
+.btn-primary:hover:not(:disabled) { background: var(--primary-active); }
+.btn-ghost { color: var(--muted); background: transparent; border: 1px solid var(--hairline); }
+
+.recap-list { display: grid; gap: 7px; margin: 15px 0 18px; }
+.recap-item {
+  display: grid;
+  grid-template-columns: 118px 1fr;
+  gap: 10px;
+  padding: 9px 10px;
+  border-bottom: 1px solid var(--hairline);
+  font-size: 0.85rem;
+  line-height: 1.45;
+}
+.recap-item b {
+  font-family: "JetBrains Mono", monospace;
+  color: var(--primary);
+  font-size: 0.68rem;
+}
+
+.frame {
+  width: 100%;
+  min-height: 300px;
+  padding: 22px 18px 44px;
+  display: grid;
+  place-items: center;
+}
+
+.arrow {
+  font: 600 1.05rem "JetBrains Mono", monospace;
+  color: var(--primary);
+  animation: nudge 1.2s ease-in-out infinite;
+}
+
+.pipe {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  width: 100%;
+}
+
+.pipe-step {
+  flex: 1;
+  min-width: 90px;
+  max-width: 140px;
+  padding: 10px 8px;
+  border: 1px solid var(--anim-border);
+  border-radius: 8px;
+  background: var(--anim-panel);
+  text-align: center;
+  font: 600 0.55rem "JetBrains Mono", monospace;
+  color: var(--ink);
+  line-height: 1.35;
+  opacity: 0.45;
+}
+
+.pipe-step.on {
+  opacity: 1;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--primary) 20%, transparent);
+  animation: pulseGlow 1.8s ease-in-out infinite;
+}
+
+.pipe-step b {
+  display: block;
+  color: var(--primary);
+  font-size: 0.5rem;
+  margin-bottom: 4px;
+}
+
+.flow-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  width: min(520px, 100%);
+}
+
+.node {
+  min-width: 100px;
+  padding: 12px 10px;
+  border: 1px solid var(--anim-border);
+  border-radius: 10px;
+  background: var(--anim-panel);
+  text-align: center;
+  font: 600 0.62rem "JetBrains Mono", monospace;
+  color: var(--ink);
+}
+
+.node .mono {
+  display: block;
+  color: var(--primary);
+  font-size: 0.52rem;
+  margin-bottom: 4px;
+}
+
+.node.on {
+  border-color: var(--primary);
+  animation: pulseGlow 1.8s ease-in-out infinite;
+}
+
+.compare {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  width: min(520px, 100%);
+}
+
+.cmp {
+  border: 1px solid var(--anim-border);
+  border-radius: 8px;
+  background: var(--anim-panel);
+  padding: 10px;
+  font-size: 0.68rem;
+  line-height: 1.45;
+  color: var(--ink);
+}
+
+.cmp .mono {
+  display: block;
+  color: var(--primary);
+  margin-bottom: 6px;
+  font-size: 0.58rem;
+}
+
+.pair-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin: 12px 0;
+}
+
+.pair-card {
+  border: 1px solid var(--hairline);
+  border-radius: 8px;
+  padding: 10px;
+  background: var(--surface);
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+
+.pair-card b {
+  display: block;
+  font: 600 0.62rem "JetBrains Mono", monospace;
+  color: var(--primary);
+  margin-bottom: 5px;
+}
+
+@keyframes nudge { 50% { transform: translateX(4px); } }
+@keyframes pulseGlow {
+  0%, 100% { box-shadow: 0 0 0 2px color-mix(in srgb, var(--primary) 18%, transparent); }
+  50% { box-shadow: 0 0 0 5px color-mix(in srgb, var(--primary) 10%, transparent); }
+}
+
+@media (max-width: 560px) {
+  .compare, .pair-grid, .recap-item { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 390px) {
+  .app { width: calc(100% - 20px); padding: 18px 0 32px; }
+  .content, .intro, .summary { padding-left: 14px; padding-right: 14px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .arrow, .pipe-step.on, .node.on { animation: none !important; }
+}
+
+</style>
+  <style>
+    /* NLP apps grid */
+    .nlp-apps { width: min(500px, 100%); display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+    .nlp-app {
+      border: 1px solid var(--anim-border); border-radius: 10px; background: var(--anim-panel);
+      padding: 12px 10px; text-align: center; animation: appGlow 3.2s ease-in-out infinite;
+    }
+    .nlp-app:nth-child(2) { animation-delay: 0.35s; }
+    .nlp-app:nth-child(3) { animation-delay: 0.7s; }
+    .nlp-app:nth-child(4) { animation-delay: 1.05s; }
+    .nlp-app .icon { font-size: 1.4rem; margin-bottom: 4px; }
+    .nlp-app b { display: block; font: 600 0.58rem "JetBrains Mono", monospace; color: var(--primary); margin-bottom: 3px; }
+    .nlp-app span { font-size: 0.65rem; color: var(--ink); line-height: 1.35; }
+    .nlp-center {
+      grid-column: 1 / -1; padding: 10px; border: 1px dashed var(--primary); border-radius: 8px;
+      text-align: center; font: 600 0.62rem "JetBrains Mono", monospace; color: var(--primary);
+      animation: pulseGlow 2.4s ease-in-out infinite;
+    }
+
+    /* Word → vector */
+    .vec-transform { width: min(480px, 100%); display: grid; gap: 14px; justify-items: center; }
+    .word-row { display: flex; align-items: center; justify-content: center; gap: 12px; flex-wrap: wrap; }
+    .word-box {
+      padding: 14px 20px; border: 1px solid var(--anim-border); border-radius: 10px;
+      background: var(--anim-panel); font: 700 1.2rem "Cormorant Garamond", serif; color: var(--ink);
+    }
+    .vec-box {
+      padding: 12px 14px; border: 1px solid var(--primary); border-radius: 8px;
+      background: color-mix(in srgb, var(--primary) 8%, var(--anim-panel));
+      font: 600 0.58rem "JetBrains Mono", monospace; color: var(--primary); line-height: 1.6;
+      animation: vecReveal 2.8s ease-in-out infinite;
+    }
+    .vec-dim { display: inline-block; padding: 2px 5px; margin: 1px; border-radius: 3px; background: var(--anim-soft); }
+
+    /* Embedding space */
+    .embed-space {
+      width: min(420px, 100%); height: 260px; border: 1px solid var(--anim-border);
+      border-radius: 12px; background: var(--anim-panel); position: relative; overflow: hidden;
+    }
+    .embed-space::before {
+      content: ""; position: absolute; inset: 0;
+      background: linear-gradient(90deg, var(--anim-soft) 1px, transparent 1px),
+        linear-gradient(var(--anim-soft) 1px, transparent 1px);
+      background-size: 28px 28px; opacity: 0.5;
+    }
+    .embed-dot {
+      position: absolute; padding: 4px 8px; border-radius: 999px;
+      font: 600 0.58rem "JetBrains Mono", monospace; white-space: nowrap;
+      border: 1px solid var(--anim-border); background: var(--anim-bg); color: var(--ink);
+      transform: translate(-50%, -50%); animation: dotDrift 4s ease-in-out infinite;
+    }
+    .embed-dot.king { left: 28%; top: 35%; border-color: var(--primary); color: var(--primary); }
+    .embed-dot.queen { left: 72%; top: 35%; border-color: var(--primary); color: var(--primary); animation-delay: 0.5s; }
+    .embed-dot.man { left: 30%; top: 68%; animation-delay: 1s; }
+    .embed-dot.woman { left: 70%; top: 68%; animation-delay: 1.5s; }
+    .embed-cluster {
+      position: absolute; border: 1px dashed var(--anim-border); border-radius: 50%;
+      pointer-events: none; animation: clusterPulse 3s ease-in-out infinite;
+    }
+    .embed-cluster.c1 { left: 18%; top: 24%; width: 22%; height: 28%; border-color: var(--primary); }
+    .embed-cluster.c2 { left: 62%; top: 24%; width: 22%; height: 28%; border-color: var(--primary); animation-delay: 0.6s; }
+    .embed-link {
+      position: absolute; height: 1px; background: var(--anim-border); transform-origin: left center;
+      pointer-events: none; animation: linkFade 3s ease-in-out infinite;
+    }
+    .embed-link.l1 { left: 28%; top: 35%; width: 44%; transform: rotate(0deg); }
+    .embed-link.l2 { left: 30%; top: 68%; width: 40%; transform: rotate(0deg); animation-delay: 0.8s; }
+
+    /* Vector arithmetic */
+    .arith-stage { width: min(500px, 100%); display: grid; gap: 12px; }
+    .arith-eq {
+      display: flex; align-items: center; justify-content: center; gap: 8px; flex-wrap: wrap;
+      font: 600 0.72rem "JetBrains Mono", monospace; color: var(--ink);
+    }
+    .arith-term {
+      padding: 8px 12px; border-radius: 8px; border: 1px solid var(--anim-border);
+      background: var(--anim-panel); animation: termHighlight 4s ease-in-out infinite;
+    }
+    .arith-term:nth-child(1) { animation-delay: 0s; border-color: var(--primary); color: var(--primary); }
+    .arith-term:nth-child(3) { animation-delay: 1s; }
+    .arith-term:nth-child(5) { animation-delay: 2s; }
+    .arith-term.result { animation-delay: 3s; border-color: var(--success); color: var(--success); background: color-mix(in srgb, var(--success) 10%, var(--anim-panel)); }
+    .arith-op { color: var(--muted); font-size: 0.85rem; }
+    .arith-visual {
+      display: grid; grid-template-columns: 1fr auto 1fr; gap: 8px; align-items: center;
+    }
+    .arith-arrow-col { display: flex; flex-direction: column; gap: 16px; align-items: center; }
+    .arith-arrow {
+      width: 48px; height: 2px; background: var(--primary); position: relative;
+      animation: arrowSlide 2.4s ease-in-out infinite;
+    }
+    .arith-arrow::after {
+      content: ""; position: absolute; right: -1px; top: -4px;
+      border: 5px solid transparent; border-left-color: var(--primary);
+    }
+    .arith-label { font: 600 0.52rem "JetBrains Mono", monospace; color: var(--muted); text-align: center; }
+
+    /* Why embeddings help */
+    .benefit-list { width: min(460px, 100%); display: grid; gap: 8px; }
+    .benefit {
+      display: grid; grid-template-columns: 36px 1fr; gap: 10px; align-items: start;
+      padding: 10px 12px; border: 1px solid var(--anim-border); border-radius: 8px;
+      background: var(--anim-panel); animation: benefitIn 3.6s ease-in-out infinite;
+    }
+    .benefit:nth-child(2) { animation-delay: 0.4s; }
+    .benefit:nth-child(3) { animation-delay: 0.8s; }
+    .benefit-num {
+      width: 28px; height: 28px; border-radius: 50%; background: var(--primary); color: #fff;
+      display: grid; place-items: center; font: 700 0.62rem "JetBrains Mono", monospace;
+    }
+    .benefit p { margin: 0; font-size: 0.72rem; line-height: 1.45; color: var(--ink); }
+    .benefit .mono { color: var(--primary); font-size: 0.55rem; margin-bottom: 3px; }
+
+    /* Association game */
+    .assoc-stage { width: min(480px, 100%); display: grid; gap: 12px; }
+    .assoc-prompt {
+      text-align: center; padding: 12px; border: 1px solid var(--primary); border-radius: 10px;
+      background: color-mix(in srgb, var(--primary) 8%, var(--anim-panel));
+      font: 700 1.15rem "Cormorant Garamond", serif; color: var(--ink);
+      animation: pulseGlow 2s ease-in-out infinite;
+    }
+    .assoc-options { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .assoc-opt {
+      padding: 10px; border: 1px solid var(--anim-border); border-radius: 8px;
+      background: var(--anim-panel); text-align: center;
+      font: 600 0.68rem "JetBrains Mono", monospace; color: var(--ink);
+      transition: 0.2s ease;
+    }
+    .assoc-opt.high {
+      border-color: var(--success); background: color-mix(in srgb, var(--success) 12%, var(--anim-panel));
+      color: var(--success); animation: scorePop 2.4s ease-in-out infinite;
+    }
+    .assoc-opt.mid { opacity: 0.7; }
+    .assoc-opt.low { opacity: 0.45; }
+    .assoc-bar-wrap { display: grid; gap: 6px; }
+    .assoc-bar-row { display: grid; grid-template-columns: 72px 1fr 36px; gap: 8px; align-items: center; font-size: 0.62rem; }
+    .assoc-bar-row span:first-child { font: 600 0.58rem "JetBrains Mono", monospace; color: var(--ink); }
+    .assoc-track { height: 8px; border-radius: 999px; background: var(--anim-soft); overflow: hidden; border: 1px solid var(--anim-border); }
+    .assoc-fill { height: 100%; background: var(--primary); border-radius: 999px; animation: fillGrow 2.8s ease-in-out infinite; }
+    .assoc-fill.f2 { animation-delay: 0.3s; background: var(--success); }
+    .assoc-fill.f3 { animation-delay: 0.6s; background: var(--warning); }
+    .assoc-fill.f4 { animation-delay: 0.9s; background: var(--muted); }
+
+    @keyframes appGlow { 0%, 100% { border-color: var(--anim-border); } 50% { border-color: var(--primary); } }
+    @keyframes vecReveal { 0%, 100% { opacity: 0.85; } 50% { opacity: 1; box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 15%, transparent); } }
+    @keyframes dotDrift { 0%, 100% { transform: translate(-50%, -50%); } 50% { transform: translate(-50%, calc(-50% - 3px)); } }
+    @keyframes clusterPulse { 0%, 100% { opacity: 0.4; } 50% { opacity: 0.85; } }
+    @keyframes linkFade { 0%, 100% { opacity: 0.3; } 50% { opacity: 0.8; } }
+    @keyframes termHighlight { 0%, 20%, 100% { opacity: 0.7; } 10% { opacity: 1; transform: scale(1.03); } }
+    @keyframes arrowSlide { 0%, 100% { transform: translateX(0); opacity: 0.6; } 50% { transform: translateX(6px); opacity: 1; } }
+    @keyframes benefitIn { 0%, 100% { opacity: 0.9; } 50% { opacity: 1; border-color: color-mix(in srgb, var(--primary) 40%, var(--anim-border)); } }
+    @keyframes scorePop { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.04); } }
+    @keyframes fillGrow { 0%, 100% { width: var(--w, 80%); } 50% { width: calc(var(--w, 80%) + 4%); } }
+
+    @media (max-width: 560px) {
+      .nlp-apps, .assoc-options { grid-template-columns: 1fr; }
+      .arith-visual { grid-template-columns: 1fr; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .nlp-app, .vec-box, .embed-dot, .embed-cluster, .arith-term, .benefit, .assoc-opt.high, .assoc-fill { animation: none !important; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app" id="app"></div>
+  <script>
+(function () {
+  "use strict";
+
+  function $(id) {
+    return document.getElementById(id);
+  }
+
+  function caption(text) {
+    return `<div class="scene-caption">${text}</div>`;
+  }
+
+  function applyTheme(theme) {
+    const next = theme === "dark" ? "dark" : "light";
+    document.documentElement.setAttribute("data-theme", next);
+    try {
+      localStorage.setItem("f2-ai-theme", next);
+    } catch (e) {}
+    const light = $("lightBtn");
+    const dark = $("darkBtn");
+    if (light) light.setAttribute("aria-pressed", next === "light" ? "true" : "false");
+    if (dark) dark.setAttribute("aria-pressed", next === "dark" ? "true" : "false");
+  }
+
+  function initTheme() {
+    let t = "light";
+    try {
+      const saved = localStorage.getItem("f2-ai-theme");
+      if (saved === "dark" || saved === "light") t = saved;
+    } catch (e) {}
+    applyTheme(t);
+    $("lightBtn") && $("lightBtn").addEventListener("click", () => applyTheme("light"));
+    $("darkBtn") && $("darkBtn").addEventListener("click", () => applyTheme("dark"));
+  }
+
+  function mount(config) {
+    const sections = config.sections || [];
+    const jumpLabels = config.jumpLabels || sections.map((s) => s.name);
+    const summaryItems = (config.summary && config.summary.items) || [];
+    let index = 0;
+
+    const root = $("app");
+    if (!root) return;
+
+    root.innerHTML = `
+      <header>
+        <div class="header-top">
+          <div class="theme-toggle" role="group" aria-label="Colour theme">
+            <button type="button" id="lightBtn" aria-pressed="true">Light</button>
+            <button type="button" id="darkBtn" aria-pressed="false">Dark</button>
+          </div>
+          <div class="progress-wrap">
+            <div class="progress-label" id="progressText">Ready</div>
+            <div class="progress-bar" aria-hidden="true"><div class="progress-fill" id="progressFill"></div></div>
+          </div>
+        </div>
+        <div>
+          <p class="eyebrow">${config.eyebrow || ""}</p>
+          <h1>${config.title || ""}</h1>
+        </div>
+        <nav class="jump-nav" id="jumpNav" aria-label="Jump to a section"></nav>
+      </header>
+
+      <main class="panel">
+        <section class="intro" id="intro">
+          <h2>${(config.intro && config.intro.h2) || ""}</h2>
+          <p>${(config.intro && config.intro.p) || ""}</p>
+          <div class="chips" aria-label="Topics">${(config.intro && config.intro.chips || [])
+            .map((c) => `<span class="chip">${c}</span>`)
+            .join("")}</div>
+          <div class="nav"><span></span><button class="btn btn-primary" id="startBtn" type="button">Start exploring</button></div>
+        </section>
+
+        <section id="mainScreen" class="hidden">
+          <div class="stage">
+            <span class="badge"><strong id="sectionCode">01</strong><span id="sectionName"></span></span>
+            <div class="scene" id="scene" aria-live="polite"></div>
+          </div>
+          <div class="content">
+            <h2 class="section-title" id="sectionTitle"></h2>
+            <div class="definition" id="definition"></div>
+            <p class="section-body" id="sectionBody"></p>
+            <div id="extra"></div>
+            <div class="nav">
+              <button class="btn btn-ghost" id="backBtn" type="button">Back</button>
+              <button class="btn btn-primary" id="nextBtn" type="button">Next</button>
+            </div>
+          </div>
+        </section>
+
+        <section class="summary hidden" id="summary">
+          <h2>${(config.summary && config.summary.title) || "Learning summary"}</h2>
+          <p>${(config.summary && config.summary.p) || ""}</p>
+          <div class="recap-list">
+            ${summaryItems
+              .map((it) => `<div class="recap-item"><b>${it.b}</b><span>${it.span}</span></div>`)
+              .join("")}
+          </div>
+          <div class="nav">
+            <button class="btn btn-ghost" id="reviewBtn" type="button">Review from start</button>
+            <button class="btn btn-primary" id="restartBtn" type="button">Restart</button>
+          </div>
+        </section>
+      </main>
+      <footer class="note">Based on EDB Booklet 2 Unit 4 · Word Embeddings &amp; NLP by Valtorta College</footer>
+    `;
+
+    initTheme();
+
+    const els = {
+      intro: $("intro"),
+      main: $("mainScreen"),
+      summary: $("summary"),
+      scene: $("scene"),
+      code: $("sectionCode"),
+      name: $("sectionName"),
+      title: $("sectionTitle"),
+      definition: $("definition"),
+      body: $("sectionBody"),
+      extra: $("extra"),
+      back: $("backBtn"),
+      next: $("nextBtn"),
+      progress: $("progressFill"),
+      progressText: $("progressText"),
+      jumpNav: $("jumpNav")
+    };
+
+    function show(which) {
+      els.intro.classList.toggle("hidden", which !== "intro");
+      els.main.classList.toggle("hidden", which !== "main");
+      els.summary.classList.toggle("hidden", which !== "summary");
+    }
+
+    function updateProgress() {
+      els.progress.style.width = `${((index + 1) / sections.length) * 100}%`;
+      els.progressText.textContent = `Section ${index + 1} of ${sections.length}`;
+    }
+
+    function updateJumpNav(active) {
+      els.jumpNav.querySelectorAll(".jump-btn").forEach((b, i) => {
+        b.classList.toggle("active", i === active);
+      });
+    }
+
+    function loadSection(i) {
+      index = i;
+      const s = sections[i];
+      show("main");
+      updateProgress();
+      updateJumpNav(i);
+      els.code.textContent = s.code;
+      els.name.textContent = s.name;
+      els.title.textContent = s.title;
+      els.definition.innerHTML = s.definition;
+      els.body.innerHTML = s.body;
+      els.extra.innerHTML = s.extra || "";
+      els.next.textContent = i === sections.length - 1 ? "See summary" : "Next";
+      if (typeof s.render === "function") s.render(els.scene, caption);
+    }
+
+    function showSummary() {
+      show("summary");
+      els.progress.style.width = "100%";
+      els.progressText.textContent = "Complete";
+      updateJumpNav(sections.length);
+    }
+
+    const allLabels = jumpLabels.concat([(config.summary && config.summary.jump) || "Sum"]);
+    els.jumpNav.innerHTML = allLabels
+      .map((label, i) => `<button type="button" class="jump-btn" data-jump="${i}">${label}</button>`)
+      .join("");
+
+    els.jumpNav.querySelectorAll(".jump-btn").forEach((button) => {
+      button.addEventListener("click", () => {
+        const t = Number(button.dataset.jump);
+        if (t === sections.length) showSummary();
+        else loadSection(t);
+      });
+    });
+
+    $("startBtn").addEventListener("click", () => loadSection(0));
+    els.next.addEventListener("click", () =>
+      index === sections.length - 1 ? showSummary() : loadSection(index + 1)
+    );
+    els.back.addEventListener("click", () => {
+      if (index === 0) {
+        show("intro");
+        updateJumpNav(-1);
+        els.progress.style.width = "0";
+        els.progressText.textContent = "Ready";
+      } else loadSection(index - 1);
+    });
+    $("restartBtn").addEventListener("click", () => loadSection(0));
+    $("reviewBtn").addEventListener("click", () => {
+      show("intro");
+      updateJumpNav(-1);
+      els.progress.style.width = "0";
+      els.progressText.textContent = "Ready";
+    });
+  }
+
+  window.F2Lesson = { mount, caption, applyTheme };
+})();
+
+</script>
+  <script>
+    (function () {
+      "use strict";
+
+      F2Lesson.mount({
+        eyebrow: "EDB Booklet 2 · Unit 4 · Part B",
+        title: "Word Embeddings &amp; NLP",
+        intro: {
+          h2: "How do computers understand words?",
+          p: "Natural Language Processing (NLP) helps computers <strong>understand, interpret, and process</strong> human language. A key idea from Booklet 2 section 4.4 is <strong>word embeddings</strong> — representing words as numbers (vectors) so models can compute meaning.",
+          chips: ["NLP", "VECTORS", "EMBEDDINGS", "ASSOCIATION"]
+        },
+        jumpLabels: ["NLP", "Vectors", "Space", "Arithmetic", "Why", "Assoc"],
+        sections: [
+          {
+            code: "01", name: "NLP", title: "Natural Language Processing",
+            definition: "Natural Language Processing (NLP) is a field of AI that helps computers understand, interpret, and process human language.",
+            body: "NLP powers many applications: <strong>machine translation</strong>, <strong>text summarisation</strong>, <strong>question answering</strong>, sentiment analysis, chatbots, and more. These systems must handle grammar, meaning, and context.",
+            extra: '<div class="example-box"><b>FROM THE BOOKLET</b>NLP bridges human language and computer processing — essential for ASR output understanding and many other AI tools.</div>',
+            render: function (sceneEl, caption) {
+              sceneEl.innerHTML = '<div class="frame"><div class="nlp-apps">' +
+                '<div class="nlp-app"><div class="icon">🌐</div><b>TRANSLATION</b><span>Convert text between languages</span></div>' +
+                '<div class="nlp-app"><div class="icon">📋</div><b>SUMMARISATION</b><span>Shorten long documents</span></div>' +
+                '<div class="nlp-app"><div class="icon">❓</div><b>QUESTION ANSWERING</b><span>Find answers in text</span></div>' +
+                '<div class="nlp-app"><div class="icon">💬</div><b>CHATBOTS</b><span>Conversational AI</span></div>' +
+                '<div class="nlp-center">NLP · understand · interpret · process language</div>' +
+                '</div></div>' +
+                caption("NLP applications turn language into tasks computers can perform.");
+            }
+          },
+          {
+            code: "02", name: "Vectors", title: "Computers Need Numbers",
+            definition: "Computers process numbers, not words directly — so each word is represented as a vector (a list of numbers) called a word embedding.",
+            body: "Instead of storing “cat” as letters, an embedding might look like <strong>[0.2, −0.5, 0.8, …]</strong> with hundreds of dimensions. Similar words get similar vectors.",
+            extra: '<div class="pair-grid">' +
+              '<div class="pair-card"><b>WORD</b>Human-readable text: “dog”</div>' +
+              '<div class="pair-card"><b>EMBEDDING</b>Machine-readable vector of real numbers</div></div>',
+            render: function (sceneEl, caption) {
+              sceneEl.innerHTML = '<div class="frame"><div class="vec-transform">' +
+                '<div class="word-row">' +
+                '<div class="word-box">cat</div>' +
+                '<span class="arrow">→</span>' +
+                '<div class="vec-box">' +
+                '<span class="vec-dim">0.21</span><span class="vec-dim">−0.48</span><span class="vec-dim">0.73</span><br>' +
+                '<span class="vec-dim">0.15</span><span class="vec-dim">−0.62</span><span class="vec-dim">0.39</span><br>' +
+                '<span style="color:var(--muted)">… 300 dimensions …</span>' +
+                '</div></div>' +
+                '<p class="mono" style="font-size:.58rem;color:var(--muted);text-align:center">Each word → one vector of numbers</p>' +
+                '</div></div>' +
+                caption("Embeddings convert words into numeric vectors.");
+            }
+          },
+          {
+            code: "03", name: "Space", title: "Embedding Space — Similar Meanings, Small Distance",
+            definition: "In embedding space, words with similar meanings are placed close together; unrelated words are farther apart.",
+            body: "Classic examples: <strong>king</strong> and <strong>queen</strong> cluster near each other (royalty); <strong>man</strong> and <strong>woman</strong> form another pair. <strong>cat</strong>, <strong>dog</strong>, and <strong>puppy</strong> would also sit near each other (animals).",
+            extra: '<div class="example-box"><b>INTUITION</b>Distance in the vector space ≈ difference in meaning.</div>',
+            render: function (sceneEl, caption) {
+              sceneEl.innerHTML = '<div class="frame"><div class="embed-space" aria-hidden="true">' +
+                '<div class="embed-cluster c1"></div><div class="embed-cluster c2"></div>' +
+                '<div class="embed-link l1"></div><div class="embed-link l2"></div>' +
+                '<span class="embed-dot king">king</span>' +
+                '<span class="embed-dot queen">queen</span>' +
+                '<span class="embed-dot man">man</span>' +
+                '<span class="embed-dot woman">woman</span>' +
+                '</div>' +
+                '<p class="mono" style="margin-top:10px;font-size:.58rem;color:var(--muted);text-align:center">Similar words → nearby points</p></div>' +
+                caption("Clusters show words with related meanings grouped together.");
+            }
+          },
+          {
+            code: "04", name: "Arithmetic", title: "Relationships as Vector Arithmetic",
+            definition: "Vector arithmetic can capture word relationships: king − man + woman ≈ queen.",
+            body: "Subtracting “man” from “king” removes a gender component; adding “woman” shifts toward the female equivalent. This shows embeddings encode <strong>meaningful directions</strong> in space (not just proximity).",
+            extra: '<div class="example-box"><b>SIMPLIFIED IDEA</b>Vectors encode concepts as directions — you can add and subtract them like algebra.</div>',
+            render: function (sceneEl, caption) {
+              sceneEl.innerHTML = '<div class="frame"><div class="arith-stage">' +
+                '<div class="arith-eq">' +
+                '<span class="arith-term">king</span><span class="arith-op">−</span>' +
+                '<span class="arith-term">man</span><span class="arith-op">+</span>' +
+                '<span class="arith-term">woman</span><span class="arith-op">≈</span>' +
+                '<span class="arith-term result">queen</span>' +
+                '</div>' +
+                '<div class="arith-visual">' +
+                '<div style="text-align:center"><div class="word-box" style="font-size:1rem;padding:10px 14px">king → queen</div><div class="arith-label">royalty + gender</div></div>' +
+                '<div class="arith-arrow-col"><div class="arith-arrow"></div><div class="arith-label">same direction</div></div>' +
+                '<div style="text-align:center"><div class="word-box" style="font-size:1rem;padding:10px 14px">man → woman</div><div class="arith-label">gender shift</div></div>' +
+                '</div></div></div>' +
+                caption("Parallel arrows: the same relationship in embedding space.");
+            }
+          },
+          {
+            code: "05", name: "Why", title: "Why Embeddings Help NLP Models",
+            definition: "Word embeddings give NLP models a numerical foundation to compare words, capture context, and generalise to new sentences.",
+            body: "With embeddings, models can measure similarity, handle synonyms, and transfer knowledge — e.g. if “puppy” is close to “dog”, the model learns they behave similarly in many contexts.",
+            extra: '<div class="pair-grid">' +
+              '<div class="pair-card"><b>WITHOUT</b>Each word is an isolated symbol — no sense of similarity.</div>' +
+              '<div class="pair-card"><b>WITH</b>Words sit in a shared space — models learn patterns from geometry.</div></div>',
+            render: function (sceneEl, caption) {
+              sceneEl.innerHTML = '<div class="frame"><div class="benefit-list">' +
+                '<div class="benefit"><span class="benefit-num">1</span><div><div class="mono">SIMILARITY</div><p>Compare words by distance — “happy” near “joyful”.</p></div></div>' +
+                '<div class="benefit"><span class="benefit-num">2</span><div><div class="mono">CONTEXT</div><p>Embeddings update with surrounding words in deep models.</p></div></div>' +
+                '<div class="benefit"><span class="benefit-num">3</span><div><div class="mono">GENERALISE</div><p>Patterns learned for one word help related words too.</p></div></div>' +
+                '</div></div>' +
+                caption("Embeddings turn language into geometry models can learn from.");
+            }
+          },
+          {
+            code: "06", name: "Assoc", title: "Association Games — Nearby Words Score Higher",
+            definition: "Word association tasks illustrate embeddings: given a cue word, options that are semantically close should receive higher association scores.",
+            body: "If the cue is <strong>“ocean”</strong>, “wave” and “beach” score higher than “table” or “computer”. Embedding models work similarly — nearby vectors produce higher similarity scores.",
+            extra: '<div class="example-box"><b>CLASSROOM LINK</b>Association games mirror how embeddings rank word relatedness.</div>',
+            render: function (sceneEl, caption) {
+              sceneEl.innerHTML = '<div class="frame"><div class="assoc-stage">' +
+                '<div class="assoc-prompt">Cue word: ocean</div>' +
+                '<div class="assoc-bar-wrap">' +
+                '<div class="assoc-bar-row"><span>wave</span><div class="assoc-track"><div class="assoc-fill f2" style="--w:92%;width:92%"></div></div><span>0.92</span></div>' +
+                '<div class="assoc-bar-row"><span>beach</span><div class="assoc-track"><div class="assoc-fill" style="--w:85%;width:85%"></div></div><span>0.85</span></div>' +
+                '<div class="assoc-bar-row"><span>fish</span><div class="assoc-track"><div class="assoc-fill f3" style="--w:68%;width:68%"></div></div><span>0.68</span></div>' +
+                '<div class="assoc-bar-row"><span>table</span><div class="assoc-track"><div class="assoc-fill f4" style="--w:12%;width:12%"></div></div><span>0.12</span></div>' +
+                '</div>' +
+                '<div class="assoc-options">' +
+                '<span class="assoc-opt high">wave ✓</span>' +
+                '<span class="assoc-opt high">beach ✓</span>' +
+                '<span class="assoc-opt mid">fish</span>' +
+                '<span class="assoc-opt low">table</span>' +
+                '</div></div></div>' +
+                caption("Higher bars = stronger association — like embedding similarity.");
+            }
+          }
+        ],
+        summary: {
+          title: "Learning summary",
+          p: "NLP helps computers work with human language. Word embeddings represent words as vectors so that similar meanings sit close together — enabling similarity, relationships (king − man + woman ≈ queen), and better NLP models.",
+          jump: "Sum",
+          items: [
+            { b: "NLP", span: "Understand, interpret, process language — translation, QA, summarisation." },
+            { b: "EMBEDDINGS", span: "Words → vectors (lists of numbers)." },
+            { b: "SPACE", span: "Similar meanings → small distance in embedding space." },
+            { b: "ARITHMETIC", span: "king − man + woman ≈ queen captures relationships." },
+            { b: "MODELS", span: "Embeddings give NLP a numerical foundation to learn patterns." },
+            { b: "ASSOCIATION", span: "Nearby words score higher — like semantic similarity." }
+          ]
+        }
+      });
+    })();
+  </script>
+  </body>
+</html>

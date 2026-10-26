@@ -1,0 +1,754 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Unit 3 — AI Ethical Principles</title>
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem("f1-ai-theme");
+        document.documentElement.setAttribute("data-theme", t === "dark" ? "dark" : "light");
+      } catch (e) { document.documentElement.setAttribute("data-theme", "light"); }
+    })();
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet" />
+  <style>
+    :root, [data-theme="light"] {
+      --canvas:#fff; --surface:#f7f6f3; --ink:#37352f; --body:#4f4d47; --muted:#787774;
+      --primary:#2383e2; --primary-active:#1a6fc1; --success:#0f7b3f; --warning:#cb6800; --danger:#d44c47;
+      --hairline:rgba(55,53,47,.09); --shadow:0 1px 2px rgba(55,53,47,.04),0 4px 12px rgba(55,53,47,.06);
+      --toggle-bg:#fff; --toggle-border:rgba(55,53,47,.14); --caption-bg:rgba(255,255,255,.96); --caption-fg:#37352f;
+      --anim-bg:#f7f6f3; --anim-panel:#fff; --anim-soft:#e8e6e1; --anim-soft-2:#ddd9d2; --anim-border:#c5c1b8;
+      --ease:cubic-bezier(.16,1,.3,1);
+    }
+    [data-theme="dark"] {
+      --canvas:#202020; --surface:#151515; --ink:#f1f0ec; --body:#cfcbc4; --muted:#9a968e;
+      --primary:#5ba8f5; --primary-active:#7bb8f7; --success:#3dcf7a; --warning:#e0a04a; --danger:#f07171;
+      --hairline:rgba(255,255,255,.1); --shadow:0 1px 2px rgba(0,0,0,.35),0 4px 14px rgba(0,0,0,.28);
+      --toggle-bg:#202020; --toggle-border:rgba(255,255,255,.14); --caption-bg:rgba(32,32,32,.96); --caption-fg:#f1f0ec;
+      --anim-bg:#1a1a1a; --anim-panel:#262626; --anim-soft:#333; --anim-soft-2:#3d3d3d; --anim-border:#555;
+    }
+    * { box-sizing:border-box; margin:0; padding:0; }
+    body { min-height:100vh; min-height:100dvh; font-family:Inter,system-ui,sans-serif; color:var(--body); background:var(--surface); -webkit-font-smoothing:antialiased; }
+    button,a { font:inherit; }
+    .app { width:min(880px,calc(100% - 28px)); margin:auto; padding:28px 0 40px; }
+    header { display:flex; flex-wrap:wrap; align-items:flex-end; justify-content:space-between; gap:14px; margin-bottom:20px; }
+    .header-top { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:12px; width:100%; margin-bottom:4px; }
+    .theme-toggle { display:inline-flex; border:1px solid var(--toggle-border); border-radius:8px; overflow:hidden; background:var(--toggle-bg); }
+    .theme-toggle button { border:0; background:transparent; color:var(--muted); font-size:.78rem; font-weight:600; padding:8px 12px; cursor:pointer; }
+    .theme-toggle button[aria-pressed="true"] { color:#fff; background:var(--primary); }
+    button:focus-visible,a:focus-visible { outline:2px solid var(--primary); outline-offset:2px; }
+    .eyebrow,.mono { font-family:"JetBrains Mono",ui-monospace,monospace; }
+    .eyebrow { font-size:.72rem; letter-spacing:.04em; color:var(--muted); margin-bottom:6px; }
+    h1,h2,h3 { font-family:"Cormorant Garamond",Georgia,serif; color:var(--ink); }
+    h1 { font-size:clamp(1.85rem,4.5vw,2.45rem); line-height:1.15; }
+    .progress-wrap { min-width:160px; width:min(220px,100%); }
+    .progress-label { font-size:.8rem; color:var(--muted); margin-bottom:8px; text-align:right; }
+    .progress-bar { height:3px; background:var(--hairline); overflow:hidden; }
+    .progress-fill { height:100%; width:0; background:var(--primary); transition:width .36s var(--ease); }
+    .jump-nav { width:100%; display:flex; gap:7px; overflow-x:auto; padding:2px 1px 7px; scrollbar-width:thin; }
+    .jump-btn { flex:0 0 auto; border:1px solid var(--hairline); border-radius:999px; background:var(--canvas); color:var(--muted); padding:6px 10px; font:600 .66rem "JetBrains Mono",monospace; cursor:pointer; transition:.18s ease; }
+    .jump-btn:hover { color:var(--primary); border-color:var(--primary); }
+    .jump-btn.active { color:#fff; background:var(--primary); border-color:var(--primary); }
+    .panel { background:var(--canvas); border:1px solid var(--hairline); border-radius:12px; box-shadow:var(--shadow); overflow:hidden; }
+    .hidden { display:none!important; }
+    footer.note { margin-top:14px; color:var(--muted); font-size:.78rem; text-align:center; }
+    .intro,.summary { padding:28px 22px; }
+    .intro h2,.summary h2,.section-title { font-size:clamp(1.4rem,3vw,1.75rem); margin-bottom:10px; line-height:1.2; }
+    .intro p,.summary p,.section-body { line-height:1.65; margin-bottom:12px; font-size:.95rem; }
+    strong { color:var(--ink); }
+    .chips { display:flex; flex-wrap:wrap; gap:8px; margin:17px 0 21px; }
+    .chip { font-family:"JetBrains Mono",monospace; font-size:.7rem; font-weight:600; padding:6px 10px; border:1px solid var(--hairline); border-radius:6px; background:var(--surface); color:var(--ink); }
+    .stage { padding:18px; border-bottom:1px solid var(--hairline); background:var(--surface); }
+    .stage-title { display:flex; justify-content:space-between; margin-bottom:12px; }
+    .badge { display:inline-flex; gap:6px; align-items:center; padding:4px 10px; border:1px solid var(--hairline); border-radius:999px; font-size:.78rem; color:var(--muted); background:var(--canvas); }
+    .badge strong { font-family:"JetBrains Mono",monospace; }
+    .scene { width:100%; min-height:320px; border:1px solid var(--hairline); border-radius:10px; background:var(--anim-bg); position:relative; overflow:hidden; display:grid; place-items:center; }
+    .scene-caption { position:absolute; z-index:8; left:10px; bottom:8px; max-width:92%; color:var(--caption-fg); background:var(--caption-bg); border:1px solid var(--hairline); border-radius:6px; padding:4px 8px; box-shadow:var(--shadow); font-size:.7rem; font-weight:600; line-height:1.35; }
+    .content { padding:20px 18px 18px; }
+    .definition { border-left:3px solid var(--primary); padding:10px 12px; margin:12px 0 15px; background:var(--surface); color:var(--ink); line-height:1.55; font-size:.92rem; }
+    .definition::before { content:"DEFINITION"; display:block; font:600 .62rem "JetBrains Mono",monospace; color:var(--primary); letter-spacing:.05em; margin-bottom:5px; }
+    .example-box { border:1px solid var(--hairline); border-radius:9px; padding:12px; margin:14px 0 4px; background:var(--surface); font-size:.88rem; line-height:1.55; }
+    .example-box b { display:block; font:600 .65rem "JetBrains Mono",monospace; color:var(--primary); margin-bottom:5px; letter-spacing:.04em; }
+    .nav { display:flex; justify-content:space-between; flex-wrap:wrap; gap:10px; margin-top:17px; }
+    .btn { border:0; border-radius:8px; padding:10px 16px; font-weight:600; font-size:.9rem; cursor:pointer; transition:.18s ease; }
+    .btn:hover:not(:disabled) { transform:translateY(-1px); }
+    .btn:disabled { opacity:.35; cursor:not-allowed; }
+    .btn-primary { color:#fff; background:var(--primary); margin-left:auto; }
+    .btn-primary:hover:not(:disabled) { background:var(--primary-active); }
+    .btn-ghost { color:var(--muted); background:transparent; border:1px solid var(--hairline); }
+    .recap-list { display:grid; gap:7px; margin:15px 0 18px; }
+    .recap-item { display:grid; grid-template-columns:118px 1fr; gap:10px; padding:9px 10px; border-bottom:1px solid var(--hairline); font-size:.85rem; line-height:1.45; }
+    .recap-item b { font-family:"JetBrains Mono",monospace; color:var(--primary); font-size:.68rem; }
+    .pair-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin:12px 0; }
+    .pair-card { border:1px solid var(--hairline); border-radius:9px; padding:11px; background:var(--surface); font-size:.82rem; line-height:1.5; }
+    .pair-card b { display:block; font:600 .65rem "JetBrains Mono",monospace; margin-bottom:4px; }
+    .pair-card.good b { color:var(--success); }
+    .pair-card.bad b { color:var(--danger); }
+
+    /* shared scene layout */
+    .frame { width:100%; height:100%; min-height:320px; padding:22px 18px 44px; display:grid; place-items:center; }
+    .row { display:flex; align-items:center; justify-content:center; gap:12px; width:100%; flex-wrap:wrap; }
+    .box { min-width:88px; min-height:72px; padding:10px 12px; border:1px solid var(--anim-border); border-radius:8px; background:var(--anim-panel); color:var(--ink); text-align:center; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; font-size:.72rem; line-height:1.3; }
+    .box .mono { font-size:.58rem; color:var(--primary); }
+    .arrow { font:600 1.05rem "JetBrains Mono",monospace; color:var(--primary); animation:nudge 1.2s ease-in-out infinite; }
+
+    /* ethics balance */
+    .balance-wrap { width:min(340px,100%); height:210px; position:relative; }
+    .balance-beam { position:absolute; left:8%; right:8%; top:78px; height:6px; background:var(--ink); border-radius:3px; transform-origin:50% 50%; animation:tilt 3.6s ease-in-out infinite; }
+    .balance-pivot { position:absolute; left:50%; top:62px; width:14px; height:14px; margin-left:-7px; border-radius:50%; background:var(--primary); z-index:2; }
+    .balance-stand { position:absolute; left:50%; top:76px; width:4px; height:90px; margin-left:-2px; background:var(--anim-border); }
+    .balance-base { position:absolute; left:50%; bottom:8px; width:90px; height:8px; margin-left:-45px; border-radius:4px; background:var(--anim-border); }
+    .pan { position:absolute; top:84px; width:92px; padding:8px 6px; border:1px solid var(--anim-border); border-radius:8px; background:var(--anim-panel); text-align:center; font:600 .62rem "JetBrains Mono",monospace; color:var(--ink); animation:panFloat 3.6s ease-in-out infinite; }
+    .pan.left { left:6%; }
+    .pan.right { right:6%; animation-delay:.05s; }
+    .pan.good { border-color:var(--success); color:var(--success); }
+    .pan.bad { border-color:var(--danger); color:var(--danger); }
+
+    /* help / hurt */
+    .dual { width:100%; display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+    .dual-card { border:1px solid var(--anim-border); border-radius:10px; background:var(--anim-panel); padding:16px 12px; text-align:center; min-height:150px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px; }
+    .dual-card .mono { color:var(--primary); }
+    .dual-card.help { animation:glowGood 2.4s ease-in-out infinite; }
+    .dual-card.hurt { animation:glowBad 2.4s ease-in-out infinite; }
+    .icon-ring { width:54px; height:54px; border-radius:50%; display:grid; place-items:center; font:700 1.2rem "JetBrains Mono",monospace; border:2px solid currentColor; }
+    .help .icon-ring { color:var(--success); }
+    .hurt .icon-ring { color:var(--danger); }
+
+    /* transparency restaurant photos */
+    .kitchen-photos { width:100%; display:grid; grid-template-columns:1fr 1fr; gap:10px; align-items:stretch; }
+    .kitchen-card { border:1px solid var(--anim-border); border-radius:10px; overflow:hidden; background:var(--anim-panel); display:flex; flex-direction:column; min-height:0; }
+    .kitchen-card img { width:100%; height:160px; object-fit:cover; display:block; background:var(--anim-soft); }
+    .kitchen-card .photo-label { padding:8px 9px; font:600 .62rem "JetBrains Mono",monospace; color:var(--ink); line-height:1.35; border-top:1px solid var(--anim-border); }
+    .kitchen-card .photo-label span { display:block; color:var(--primary); font-size:.55rem; margin-bottom:2px; }
+    .kitchen-note { margin-top:10px; text-align:center; font:600 .62rem "JetBrains Mono",monospace; color:var(--muted); }
+
+    /* fairness hiring bias */
+    .fair-stage { width:min(520px,100%); display:grid; gap:12px; }
+    .ai-scanner { margin:0 auto; padding:6px 12px; border:1px solid var(--primary); border-radius:999px; background:color-mix(in srgb,var(--primary) 10%,var(--anim-panel)); color:var(--primary); font:600 .62rem "JetBrains Mono",monospace; animation:lockPulse 2s ease-in-out infinite; }
+    .fair-row { width:100%; display:flex; align-items:stretch; justify-content:center; gap:12px; }
+    .candidate { flex:1; min-width:0; max-width:150px; border:1px solid var(--anim-border); border-radius:10px; background:var(--anim-panel); padding:10px 8px 12px; text-align:center; position:relative; overflow:hidden; }
+    .candidate .who { font:600 .55rem "JetBrains Mono",monospace; color:var(--muted); margin-bottom:8px; }
+    .avatar { width:54px; height:54px; margin:0 auto 8px; position:relative; }
+    .avatar .face { width:40px; height:40px; border-radius:50%; margin:0 auto; border:2px solid var(--anim-border); background:var(--anim-soft-2); position:relative; }
+    .avatar .hair { position:absolute; left:7px; right:7px; top:0; height:16px; border-radius:16px 16px 4px 4px; background:#8a7a68; }
+    .avatar.woman .hair { height:22px; border-radius:18px 18px 10px 10px; background:#6b5b4a; }
+    .avatar.woman .face::after { content:""; position:absolute; left:6px; right:6px; bottom:4px; height:10px; border-radius:0 0 20px 20px; background:color-mix(in srgb,var(--ink) 8%,transparent); }
+    .avatar.man .hair { height:10px; top:2px; background:#5c5348; }
+    .avatar .glasses { position:absolute; left:6px; right:6px; top:16px; height:8px; border:1.5px solid var(--ink); border-radius:3px; opacity:.55; }
+    .cand-name { font:700 .72rem "JetBrains Mono",monospace; color:var(--ink); }
+    .cand-tag { margin-top:4px; font:600 .52rem "JetBrains Mono",monospace; color:var(--muted); line-height:1.3; }
+    .same-cv { margin-top:8px; padding:4px 6px; border:1px dashed var(--anim-border); border-radius:4px; font:600 .5rem "JetBrains Mono",monospace; color:var(--muted); }
+    .verdict-stamp { margin-top:10px; display:inline-block; padding:4px 8px; border-radius:4px; font:700 .58rem "JetBrains Mono",monospace; }
+    .candidate.bias { border-color:var(--danger); animation:shake 2.4s ease-in-out infinite; }
+    .candidate.bias .verdict-stamp { color:#fff; background:var(--danger); }
+    .candidate.bias .scan-beam { position:absolute; inset:0; background:linear-gradient(180deg,transparent,color-mix(in srgb,var(--danger) 22%,transparent),transparent); animation:scanDown 2.4s linear infinite; pointer-events:none; }
+    .candidate.ok { border-color:var(--success); }
+    .candidate.ok .verdict-stamp { color:#fff; background:var(--success); animation:typeCycle 2.8s ease-in-out infinite; }
+    .bias-reason { text-align:center; font:600 .6rem "JetBrains Mono",monospace; color:var(--danger); line-height:1.4; }
+    .bias-reason span { color:var(--muted); }
+
+    /* beneficence two doctors */
+    .doc-row { width:100%; display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+    .doc-card { border:1px solid var(--anim-border); border-radius:10px; background:var(--anim-panel); padding:12px 10px; min-height:210px; display:flex; flex-direction:column; gap:8px; }
+    .doc-card.wrong { border-color:color-mix(in srgb,var(--danger) 45%,var(--anim-border)); }
+    .doc-card.right { border-color:color-mix(in srgb,var(--success) 45%,var(--anim-border)); }
+    .doc-head { display:flex; align-items:center; gap:8px; }
+    .doc-avatar { width:36px; height:36px; border-radius:50%; border:2px solid var(--anim-border); background:var(--anim-soft); display:grid; place-items:center; font:700 .65rem "JetBrains Mono",monospace; color:var(--ink); flex-shrink:0; }
+    .doc-card.wrong .doc-avatar { border-color:var(--danger); color:var(--danger); }
+    .doc-card.right .doc-avatar { border-color:var(--success); color:var(--success); }
+    .doc-meta { min-width:0; }
+    .doc-meta b { display:block; font:700 .68rem "JetBrains Mono",monospace; color:var(--ink); }
+    .doc-meta span { font:600 .52rem "JetBrains Mono",monospace; color:var(--muted); }
+    .patient { margin-top:2px; padding:6px 8px; border-radius:6px; background:var(--anim-bg); border:1px solid var(--anim-border); font:600 .55rem "JetBrains Mono",monospace; color:var(--muted); }
+    .speech { flex:1; border:1px solid var(--anim-border); border-radius:8px; padding:10px; background:var(--anim-bg); font-size:.68rem; line-height:1.45; color:var(--ink); position:relative; overflow:hidden; }
+    .speech.jargon { color:var(--danger); font-family:"JetBrains Mono",monospace; font-size:.58rem; font-weight:600; }
+    .jargon-line { display:block; opacity:0; animation:jargonCycle 6s linear infinite; }
+    .jargon-line:nth-child(1){animation-delay:0s}.jargon-line:nth-child(2){animation-delay:1.2s}.jargon-line:nth-child(3){animation-delay:2.4s}.jargon-line:nth-child(4){animation-delay:3.6s}.jargon-line:nth-child(5){animation-delay:4.8s}
+    .patient-react { font:600 .55rem "JetBrains Mono",monospace; color:var(--danger); animation:pulse 1.2s ease-in-out infinite alternate; }
+    .speech.kind { color:var(--success); }
+    .kind-line { display:block; margin-bottom:6px; animation:fadeUp .8s var(--ease) both; }
+    .kind-line:nth-child(2){animation-delay:.35s}.kind-line:nth-child(3){animation-delay:.7s}
+    .patient-react.ok { color:var(--success); }
+
+    /* responsibility robot spill */
+    .spill-stage { width:min(460px,100%); display:grid; gap:12px; }
+    .spill-scene { height:150px; position:relative; border:1px solid var(--anim-border); border-radius:10px; background:var(--anim-panel); overflow:hidden; }
+    .table { position:absolute; left:12%; right:12%; bottom:18px; height:10px; border-radius:4px; background:var(--anim-border); }
+    .guest { position:absolute; right:18%; bottom:28px; width:54px; text-align:center; z-index:2; }
+    .guest .g-head { width:28px; height:28px; margin:0 auto 4px; border-radius:50%; background:var(--anim-soft-2); border:2px solid var(--anim-border); }
+    .guest .g-body { width:34px; height:40px; margin:0 auto; border-radius:8px 8px 4px 4px; background:var(--anim-soft); border:1px solid var(--anim-border); }
+    .guest .shock { position:absolute; top:-2px; right:-8px; font:700 .7rem "JetBrains Mono",monospace; color:var(--danger); animation:pulse 1s ease-in-out infinite alternate; }
+    .robot { position:absolute; left:14%; bottom:28px; width:70px; z-index:3; animation:robotWalk 3.2s ease-in-out infinite; }
+    .robot .r-head { width:34px; height:26px; margin:0 auto; border-radius:6px; background:var(--primary); position:relative; }
+    .robot .r-head::before,.robot .r-head::after { content:""; position:absolute; top:8px; width:6px; height:6px; border-radius:50%; background:#fff; }
+    .robot .r-head::before{left:6px}.robot .r-head::after{right:6px}
+    .robot .r-body { width:40px; height:36px; margin:4px auto 0; border-radius:6px; background:color-mix(in srgb,var(--primary) 55%,var(--anim-panel)); border:1px solid var(--primary); }
+    .tray { position:absolute; left:52px; top:8px; width:36px; height:8px; background:var(--anim-border); border-radius:2px; transform-origin:left center; animation:trayTip 3.2s ease-in-out infinite; }
+    .bowl { position:absolute; left:58px; top:-6px; width:18px; height:12px; border-radius:2px 2px 8px 8px; background:var(--warning); animation:bowlFly 3.2s ease-in-out infinite; }
+    .soup { position:absolute; right:24%; top:42%; width:22px; height:22px; border-radius:50%; background:color-mix(in srgb,var(--warning) 70%,#fff); opacity:0; animation:soupSplash 3.2s ease-in-out infinite; z-index:4; }
+    .soup::after { content:""; position:absolute; inset:-6px; border:2px solid color-mix(in srgb,var(--warning) 50%,transparent); border-radius:50%; }
+    .blame { width:100%; display:flex; justify-content:center; gap:8px; flex-wrap:wrap; }
+    .blame-card { width:92px; min-height:62px; padding:8px 6px; border:1px solid var(--anim-border); border-radius:8px; background:var(--anim-panel); text-align:center; font:600 .55rem "JetBrains Mono",monospace; color:var(--ink); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; }
+    .blame-card.active { border-color:var(--warning); box-shadow:0 0 0 2px color-mix(in srgb,var(--warning) 25%,transparent); animation:typeCycle 2.5s ease-in-out infinite; }
+    .blame-card span { color:var(--muted); font-size:.5rem; font-weight:500; }
+
+    /* privacy peer AI leak */
+    .privacy-flow { width:min(520px,100%); display:grid; gap:10px; }
+    .privacy-row { display:flex; align-items:center; justify-content:center; gap:8px; flex-wrap:wrap; }
+    .priv-box { min-width:96px; padding:10px 8px; border:1px solid var(--anim-border); border-radius:8px; background:var(--anim-panel); text-align:center; font:600 .58rem "JetBrains Mono",monospace; color:var(--ink); line-height:1.35; }
+    .priv-box .mono { display:block; color:var(--primary); font-size:.52rem; margin-bottom:4px; }
+    .priv-box.students { min-width:130px; }
+    .face-row { display:flex; justify-content:center; gap:4px; margin-bottom:6px; }
+    .mini-face { width:18px; height:18px; border-radius:50%; background:var(--anim-soft-2); border:1px solid var(--anim-border); }
+    .priv-box.train { border-color:var(--primary); animation:lockPulse 2.2s ease-in-out infinite; }
+    .priv-box.leak { border-color:var(--danger); color:var(--danger); animation:shake 2.2s ease-in-out infinite; }
+    .consent-x { margin-top:8px; text-align:center; font:600 .6rem "JetBrains Mono",monospace; color:var(--danger); }
+
+    /* task 1 grading */
+    .grade-belt { width:min(460px,100%); height:130px; position:relative; overflow:hidden; border-top:1px solid var(--anim-border); border-bottom:1px solid var(--anim-border); }
+    .script { position:absolute; top:28px; left:-120px; width:100px; padding:10px 8px; border:1px solid var(--anim-border); border-radius:7px; background:var(--anim-panel); font:600 .58rem "JetBrains Mono",monospace; color:var(--ink); text-align:center; animation:belt 4.5s linear infinite; }
+    .script:nth-child(2){animation-delay:1.5s}.script:nth-child(3){animation-delay:3s}
+    .grader { position:absolute; right:18px; top:18px; bottom:18px; width:110px; border:1px solid var(--primary); border-radius:8px; background:color-mix(in srgb,var(--primary) 8%,var(--anim-panel)); display:grid; place-items:center; text-align:center; font:700 .65rem "JetBrains Mono",monospace; color:var(--primary); z-index:2; }
+    .grade-tag { position:absolute; right:28px; bottom:28px; z-index:3; padding:4px 8px; border-radius:4px; background:var(--success); color:#fff; font:600 .55rem "JetBrains Mono",monospace; animation:stamp 4.5s ease-in-out infinite; }
+
+    /* task 2 leavehomesafe */
+    .trace { width:min(420px,100%); display:grid; gap:12px; }
+    .phone { border:1px solid var(--anim-border); border-radius:14px; background:var(--anim-panel); padding:14px; min-height:150px; }
+    .phone-bar { height:6px; width:40%; margin:0 auto 12px; border-radius:3px; background:var(--anim-soft-2); }
+    .qr-row { display:flex; align-items:center; gap:10px; }
+    .qr { width:56px; height:56px; border:2px solid var(--ink); display:grid; grid-template-columns:1fr 1fr; gap:3px; padding:5px; flex-shrink:0; animation:typeCycle 2.8s ease-in-out infinite; }
+    .qr i { background:var(--ink); }
+    .qr i:nth-child(2),.qr i:nth-child(3){ opacity:.35; }
+    .scan-info { flex:1; font-size:.68rem; line-height:1.4; color:var(--ink); }
+    .scan-info .mono { display:block; margin-bottom:4px; }
+    .alert-pop { margin-top:10px; padding:8px 10px; border-radius:6px; border:1px solid var(--warning); background:color-mix(in srgb,var(--warning) 10%,var(--anim-panel)); color:var(--warning); font:600 .6rem "JetBrains Mono",monospace; animation:fadeUp 1.2s var(--ease) infinite alternate; }
+    .auto-leave { display:flex; align-items:center; justify-content:center; gap:8px; font:600 .6rem "JetBrains Mono",monospace; color:var(--primary); }
+    .taxi { padding:8px 10px; border:1px solid var(--anim-border); border-radius:6px; background:var(--anim-panel); animation:nudge 1.4s ease-in-out infinite; }
+
+    /* task 3 split */
+    .split3 { width:100%; display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+    .domain { border:1px solid var(--anim-border); border-radius:10px; background:var(--anim-panel); padding:10px; min-height:220px; display:flex; flex-direction:column; align-items:center; gap:8px; text-align:center; }
+    .domain .mono { color:var(--primary); }
+    .domain-media { width:100%; flex:1; min-height:140px; border-radius:8px; overflow:hidden; border:1px solid var(--anim-border); background:var(--anim-soft); display:grid; place-items:center; }
+    .domain-media img { width:100%; height:100%; max-height:180px; object-fit:contain; display:block; }
+    .fake-quote { font-size:.62rem; line-height:1.4; color:var(--ink); padding:0 4px; font-style:italic; }
+
+    @keyframes fadeUp { from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none} }
+    @keyframes nudge { 50%{transform:translateX(4px)} }
+    @keyframes tilt { 0%,100%{transform:rotate(-6deg)}50%{transform:rotate(6deg)} }
+    @keyframes panFloat { 0%,100%{transform:translateY(0)}50%{transform:translateY(10px)} }
+    @keyframes glowGood { 0%,100%{box-shadow:0 0 0 0 transparent}50%{box-shadow:0 0 0 3px color-mix(in srgb,var(--success) 25%,transparent)} }
+    @keyframes glowBad { 0%,100%{box-shadow:0 0 0 0 transparent}50%{box-shadow:0 0 0 3px color-mix(in srgb,var(--danger) 25%,transparent)} }
+    @keyframes shine { to{transform:translateX(120%)} }
+    @keyframes typeCycle { 0%,100%{opacity:.5;transform:scale(.97)}30%,65%{opacity:1;transform:scale(1);border-color:var(--primary)} }
+    @keyframes shake { 0%,80%,100%{transform:none}85%{transform:translateX(-3px)}90%{transform:translateX(3px)}95%{transform:translateX(-2px)} }
+    @keyframes pulse { to{opacity:.45;transform:scale(.96)} }
+    @keyframes lockPulse { 50%{transform:scale(1.04)} }
+    @keyframes belt { 0%{transform:translateX(0);opacity:0}10%{opacity:1}55%{transform:translateX(280px)}70%,100%{transform:translateX(340px);opacity:0} }
+    @keyframes stamp { 0%,45%,100%{opacity:0;transform:scale(.8)}55%,75%{opacity:1;transform:scale(1)} }
+    @keyframes scanDown { 0%{transform:translateY(-100%)}100%{transform:translateY(100%)} }
+    @keyframes jargonCycle {
+      0%,8%{opacity:0;transform:translateY(6px)}12%,20%{opacity:1;transform:none}24%,100%{opacity:0;transform:translateY(-4px)}
+    }
+    @keyframes robotWalk {
+      0%,15%{transform:translateX(0)}
+      45%{transform:translateX(118px)}
+      55%,100%{transform:translateX(118px)}
+    }
+    @keyframes trayTip {
+      0%,42%{transform:rotate(0)}
+      52%,100%{transform:rotate(-48deg)}
+    }
+    @keyframes bowlFly {
+      0%,42%{transform:translate(0,0) rotate(0);opacity:1}
+      58%{transform:translate(70px,-18px) rotate(40deg);opacity:1}
+      70%,100%{transform:translate(95px,28px) rotate(80deg);opacity:0}
+    }
+    @keyframes soupSplash {
+      0%,50%{opacity:0;transform:scale(.4)}
+      58%,72%{opacity:1;transform:scale(1)}
+      85%,100%{opacity:.35;transform:scale(1.05)}
+    }
+    @media (prefers-reduced-motion:reduce) {
+      *,*::before,*::after { animation-duration:.01ms!important; animation-iteration-count:1!important; transition-duration:.01ms!important; }
+    }
+    @media (max-width:620px) {
+      .pair-grid,.dual,.split3,.doc-row,.kitchen-photos { grid-template-columns:1fr; }
+      .kitchen-card img { height:180px; }
+      .recap-item { grid-template-columns:96px 1fr; }
+      .scene { min-height:320px; }
+      .fair-row { flex-direction:column; align-items:center; }
+      .candidate { max-width:220px; width:100%; }
+    }
+    @media (max-width:390px) {
+      .app { width:calc(100% - 20px); padding:18px 0 32px; }
+      .content,.intro,.summary { padding-left:14px; padding-right:14px; }
+      .stage { padding:12px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <div class="header-top">
+        <div class="theme-toggle" role="group" aria-label="Colour theme">
+          <button type="button" id="lightBtn" aria-pressed="true">Light</button>
+          <button type="button" id="darkBtn" aria-pressed="false">Dark</button>
+        </div>
+        <div class="progress-wrap">
+          <div class="progress-label" id="progressText">Ready</div>
+          <div class="progress-bar" aria-hidden="true"><div class="progress-fill" id="progressFill"></div></div>
+        </div>
+      </div>
+      <div>
+        <p class="eyebrow">EDB Booklet 1 · Unit 3</p>
+        <h1>AI Ethical Principles</h1>
+      </div>
+      <nav class="jump-nav" id="jumpNav" aria-label="Jump to a section"></nav>
+    </header>
+
+    <main class="panel">
+      <section class="intro" id="intro">
+        <h2>What should AI be allowed to do?</h2>
+        <p>AI can mark essays, track contacts, drive cars, or invent fake videos. Before we cheer for speed, we ask: is this <strong>good or bad</strong>, <strong>right or wrong</strong> — and for whom?</p>
+        <p>This lesson explains <strong>ethics</strong>, then the <strong>five common AI ethical principles</strong>, with short concept stories for Tasks 1–3.</p>
+        <div class="chips" aria-label="Five principles">
+          <span class="chip">TRANSPARENCY</span>
+          <span class="chip">JUSTICE &amp; FAIRNESS</span>
+          <span class="chip">BENEFICENCE</span>
+          <span class="chip">RESPONSIBILITY</span>
+          <span class="chip">PRIVACY</span>
+        </div>
+        <div class="nav"><span></span><button class="btn btn-primary" id="startBtn" type="button">Start exploring</button></div>
+      </section>
+
+      <section id="mainScreen" class="hidden">
+        <div class="stage">
+          <div class="stage-title"><span class="badge"><strong id="sectionCode">01</strong><span id="sectionName">Ethics</span></span></div>
+          <div class="scene" id="scene" aria-live="polite"></div>
+        </div>
+        <div class="content">
+          <h2 class="section-title" id="sectionTitle"></h2>
+          <div class="definition" id="definition"></div>
+          <p class="section-body" id="sectionBody"></p>
+          <div id="extra"></div>
+          <div class="nav">
+            <button class="btn btn-ghost" id="backBtn" type="button">Back</button>
+            <button class="btn btn-primary" id="nextBtn" type="button">Next</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="summary hidden" id="summary">
+        <h2>Learning summary</h2>
+        <p><strong>AI ethics</strong> is a system of principles. These principles guide us to consider both the positive and negative impacts of AI when developing related technologies and using them in real applications.</p>
+        <p>Ethical considerations are often very complex; thus, it is important to promote more thoughtful attention to the complex ethical problems. Controversies may arise about the future application of “Advanced AI”.</p>
+        <div class="recap-list">
+          <div class="recap-item"><b>TRANSPARENCY</b><span>AI processing should be interpretable and explainable to users.</span></div>
+          <div class="recap-item"><b>JUSTICE &amp; FAIRNESS</b><span>Ensure equality, inclusion, and diversity; avoid bias and discrimination.</span></div>
+          <div class="recap-item"><b>BENEFICENCE</b><span>Do no harm; prioritise safety and well-being.</span></div>
+          <div class="recap-item"><b>RESPONSIBILITY</b><span>Uphold accountability and honesty for AI’s impact.</span></div>
+          <div class="recap-item"><b>PRIVACY</b><span>Protect and secure sensitive data under relevant rules.</span></div>
+        </div>
+        <div class="nav">
+          <button class="btn btn-ghost" id="reviewBtn" type="button">Review from start</button>
+          <button class="btn btn-primary" id="restartBtn" type="button">Restart</button>
+        </div>
+      </section>
+    </main>
+    <footer class="note">Based on EDB Booklet 1 Unit 3 · Tasks 1–3 — AI Ethical Principles by Valtorta College</footer>
+  </div>
+
+  <script>
+    (function () {
+      "use strict";
+      const TOTAL = 10;
+      const $ = (id) => document.getElementById(id);
+      const els = {
+        intro: $("intro"), main: $("mainScreen"), summary: $("summary"), scene: $("scene"),
+        code: $("sectionCode"), name: $("sectionName"), title: $("sectionTitle"),
+        definition: $("definition"), body: $("sectionBody"), extra: $("extra"),
+        back: $("backBtn"), next: $("nextBtn"), progress: $("progressFill"), progressText: $("progressText")
+      };
+      let index = 0;
+
+      function caption(text) {
+        return `<div class="scene-caption">${text}</div>`;
+      }
+
+      function renderEthics() {
+        els.scene.innerHTML = `<div class="frame"><div class="balance-wrap" aria-hidden="true">
+          <div class="balance-pivot"></div>
+          <div class="balance-beam"></div>
+          <div class="pan left good">GOOD<br>RIGHTS</div>
+          <div class="pan right bad">BAD<br>DUTIES</div>
+          <div class="balance-stand"></div>
+          <div class="balance-base"></div>
+        </div></div>${caption("Ethics is the balance of good vs bad, rights vs responsibilities.")}`;
+      }
+
+      function renderHelpHurt() {
+        els.scene.innerHTML = `<div class="frame"><div class="dual">
+          <div class="dual-card help"><div class="icon-ring">+</div><span class="mono">HELP</span><strong>Do good</strong><span>detect disease · safer roads</span></div>
+          <div class="dual-card hurt"><div class="icon-ring">−</div><span class="mono">HURT</span><strong>Do harm</strong><span>biased grades · deepfake scams</span></div>
+        </div></div>${caption("The same AI toolkit can help people — or hurt them. Ethics weighs both sides.")}`;
+      }
+
+      function renderTransparency() {
+        const dinTaiFung = encodeURI("../F1 AI assets/img/鼎泰豐kitchen.jpg");
+        els.scene.innerHTML = `<div class="frame" style="padding-bottom:48px">
+          <div class="kitchen-photos">
+            <div class="kitchen-card">
+              <img src="${dinTaiFung}" alt="Din Tai Fung open kitchen" loading="lazy" />
+              <div class="photo-label"><span>DIN TAI FUNG</span>Open kitchen — guests watch dumpling-making</div>
+            </div>
+            <div class="kitchen-card">
+              <img src="../F1 AI assets/img/Omakase.jpg" alt="Omakase counter where guests see the chef" loading="lazy" />
+              <div class="photo-label"><span>OMAKASE</span>Counter seating — every cut is visible</div>
+            </div>
+          </div>
+          <p class="kitchen-note">SEE THE COOKING = TRUST THE FOOD</p>
+        </div>${caption("Restaurant transparency: you can watch how the food is made — just like users should see how AI decides.")}`;
+      }
+
+      function renderFairness() {
+        els.scene.innerHTML = `<div class="frame"><div class="fair-stage">
+          <div class="ai-scanner">HIRING AI · SCANNING CANDIDATES</div>
+          <div class="fair-row">
+            <div class="candidate bias">
+              <div class="scan-beam" aria-hidden="true"></div>
+              <div class="who">CANDIDATE A</div>
+              <div class="avatar woman"><div class="hair"></div><div class="face"><i class="glasses" aria-hidden="true"></i></div></div>
+              <div class="cand-name">OLDER WOMAN</div>
+              <div class="cand-tag">same skills · same CV score</div>
+              <div class="same-cv">CV MATCH 92%</div>
+              <span class="verdict-stamp">REJECTED</span>
+            </div>
+            <div class="candidate ok">
+              <div class="who">CANDIDATE B</div>
+              <div class="avatar man"><div class="hair"></div><div class="face"><i class="glasses" aria-hidden="true"></i></div></div>
+              <div class="cand-name">OLDER MAN</div>
+              <div class="cand-tag">same skills · same CV score</div>
+              <div class="same-cv">CV MATCH 92%</div>
+              <span class="verdict-stamp">HIRED</span>
+            </div>
+            <div class="candidate ok">
+              <div class="who">CANDIDATE C</div>
+              <div class="avatar man"><div class="hair"></div><div class="face"><i class="glasses" aria-hidden="true"></i></div></div>
+              <div class="cand-name">OLDER MAN</div>
+              <div class="cand-tag">same skills · same CV score</div>
+              <div class="same-cv">CV MATCH 92%</div>
+              <span class="verdict-stamp">HIRED</span>
+            </div>
+          </div>
+          <p class="bias-reason">BIAS FLAG: “older woman” pattern in training data<br><span>Equal ability — unequal outcome</span></p>
+        </div></div>${caption("The AI rejects Candidate A because of who she is (older woman), not because her skills are weaker.")}`;
+      }
+
+      function renderBeneficence() {
+        els.scene.innerHTML = `<div class="frame"><div class="doc-row">
+          <div class="doc-card wrong">
+            <div class="doc-head">
+              <div class="doc-avatar">MD</div>
+              <div class="doc-meta"><b>Doctor (unclear)</b><span>harms understanding</span></div>
+            </div>
+            <div class="patient">Patient: “What is wrong with me?”</div>
+            <div class="speech jargon" aria-live="polite">
+              <span class="jargon-line">idiopathic multifactorial pathogenesis…</span>
+              <span class="jargon-line">iatrogenic pharmacokinetic cascade…</span>
+              <span class="jargon-line">differential diagnosis: excl. sequelae…</span>
+              <span class="jargon-line">titrate polypharmacy per comorbidities…</span>
+              <span class="jargon-line">non-inferiority vs placebo cohort…</span>
+            </div>
+            <div class="patient-react">Patient: “?? I understood nothing.”</div>
+          </div>
+          <div class="doc-card right">
+            <div class="doc-head">
+              <div class="doc-avatar">MD</div>
+              <div class="doc-meta"><b>Doctor (kind)</b><span>protects well-being</span></div>
+            </div>
+            <div class="patient">Patient: “What is wrong with me?”</div>
+            <div class="speech kind">
+              <span class="kind-line">“You’ve got a mild cold — rest helps.”</span>
+              <span class="kind-line">“Drink water. How’s your sleep lately?”</span>
+              <span class="kind-line">“Any questions? Ask like we’re chatting.”</span>
+            </div>
+            <div class="patient-react ok">Patient: “Thanks — I feel cared for.”</div>
+          </div>
+        </div></div>${caption("Beneficence: clear, kind care reduces harm. Jargon that confuses people can hurt well-being.")}`;
+      }
+
+      function renderResponsibility() {
+        els.scene.innerHTML = `<div class="frame"><div class="spill-stage">
+          <div class="spill-scene" aria-hidden="true">
+            <div class="robot">
+              <div class="tray"></div>
+              <div class="bowl"></div>
+              <div class="r-head"></div>
+              <div class="r-body"></div>
+            </div>
+            <div class="soup"></div>
+            <div class="guest">
+              <span class="shock">!</span>
+              <div class="g-head"></div>
+              <div class="g-body"></div>
+            </div>
+            <div class="table"></div>
+          </div>
+          <div class="blame">
+            <div class="blame-card"><span>WHO?</span>OWNER</div>
+            <div class="blame-card active"><span>ACCOUNTABLE?</span>ENGINEER</div>
+            <div class="blame-card"><span>WHO?</span>ROBOT CO.</div>
+            <div class="blame-card"><span>WHO?</span>GUEST?</div>
+          </div>
+        </div></div>${caption("Robot waiter spills soup on the guest — “the robot did it” is not enough. Who is accountable?")}`;
+      }
+
+      function renderPrivacy() {
+        els.scene.innerHTML = `<div class="frame"><div class="privacy-flow">
+          <div class="privacy-row">
+            <div class="priv-box students">
+              <span class="mono">STUDENTS</span>
+              <div class="face-row"><i class="mini-face"></i><i class="mini-face"></i><i class="mini-face"></i></div>
+              face + voice data
+            </div>
+            <span class="arrow">→</span>
+            <div class="priv-box train">
+              <span class="mono">COMPANY</span>
+              trains Peer AI
+            </div>
+            <span class="arrow">→</span>
+            <div class="priv-box leak">
+              <span class="mono">LEAKED</span>
+              training set<br>published online
+            </div>
+          </div>
+          <p class="consent-x">NO CONSENT · NO NOTICE · FACES &amp; VOICES EXPOSED</p>
+        </div></div>${caption("Peer AI trained on students’ faces and voices — then the training data is published without telling them.")}`;
+      }
+
+      function renderTask1() {
+        els.scene.innerHTML = `<div class="frame">
+          <div class="grade-belt">
+            <div class="script">ESSAY A</div>
+            <div class="script">ESSAY B</div>
+            <div class="script">“ASDF”??</div>
+            <div class="grader">AI<br>GRADER</div>
+            <span class="grade-tag">SCORE</span>
+          </div>
+        </div>${caption("Task 1 concept: AI grades stacks of scripts fast and consistently — but may miss meaning or invent unfair scores.")}`;
+      }
+
+      function renderTask2() {
+        els.scene.innerHTML = `<div class="frame"><div class="trace">
+          <div class="phone">
+            <div class="phone-bar"></div>
+            <div class="qr-row">
+              <div class="qr" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+              <div class="scan-info"><span class="mono">LEAVEHOMESAFE</span>Scan venue QR → log visit time. If a case appears later, alert nearby visitors.</div>
+            </div>
+            <div class="alert-pop">ALERT · similar time at venue · health advice</div>
+          </div>
+          <div class="auto-leave"><span class="taxi">TAXI RIDE</span><span class="arrow">→</span><span>AI auto-leave (phone motion)</span></div>
+        </div></div>${caption("Task 2 concept: contact-tracing helps stop spread — but needs clear rules for data, consent, and fairness.")}`;
+      }
+
+      function renderTask3() {
+        const dogGif = encodeURI("../F1 AI assets/img/dog driving car.gif");
+        const catGif = encodeURI("../F1 AI assets/img/cat dance.gif");
+        els.scene.innerHTML = `<div class="frame" style="padding-bottom:48px"><div class="split3">
+          <div class="domain">
+            <span class="mono">AUTONOMOUS DRIVING</span>
+            <div class="domain-media"><img src="${dogGif}" alt="Dog appearing to drive a car" /></div>
+            <span style="font-size:.68rem;line-height:1.35;color:var(--ink)">AI can operate a vehicle without a human driver</span>
+          </div>
+          <div class="domain">
+            <span class="mono">FAKE VIDEO</span>
+            <div class="domain-media"><img src="${catGif}" alt="AI-generated cat dance video" /></div>
+            <p class="fake-quote">“Indeed. We can't with a single sentence from an AI, you dismiss all the kitten's hard work.”</p>
+          </div>
+        </div></div>${caption("Task 3: autonomous driving vs fake video — both need ethical checks before we trust what we see.")}`;
+      }
+
+      const sections = [
+        {
+          code: "01", name: "Ethics", title: "What is Ethics?",
+          definition: "Ethics is a system of moral principles, considering what is good versus bad for individuals, groups and society; what is right versus wrong; how to balance rights with responsibilities; and how work can benefit not only ourselves, but also others and society.",
+          body: "Think of ethics as a <strong>shared rulebook for living together</strong> — not just “Will this make me look clever?” but “Will this help or hurt people?” School rules, road rules, and friendship rules are everyday ethics in action.",
+          extra: `<div class="example-box"><b>EVERYDAY METAPHOR</b>A traffic light is not “physics” — it is a social agreement: stop when red so others stay safe. Ethics for AI is the same kind of agreement, written for machines that decide things about people.</div>`,
+          render: renderEthics
+        },
+        {
+          code: "02", name: "AI & Ethics", title: "Why AI needs ethical thinking",
+          definition: "AI can help (do good) and AI can hurt (do harm). We must consider possible benefits versus harm — ethical considerations — in AI applications. There are several globally converging principles among AI ethics guidelines.",
+          body: "A medical AI that spots tumours early <strong>helps</strong>. A deepfake video that scams grandparents <strong>hurts</strong>. Same family of techniques — opposite moral outcomes. Unit 3 focuses on five common principles used worldwide.",
+          extra: `<div class="chips" aria-label="Five principles"><span class="chip">TRANSPARENCY</span><span class="chip">JUSTICE &amp; FAIRNESS</span><span class="chip">BENEFICENCE</span><span class="chip">RESPONSIBILITY</span><span class="chip">PRIVACY</span></div>`,
+          render: renderHelpHurt
+        },
+        {
+          code: "03", name: "Transparency", title: "Transparency",
+          definition: "Ensure that AI-enabled processing in applications can be interpretable by and explainable to users, enabling them to understand how decisions are made and the reasoning behind them.",
+          body: "If an AI rejects a loan or fails a student, people deserve more than “the computer said so.” <strong>Transparency</strong> means the process can be explained in human language.",
+          extra: `<div class="example-box"><b>RESTAURANT METAPHOR</b>At <strong>Din Tai Fung</strong>, the open kitchen lets you watch dumplings being folded. At an <strong>omakase</strong> counter, every cut happens in front of you. Opaque AI is a locked kitchen — food arrives, but you never learn the recipe. Transparent AI shows the key steps behind a score or alert.</div>`,
+          render: renderTransparency
+        },
+        {
+          code: "04", name: "Fairness", title: "Justice and fairness",
+          definition: "Development of AI technologies and their applications must ensure equality, inclusion and diversity, by considering the impact of AI on different individuals and communities and avoiding biases and discrimination.",
+          body: "Models learn from past data. If the past was unfair, the model can <strong>copy that unfairness at scale</strong> — faster and quieter than a human bias.",
+          extra: `<div class="example-box"><b>CLEAR BIAS STORY</b>Three candidates have the <strong>same CV match (92%)</strong>. Candidate A is an <strong>older woman</strong>; B and C are <strong>older men</strong>. The hiring AI still rejects A because training data linked “success” to a certain character profile — not because her skills were weaker. Fairness asks: equal ability, equal chance?</div>`,
+          render: renderFairness
+        },
+        {
+          code: "05", name: "Beneficence", title: "Beneficence",
+          definition: "Development and application of AI technologies must not do any harm and should prioritise the safety and well-being of individuals, by minimising negative impacts on humans, society, and the environment.",
+          body: "Short classroom motto: <strong>Do good, do no harm.</strong> Even “helpful” systems can harm people if they confuse, scare, or ignore their well-being.",
+          extra: `<div class="example-box"><b>DOCTOR METAPHOR</b>One doctor floods the patient with jargon nobody understands — that can increase fear and harm. The other talks like a caring friend: simple words, kind questions, shared understanding. Beneficence prefers the kind side — protect well-being, do not confuse people for show.</div>`,
+          render: renderBeneficence
+        },
+        {
+          code: "06", name: "Responsibility", title: "Responsibility",
+          definition: "Development and application of AI technologies must uphold accountability and honesty by considering the potential risks and taking responsibility for their impact on society.",
+          body: "When something goes wrong, “the AI did it” is not an answer. <strong>People and organisations</strong> must own design choices, warnings, and fixes.",
+          extra: `<div class="example-box"><b>FUN EXAMPLE</b>A robot waiter walks over, tips the tray, and <strong>spills soup on the guest</strong>. Everyone freezes: the owner? the engineer? the robot company? the guest? Responsibility means naming who is accountable <em>before</em> the spill — and being honest about known risks.</div>`,
+          render: renderResponsibility
+        },
+        {
+          code: "07", name: "Privacy", title: "Privacy",
+          definition: "While developing AI technologies and incorporating them into real applications, sensitive data must be protected and secured by complying with relevant data protection and privacy regulations.",
+          body: "AI is hungry for <strong>faces and voices</strong>. Privacy asks what is collected, who can see it, how long it is kept, and whether people consented.",
+          extra: `<div class="example-box"><b>METAPHOR</b>Your face and voice are like a personal diary — not public posters.<br><br><b>REAL EXAMPLE</b>A company uses students’ <strong>faces and voices</strong> to train a “peer AI” classmate. Later, the training dataset is <strong>published online without student consent or notice</strong>. That is a privacy failure: sensitive identity data left the vault.</div>`,
+          render: renderPrivacy
+        },
+        {
+          code: "08", name: "Task 1", title: "Task 1 concept — AI grading",
+          definition: "AI can automatically and quickly grade students’ assignments or examinations. Models are trained on large sets of past answers and human feedback.",
+          body: "Imagine a conveyor belt of essays racing into an AI grader. It is tireless and consistent — but it may reward empty nonsense, copy human bias, or make high-stakes decisions students do not trust.",
+          extra: `<div class="pair-grid">
+            <div class="pair-card good"><b>ADVANTAGES</b>Faster marking · less teacher load · consistent standards · instant feedback · scales to big exams</div>
+            <div class="pair-card bad"><b>DISADVANTAGES</b>May miss real writing quality · possible bias · big impact on individuals · low trust · privacy of student work</div>
+          </div>
+          <div class="example-box"><b>LINK TO PRINCIPLES</b>Ask: Can the score be <strong>explained</strong> (transparency)? Fair across groups? Safe for learners? Who is <strong>accountable</strong> for a wrong mark? Are scripts kept private?</div>`,
+          render: renderTask1
+        },
+        {
+          code: "09", name: "Task 2", title: "Task 2 concept — Contact-tracing app",
+          definition: "During COVID-19, Hong Kong’s LeaveHomeSafe logged venue visits by QR code. If a confirmed case appeared, the app alerted people who visited at a similar time and offered health advice. An AI “auto-leave” feature used phone motion (accelerometer) to mark leaving a taxi without tapping Leave.",
+          body: "Public-health AI can <strong>protect the community</strong> — but it also collects movement patterns. Developers and users both carry ethical duties.",
+          extra: `<div class="example-box"><b>CONCEPT CHECK (DEVELOPER VS USER)</b>
+            <div class="recap-list" style="margin-top:8px">
+              <div class="recap-item"><b>TRANSPARENCY</b><span>Say what data is collected and how it is shared with health bodies.</span></div>
+              <div class="recap-item"><b>FAIRNESS</b><span>Collect only what outbreak control needs; users follow the process fairly.</span></div>
+              <div class="recap-item"><b>BENEFICENCE</b><span>Aim to reduce disease spread and protect well-being.</span></div>
+              <div class="recap-item"><b>RESPONSIBILITY</b><span>Protect and handle data carefully; users follow the rules.</span></div>
+              <div class="recap-item"><b>PRIVACY</b><span>Secure data; users should consent to location-related collection.</span></div>
+            </div>
+          </div>`,
+          render: renderTask2
+        },
+        {
+          code: "10", name: "Task 3", title: "Task 3 concept — Driving &amp; fake video",
+          definition: "Autonomous driving uses sensors, algorithms, and AI to operate a vehicle without direct human control. Fake video generation uses deep learning and computer vision to create content that looks genuine — for humour, politics, social media, or scams.",
+          body: "Two domains, same five principles. On the road the big risk is <strong>physical harm</strong>. With fake media the big risk is <strong>lying to eyes and ears</strong> — fraud, reputation damage, or privacy invasion.",
+          extra: `<div class="pair-grid">
+            <div class="pair-card"><b>AUTONOMOUS DRIVING</b>Explain camera use &amp; decisions · do not raise risk for any road user · prioritise safety · own the risks · protect collected data with consent</div>
+            <div class="pair-card"><b>FAKE VIDEO</b>Explain how generation works · never use for fraud · create carefully for social good · prevent harmful misuse · do not steal someone’s face or voice</div>
+          </div>
+          <div class="example-box"><b>CLASSROOM HOOK</b>The dog-driving clip and the dancing-kitten clip look “real enough” to laugh at — but fake video can also scam, smear, or erase someone’s hard work with one careless AI sentence.</div>`,
+          render: renderTask3
+        }
+      ];
+
+      const jumpLabels = ["Ethics", "Help/Hurt", "Transp.", "Fair", "Benef.", "Resp.", "Privacy", "T1", "T2", "T3", "Sum"];
+
+      function show(which) {
+        els.intro.classList.toggle("hidden", which !== "intro");
+        els.main.classList.toggle("hidden", which !== "main");
+        els.summary.classList.toggle("hidden", which !== "summary");
+      }
+
+      function updateProgress() {
+        els.progress.style.width = `${((index + 1) / TOTAL) * 100}%`;
+        els.progressText.textContent = `Section ${index + 1} of ${TOTAL}`;
+      }
+
+      function updateJumpNav(active) {
+        $("jumpNav").querySelectorAll(".jump-btn").forEach((button, i) => button.classList.toggle("active", i === active));
+      }
+
+      function loadSection(i) {
+        index = i;
+        const s = sections[i];
+        show("main");
+        updateProgress();
+        updateJumpNav(i);
+        els.code.textContent = s.code;
+        els.name.textContent = s.name;
+        els.title.textContent = s.title;
+        els.definition.innerHTML = s.definition;
+        els.body.innerHTML = s.body;
+        els.extra.innerHTML = s.extra || "";
+        els.back.disabled = false;
+        els.next.disabled = false;
+        els.next.textContent = i === sections.length - 1 ? "See summary" : "Next";
+        s.render();
+      }
+
+      function showSummary() {
+        show("summary");
+        els.progress.style.width = "100%";
+        els.progressText.textContent = "Complete";
+        updateJumpNav(sections.length);
+      }
+
+      $("jumpNav").innerHTML = jumpLabels.map((label, i) =>
+        `<button type="button" class="jump-btn" data-jump="${i}">${label}</button>`
+      ).join("");
+
+      $("jumpNav").querySelectorAll(".jump-btn").forEach((button) => {
+        button.addEventListener("click", () => {
+          const target = Number(button.dataset.jump);
+          if (target === sections.length) showSummary();
+          else loadSection(target);
+        });
+      });
+
+      $("startBtn").addEventListener("click", () => loadSection(0));
+      els.next.addEventListener("click", () => {
+        if (index === sections.length - 1) showSummary();
+        else loadSection(index + 1);
+      });
+      els.back.addEventListener("click", () => {
+        if (index === 0) {
+          show("intro");
+          updateJumpNav(-1);
+          els.progress.style.width = "0";
+          els.progressText.textContent = "Ready";
+        } else loadSection(index - 1);
+      });
+      $("restartBtn").addEventListener("click", () => loadSection(0));
+      $("reviewBtn").addEventListener("click", () => {
+        show("intro");
+        updateJumpNav(-1);
+        els.progress.style.width = "0";
+        els.progressText.textContent = "Ready";
+      });
+
+      function theme(t) {
+        const next = t === "dark" ? "dark" : "light";
+        document.documentElement.setAttribute("data-theme", next);
+        try { localStorage.setItem("f1-ai-theme", next); } catch (e) {}
+        $("lightBtn").setAttribute("aria-pressed", next === "light");
+        $("darkBtn").setAttribute("aria-pressed", next === "dark");
+      }
+      $("lightBtn").addEventListener("click", () => theme("light"));
+      $("darkBtn").addEventListener("click", () => theme("dark"));
+      theme(document.documentElement.getAttribute("data-theme"));
+    })();
+  </script>
+</body>
+</html>

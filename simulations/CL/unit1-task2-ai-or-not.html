@@ -1,0 +1,1905 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Unit 1 Task 2 — AI or Not AI?</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet" />
+  <style>
+    :root, [data-theme="light"] {
+      --canvas: #ffffff;
+      --surface: #f7f6f3;
+      --ink: #37352f;
+      --body: #4f4d47;
+      --muted: #787774;
+      --primary: #2383e2;
+      --primary-active: #1a6fc1;
+      --success: #0f7b3f;
+      --warning: #cb6800;
+      --danger: #d44c47;
+      --hairline: rgba(55, 53, 47, 0.09);
+      --ai: #2383e2;
+      --non: #cb6800;
+      --both: #0f7b3f;
+      --radius: 10px;
+      --radius-btn: 8px;
+      --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+      --shadow-soft: 0 1px 2px rgba(55, 53, 47, 0.04), 0 4px 12px rgba(55, 53, 47, 0.06);
+      --toggle-bg: #ffffff;
+      --toggle-border: rgba(55, 53, 47, 0.14);
+      --caption-bg: rgba(255, 255, 255, 0.96);
+      --caption-fg: #37352f;
+      --anim-bg: #f7f6f3;
+      --anim-panel: #ffffff;
+      --anim-soft: #e8e6e1;
+      --anim-soft-2: #ddd9d2;
+      --anim-border: #c5c1b8;
+      --road-sky: #dfe8f2;
+      --road-ground: #c8c4bc;
+    }
+
+    [data-theme="dark"] {
+      --canvas: #202020;
+      --surface: #151515;
+      --ink: #f1f0ec;
+      --body: #cfcbc4;
+      --muted: #9a968e;
+      --primary: #5ba8f5;
+      --primary-active: #7bb8f7;
+      --success: #3dcf7a;
+      --warning: #e0a04a;
+      --danger: #f07171;
+      --hairline: rgba(255, 255, 255, 0.1);
+      --ai: #5ba8f5;
+      --non: #e0a04a;
+      --both: #3dcf7a;
+      --shadow-soft: 0 1px 2px rgba(0, 0, 0, 0.35), 0 4px 14px rgba(0, 0, 0, 0.28);
+      --toggle-bg: #202020;
+      --toggle-border: rgba(255, 255, 255, 0.14);
+      --caption-bg: rgba(32, 32, 32, 0.96);
+      --caption-fg: #f1f0ec;
+      --anim-bg: #1a1a1a;
+      --anim-panel: #262626;
+      --anim-soft: #333333;
+      --anim-soft-2: #3d3d3d;
+      --anim-border: #555555;
+      --road-sky: #243040;
+      --road-ground: #2e2c28;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      min-height: 100vh;
+      min-height: 100dvh;
+      font-family: Inter, system-ui, sans-serif;
+      color: var(--body);
+      background: var(--surface);
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .app {
+      width: min(880px, calc(100% - 28px));
+      margin: 0 auto;
+      padding: 28px 0 40px;
+    }
+
+    header {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 14px;
+      margin-bottom: 20px;
+    }
+
+    .header-top {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      width: 100%;
+      margin-bottom: 4px;
+    }
+
+    .theme-toggle {
+      display: inline-flex;
+      border: 1px solid var(--toggle-border);
+      border-radius: 8px;
+      overflow: hidden;
+      background: var(--toggle-bg);
+      flex-shrink: 0;
+    }
+
+    .theme-toggle button {
+      appearance: none;
+      border: 0;
+      background: transparent;
+      color: var(--muted);
+      font: inherit;
+      font-size: 0.78rem;
+      font-weight: 600;
+      padding: 8px 12px;
+      cursor: pointer;
+      line-height: 1;
+    }
+
+    .theme-toggle button[aria-pressed="true"] {
+      background: var(--primary);
+      color: #fff;
+    }
+
+    .theme-toggle button:focus-visible {
+      outline: 2px solid var(--primary);
+      outline-offset: 2px;
+    }
+
+    .eyebrow {
+      font-family: "JetBrains Mono", ui-monospace, monospace;
+      font-size: 0.72rem;
+      letter-spacing: 0.04em;
+      color: var(--muted);
+      font-weight: 500;
+      margin-bottom: 6px;
+    }
+
+    h1 {
+      font-family: "Cormorant Garamond", Georgia, serif;
+      font-size: clamp(1.85rem, 4.5vw, 2.45rem);
+      font-weight: 700;
+      color: var(--ink);
+      line-height: 1.15;
+      letter-spacing: -0.01em;
+    }
+
+    .progress-wrap {
+      min-width: 160px;
+      width: min(220px, 100%);
+    }
+
+    .progress-label {
+      font-size: 0.8rem;
+      color: var(--muted);
+      margin-bottom: 8px;
+      text-align: right;
+    }
+
+    .progress-bar {
+      height: 3px;
+      border-radius: 1px;
+      background: var(--hairline);
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      width: 0%;
+      background: var(--primary);
+      transition: width 360ms var(--ease-out);
+    }
+
+    .jump-nav {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin: -8px 0 16px;
+    }
+
+    .jump-nav button {
+      appearance: none;
+      border: 1px solid var(--hairline);
+      border-radius: 999px;
+      background: var(--canvas);
+      color: var(--muted);
+      padding: 5px 9px;
+      font-family: "JetBrains Mono", ui-monospace, monospace;
+      font-size: 0.68rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .jump-nav button:hover,
+    .jump-nav button[aria-current="step"] {
+      border-color: var(--primary);
+      background: rgba(35, 131, 226, 0.08);
+      color: var(--primary);
+    }
+
+    .panel {
+      background: var(--canvas);
+      border: 1px solid var(--hairline);
+      border-radius: 12px;
+      box-shadow: var(--shadow-soft);
+      overflow: hidden;
+    }
+
+    .stage {
+      padding: 18px 18px 16px;
+      border-bottom: 1px solid var(--hairline);
+      min-height: 240px;
+      display: grid;
+      place-items: center;
+      background: var(--surface);
+    }
+
+    .stage-title {
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      border: 1px solid var(--hairline);
+      font-size: 0.78rem;
+      color: var(--muted);
+      background: var(--canvas);
+    }
+
+    .badge strong {
+      font-family: "JetBrains Mono", ui-monospace, monospace;
+      color: var(--ink);
+      font-weight: 600;
+    }
+
+    .content {
+      padding: 20px 18px 18px;
+    }
+
+    .question {
+      font-family: "Cormorant Garamond", Georgia, serif;
+      font-size: clamp(1.2rem, 3vw, 1.5rem);
+      font-weight: 600;
+      color: var(--ink);
+      margin-bottom: 6px;
+      line-height: 1.3;
+    }
+
+    .hint {
+      color: var(--muted);
+      font-size: 0.9rem;
+      margin-bottom: 16px;
+      line-height: 1.5;
+    }
+
+    .choices {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 10px;
+      margin-bottom: 6px;
+    }
+
+    .choice {
+      appearance: none;
+      border: 1px solid var(--hairline);
+      background: var(--canvas);
+      color: var(--ink);
+      border-radius: var(--radius);
+      padding: 12px 14px;
+      font: inherit;
+      font-weight: 600;
+      font-size: 0.92rem;
+      cursor: pointer;
+      text-align: left;
+      transition:
+        border-color 180ms ease,
+        background 180ms ease,
+        transform 220ms var(--ease-out);
+    }
+
+    .choice:hover:not(:disabled) {
+      border-color: rgba(35, 131, 226, 0.45);
+      background: rgba(35, 131, 226, 0.04);
+    }
+
+    .choice:active:not(:disabled) {
+      transform: scale(0.98);
+    }
+
+    .choice:disabled { cursor: default; }
+
+    .choice.correct {
+      border-color: rgba(15, 123, 63, 0.45);
+      background: rgba(15, 123, 63, 0.08);
+      animation: scalePop 220ms var(--ease-out);
+    }
+
+    .choice.wrong {
+      border-color: rgba(212, 76, 71, 0.45);
+      background: rgba(212, 76, 71, 0.07);
+      animation: scalePop 220ms var(--ease-out);
+    }
+
+    .choice .sub {
+      display: block;
+      margin-top: 4px;
+      font-size: 0.78rem;
+      font-weight: 400;
+      color: var(--muted);
+      line-height: 1.35;
+    }
+
+    .explain {
+      display: none;
+      margin-top: 16px;
+      padding-top: 16px;
+      border-top: 1px solid var(--hairline);
+    }
+
+    .explain.show {
+      display: block;
+      animation: fadeUp 360ms var(--ease-out);
+    }
+
+    .verdict {
+      display: inline-flex;
+      align-items: center;
+      padding: 3px 9px;
+      border-radius: 999px;
+      font-family: "JetBrains Mono", ui-monospace, monospace;
+      font-size: 0.72rem;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      margin-bottom: 10px;
+      border: 1px solid var(--hairline);
+    }
+
+    .verdict.ai {
+      color: var(--ai);
+      background: rgba(35, 131, 226, 0.08);
+      border-color: rgba(35, 131, 226, 0.22);
+    }
+
+    .verdict.non {
+      color: var(--non);
+      background: rgba(203, 104, 0, 0.08);
+      border-color: rgba(203, 104, 0, 0.22);
+    }
+
+    .verdict.both {
+      color: var(--both);
+      background: rgba(15, 123, 63, 0.08);
+      border-color: rgba(15, 123, 63, 0.22);
+    }
+
+    .explain h3 {
+      font-family: "Cormorant Garamond", Georgia, serif;
+      font-size: 1.15rem;
+      font-weight: 600;
+      color: var(--ink);
+      margin-bottom: 8px;
+    }
+
+    .explain p {
+      color: var(--body);
+      line-height: 1.6;
+      margin-bottom: 10px;
+      font-size: 0.92rem;
+    }
+
+    .explain p strong { color: var(--ink); font-weight: 600; }
+
+    .explain .aside {
+      color: var(--muted);
+      font-size: 0.85rem;
+    }
+
+    .nav {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      margin-top: 16px;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      appearance: none;
+      border: 0;
+      border-radius: var(--radius-btn);
+      padding: 10px 16px;
+      font: inherit;
+      font-weight: 600;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: background 160ms ease, border-color 160ms ease, transform 220ms var(--ease-out), opacity 160ms ease;
+    }
+
+    .btn:hover:not(:disabled) { transform: translateY(-1px); }
+    .btn:active:not(:disabled) { transform: scale(0.98); }
+    .btn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+    .btn-ghost {
+      background: transparent;
+      color: var(--muted);
+      border: 1px solid var(--hairline);
+    }
+
+    .btn-ghost:hover:not(:disabled) {
+      color: var(--ink);
+      border-color: rgba(55, 53, 47, 0.18);
+      background: var(--surface);
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      color: #fff;
+      margin-left: auto;
+    }
+
+    .btn-primary:hover:not(:disabled) {
+      background: var(--primary-active);
+    }
+
+    .intro, .summary {
+      padding: 26px 22px;
+    }
+
+    .intro h2, .summary h2 {
+      font-family: "Cormorant Garamond", Georgia, serif;
+      font-size: clamp(1.35rem, 3vw, 1.65rem);
+      font-weight: 600;
+      color: var(--ink);
+      margin-bottom: 10px;
+    }
+
+    .intro p, .summary p {
+      color: var(--body);
+      line-height: 1.65;
+      margin-bottom: 12px;
+      font-size: 0.95rem;
+    }
+
+    .intro p strong, .summary p strong { color: var(--ink); }
+
+    .score-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin: 18px 0;
+    }
+
+    .score-card {
+      border: 1px solid var(--hairline);
+      border-radius: var(--radius);
+      padding: 14px 12px;
+      background: var(--surface);
+    }
+
+    .score-card span {
+      display: block;
+      color: var(--muted);
+      font-size: 0.75rem;
+      margin-bottom: 4px;
+    }
+
+    .score-card strong {
+      font-family: "Cormorant Garamond", Georgia, serif;
+      font-size: 1.55rem;
+      font-weight: 700;
+      color: var(--ink);
+    }
+
+    /* Shared animation scene */
+    .scene {
+      width: min(100%, 820px);
+      aspect-ratio: 16 / 8;
+      border-radius: 10px;
+      border: 1px solid var(--hairline);
+      background: var(--anim-bg);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .scene-caption {
+      position: absolute;
+      left: 10px;
+      bottom: 8px;
+      z-index: 5;
+      font-size: 0.7rem;
+      font-weight: 600;
+      color: var(--caption-fg);
+      background: var(--caption-bg);
+      border: 1px solid var(--hairline);
+      padding: 4px 8px;
+      border-radius: 6px;
+      max-width: min(92%, 420px);
+      box-shadow: var(--shadow-soft);
+      pointer-events: none;
+    }
+
+    .dual {
+      width: 100%;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    @media (max-width: 760px) {
+      .dual { grid-template-columns: 1fr; }
+      .scene { aspect-ratio: 16 / 9; }
+      .score-grid { grid-template-columns: 1fr; }
+      .progress-label { text-align: right; }
+      .progress-wrap { max-width: none; }
+      .songs { grid-template-columns: 1fr; gap: 8px; }
+      .arrow-learn { top: 52%; }
+      .cv-box span, .face-box span, .detect-box span {
+        top: 2px;
+        left: 2px;
+      }
+    }
+
+    @media (max-width: 390px) {
+      .app { width: calc(100% - 20px); padding: 18px 0 32px; }
+      .content, .intro, .summary { padding-left: 14px; padding-right: 14px; }
+      .stage { padding: 12px; }
+      .choices { grid-template-columns: 1fr; }
+    }
+
+    .dual-label {
+      position: absolute;
+      top: 8px;
+      left: 8px;
+      z-index: 5;
+      font-family: "JetBrains Mono", ui-monospace, monospace;
+      font-size: 0.65rem;
+      font-weight: 600;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      padding: 3px 8px;
+      border-radius: 999px;
+      border: 1px solid var(--hairline);
+    }
+
+    .dual-label.non {
+      background: rgba(203, 104, 0, 0.08);
+      color: var(--non);
+      border-color: rgba(203, 104, 0, 0.2);
+    }
+
+    .dual-label.ai {
+      background: rgba(35, 131, 226, 0.08);
+      color: var(--ai);
+      border-color: rgba(35, 131, 226, 0.2);
+    }
+
+    /* ===== Airport scanner ===== */
+    .belt {
+      position: absolute;
+      left: 0; right: 0;
+      bottom: 28%;
+      height: 18%;
+      background:
+        repeating-linear-gradient(90deg, var(--anim-soft) 0 18px, var(--anim-soft-2) 18px 36px);
+      border-top: 2px solid var(--anim-border);
+      border-bottom: 2px solid var(--anim-border);
+      animation: beltMove 1.2s linear infinite;
+    }
+
+    @keyframes beltMove {
+      from { background-position: 0 0; }
+      to { background-position: 36px 0; }
+    }
+
+    .machine {
+      position: absolute;
+      left: 38%;
+      top: 12%;
+      width: 24%;
+      height: 58%;
+      background: linear-gradient(180deg, var(--anim-soft), var(--anim-soft-2));
+      border: 1.5px solid var(--anim-border);
+      border-radius: 8px;
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+      z-index: 2;
+    }
+
+    .machine::before {
+      content: "";
+      position: absolute;
+      inset: 12% 8%;
+      border-radius: 6px;
+      background: #2a2926;
+      border: 1px solid #1a1917;
+    }
+
+    .machine-light {
+      position: absolute;
+      top: 6px;
+      right: 8px;
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--success);
+      animation: blink 1.4s ease-in-out infinite;
+    }
+
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.35; }
+    }
+
+    .bag {
+      position: absolute;
+      bottom: 34%;
+      width: 70px;
+      height: 46px;
+      z-index: 3;
+      animation: bagRun 5.5s linear infinite;
+    }
+
+    .bag-body {
+      width: 100%;
+      height: 100%;
+      border-radius: 8px 8px 6px 6px;
+      background: linear-gradient(160deg, #5a8fc9, #3a6fa8);
+      border: 1.5px solid rgba(255, 255, 255, 0.35);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .bag-handle {
+      position: absolute;
+      top: -10px;
+      left: 18px;
+      width: 34px;
+      height: 12px;
+      border: 2.5px solid #7aa8d4;
+      border-bottom: 0;
+      border-radius: 8px 8px 0 0;
+    }
+
+    .bag-label {
+      position: absolute;
+      right: 6px;
+      top: 8px;
+      width: 16px;
+      height: 22px;
+      background: rgba(255, 255, 255, 0.35);
+      border-radius: 3px;
+    }
+
+    .scene.non-ai .bag-body {
+      animation: toXray 5.5s linear infinite;
+    }
+
+    .xray-ghost {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      background:
+        radial-gradient(circle at 30% 55%, rgba(180, 255, 210, 0.95) 0 8%, transparent 9%),
+        radial-gradient(circle at 58% 48%, rgba(160, 230, 255, 0.9) 0 10%, transparent 11%),
+        linear-gradient(180deg, transparent 20%, rgba(120, 255, 180, 0.35) 45%, transparent 70%);
+      mix-blend-mode: screen;
+    }
+
+    .scene.non-ai .xray-ghost {
+      animation: xrayFlash 5.5s linear infinite;
+    }
+
+    .detect-box {
+      position: absolute;
+      border: 2px solid #0f7b3f;
+      box-shadow: 0 0 0 1px rgba(55, 53, 47, 0.12);
+      opacity: 0;
+      z-index: 4;
+      pointer-events: none;
+    }
+
+    .detect-box span {
+      position: absolute;
+      top: -16px;
+      left: -1px;
+      font-family: "JetBrains Mono", ui-monospace, monospace;
+      font-size: 0.58rem;
+      font-weight: 600;
+      background: #0f7b3f;
+      color: #fff;
+      padding: 1px 4px;
+      white-space: nowrap;
+      border-radius: 2px;
+    }
+
+    .scene.ai-mode .detect-laptop {
+      width: 28px; height: 18px; bottom: 42%;
+      animation: detectA 5.5s linear infinite;
+    }
+    .scene.ai-mode .detect-bottle {
+      width: 14px; height: 26px; bottom: 40%;
+      border-color: #cb6800;
+      animation: detectB 5.5s linear infinite;
+    }
+    .scene.ai-mode .detect-bottle span { background: #cb6800; }
+    .scene.ai-mode .detect-phone {
+      width: 12px; height: 20px; bottom: 41%;
+      border-color: #2383e2;
+      animation: detectC 5.5s linear infinite;
+    }
+    .scene.ai-mode .detect-phone span { background: #2383e2; }
+
+    @keyframes bagRun {
+      0%   { left: -12%; transform: scale(1); filter: none; }
+      35%  { left: 40%; transform: scale(1); filter: none; }
+      48%  { left: 46%; transform: scale(0.92); }
+      62%  { left: 52%; transform: scale(0.92); }
+      100% { left: 108%; transform: scale(1); filter: none; }
+    }
+
+    @keyframes toXray {
+      0%, 34% {
+        background: linear-gradient(160deg, #5a8fc9, #3a6fa8);
+        filter: none;
+        opacity: 1;
+      }
+      42%, 60% {
+        background: linear-gradient(160deg, rgba(140, 255, 190, 0.35), rgba(80, 180, 255, 0.28));
+        filter: contrast(1.35) brightness(1.2);
+        opacity: 0.9;
+      }
+      70%, 100% {
+        background: linear-gradient(160deg, #5a8fc9, #3a6fa8);
+        filter: none;
+        opacity: 1;
+      }
+    }
+
+    @keyframes xrayFlash {
+      0%, 38% { opacity: 0; }
+      42%, 58% { opacity: 1; }
+      68%, 100% { opacity: 0; }
+    }
+
+    @keyframes detectA {
+      0%, 38% { left: -20%; opacity: 0; }
+      42% { left: 44%; opacity: 1; }
+      58% { left: 50%; opacity: 1; }
+      68%, 100% { left: 110%; opacity: 0; }
+    }
+    @keyframes detectB {
+      0%, 38% { left: -18%; opacity: 0; }
+      43% { left: 48%; opacity: 1; }
+      58% { left: 54%; opacity: 1; }
+      68%, 100% { left: 112%; opacity: 0; }
+    }
+    @keyframes detectC {
+      0%, 38% { left: -16%; opacity: 0; }
+      44% { left: 51%; opacity: 1; }
+      58% { left: 57%; opacity: 1; }
+      68%, 100% { left: 114%; opacity: 0; }
+    }
+
+    .scan-beam {
+      position: absolute;
+      left: 38%;
+      top: 12%;
+      width: 24%;
+      height: 58%;
+      z-index: 2;
+      pointer-events: none;
+      overflow: hidden;
+      border-radius: 8px;
+    }
+
+    .scan-beam::after {
+      content: "";
+      position: absolute;
+      left: 0; right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, #0f7b3f, transparent);
+      animation: beam 1.8s ease-in-out infinite;
+    }
+
+    .scene.non-ai .scan-beam::after {
+      background: linear-gradient(90deg, transparent, #5ec9a0, transparent);
+    }
+
+    @keyframes beam {
+      0% { top: 10%; opacity: 0.2; }
+      50% { top: 75%; opacity: 1; }
+      100% { top: 10%; opacity: 0.2; }
+    }
+
+    /* ===== Generic icon scenes ===== */
+    .anim-box {
+      width: min(100%, 520px);
+      height: 220px;
+      position: relative;
+      border-radius: 10px;
+      border: 1px solid var(--hairline);
+      background: var(--anim-bg);
+      overflow: hidden;
+      margin: 0 auto;
+    }
+
+    /* RFID */
+    .rfid-tag {
+      position: absolute;
+      left: 16%;
+      top: 42%;
+      width: 70px;
+      height: 46px;
+      border-radius: 8px;
+      background: var(--anim-panel);
+      color: var(--ink);
+      border: 1px solid var(--hairline);
+      display: grid;
+      place-items: center;
+      font-family: "JetBrains Mono", ui-monospace, monospace;
+      font-size: 0.68rem;
+      font-weight: 600;
+      animation: floaty 2.4s ease-in-out infinite;
+    }
+    .rfid-reader {
+      position: absolute;
+      right: 14%;
+      top: 28%;
+      width: 90px;
+      height: 110px;
+      border-radius: 10px;
+      background: var(--anim-panel);
+      border: 1.5px solid var(--anim-border);
+    }
+    .rfid-reader::after {
+      content: "READER";
+      position: absolute;
+      bottom: 8px;
+      left: 0; right: 0;
+      text-align: center;
+      font-family: "JetBrains Mono", ui-monospace, monospace;
+      font-size: 0.6rem;
+      color: var(--muted);
+    }
+    .wave {
+      position: absolute;
+      left: 32%;
+      top: 45%;
+      width: 24px;
+      height: 24px;
+      border: 2px solid var(--primary);
+      border-radius: 50%;
+      opacity: 0;
+      animation: ripple 2s linear infinite;
+    }
+    .wave:nth-child(2) { animation-delay: 0.45s; }
+    .wave:nth-child(3) { animation-delay: 0.9s; }
+    @keyframes ripple {
+      0% { transform: scale(0.4); opacity: 0.7; }
+      100% { transform: scale(4.2); opacity: 0; }
+    }
+    @keyframes floaty {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-8px); }
+    }
+
+    /* Calculator */
+    .calc {
+      position: absolute;
+      inset: 24px auto auto 50%;
+      transform: translateX(-50%);
+      width: 150px;
+      height: 170px;
+      background: var(--surface);
+      border: 1.5px solid var(--anim-border);
+      border-radius: 10px;
+      padding: 10px;
+    }
+    .calc-screen {
+      height: 36px;
+      background: var(--ink);
+      border-radius: 6px;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      padding: 0 8px;
+      font-family: "JetBrains Mono", ui-monospace, monospace;
+      font-size: 0.85rem;
+      margin-bottom: 8px;
+    }
+    .calc-keys {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 5px;
+    }
+    .calc-keys i {
+      height: 22px;
+      border-radius: 4px;
+      background: var(--anim-soft-2);
+      display: block;
+    }
+    .calc-keys i.on { animation: keyPress 3s ease infinite; background: var(--primary); }
+    @keyframes keyPress {
+      0%, 10%, 100% { background: var(--anim-soft-2); transform: scale(1); }
+      15%, 25% { background: var(--primary); transform: scale(0.92); }
+      40% { background: var(--anim-soft-2); }
+    }
+    .gate-flow {
+      position: absolute;
+      bottom: 12px;
+      left: 10px;
+      right: 10px;
+      text-align: center;
+      font-size: 0.72rem;
+      font-weight: 600;
+      color: var(--caption-fg);
+      background: var(--caption-bg);
+      border: 1px solid var(--hairline);
+      border-radius: 6px;
+      padding: 4px 8px;
+    }
+
+    /* Self-driving */
+    .road {
+      position: absolute;
+      inset: 0;
+      background:
+        linear-gradient(180deg, var(--road-sky) 0 48%, var(--road-ground) 48% 100%);
+    }
+    .lane {
+      position: absolute;
+      left: 0; right: 0;
+      top: 72%;
+      height: 3px;
+      background: repeating-linear-gradient(90deg, #fff 0 28px, transparent 28px 52px);
+      animation: laneMove 0.8s linear infinite;
+    }
+    @keyframes laneMove {
+      from { background-position: 0 0; }
+      to { background-position: -52px 0; }
+    }
+    .car {
+      position: absolute;
+      left: 42%;
+      bottom: 24%;
+      width: 90px;
+      height: 42px;
+      background: var(--primary);
+      border-radius: 10px 14px 6px 6px;
+      animation: carBob 1.5s ease-in-out infinite;
+      z-index: 2;
+    }
+    .car::before {
+      content: "";
+      position: absolute;
+      left: 14px; top: -16px;
+      width: 52px; height: 20px;
+      background: #5aa3e8;
+      border-radius: 8px 12px 0 0;
+    }
+    @keyframes carBob {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-3px); }
+    }
+    .cv-box {
+      position: absolute;
+      border: 2px solid #0f7b3f;
+    }
+    .cv-box span {
+      position: absolute;
+      top: -15px;
+      left: 0;
+      font-family: "JetBrains Mono", ui-monospace, monospace;
+      font-size: 0.58rem;
+      font-weight: 600;
+      background: #0f7b3f;
+      color: #fff;
+      padding: 1px 4px;
+      border-radius: 2px;
+    }
+    .sign {
+      position: absolute;
+      right: 14%;
+      top: 28%;
+      width: 34px;
+      height: 34px;
+      background: var(--danger);
+      border-radius: 50%;
+      animation: detectPulse 2s ease-in-out infinite;
+    }
+    .ped {
+      position: absolute;
+      left: 16%;
+      top: 36%;
+      width: 18px;
+      height: 40px;
+      background: var(--warning);
+      border-radius: 8px 8px 4px 4px;
+      animation: detectPulse 2s ease-in-out infinite 0.4s;
+    }
+    @keyframes detectPulse {
+      0%, 100% { filter: brightness(1); }
+      50% { filter: brightness(1.12); }
+    }
+
+    /* Chatbot */
+    .chat {
+      position: absolute;
+      inset: 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      justify-content: center;
+    }
+    .bubble {
+      max-width: 72%;
+      padding: 10px 12px;
+      border-radius: 10px;
+      font-size: 0.82rem;
+      line-height: 1.35;
+      opacity: 0;
+      animation: chatIn 4.5s ease infinite;
+      border: 1px solid var(--hairline);
+    }
+    .bubble.user {
+      align-self: flex-end;
+      background: var(--surface);
+      color: var(--ink);
+      animation-delay: 0.2s;
+    }
+    .bubble.bot {
+      align-self: flex-start;
+      background: rgba(35, 131, 226, 0.08);
+      border-color: rgba(35, 131, 226, 0.22);
+      color: var(--ink);
+      animation-delay: 1.4s;
+    }
+    .nlp-tag {
+      align-self: center;
+      font-family: "JetBrains Mono", ui-monospace, monospace;
+      font-size: 0.68rem;
+      font-weight: 600;
+      color: var(--caption-fg);
+      background: var(--caption-bg);
+      border: 1px solid var(--hairline);
+      padding: 4px 10px;
+      border-radius: 999px;
+      opacity: 0;
+      animation: chatIn 4.5s ease infinite;
+      animation-delay: 0.8s;
+    }
+    @keyframes chatIn {
+      0%, 8% { opacity: 0; transform: translateY(8px); }
+      18%, 85% { opacity: 1; transform: translateY(0); }
+      100% { opacity: 0; }
+    }
+
+    /* Recommender */
+    .songs {
+      position: absolute;
+      inset: 18px;
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      gap: 10px;
+    }
+    .hist, .rec {
+      border: 1px solid var(--hairline);
+      border-radius: 10px;
+      padding: 10px;
+      background: var(--surface);
+    }
+    .hist h4, .rec h4 {
+      font-family: "JetBrains Mono", ui-monospace, monospace;
+      font-size: 0.65rem;
+      color: var(--muted);
+      margin-bottom: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      font-weight: 600;
+    }
+    .track {
+      height: 16px;
+      border-radius: 4px;
+      background: var(--anim-soft);
+      margin-bottom: 7px;
+      position: relative;
+      overflow: hidden;
+    }
+    .track::after {
+      content: "";
+      position: absolute;
+      inset: 0 auto 0 0;
+      width: 0;
+      background: var(--primary);
+      animation: fillTrack 3.2s ease infinite;
+    }
+    .track:nth-child(2)::after { animation-delay: 0.2s; }
+    .track:nth-child(3)::after { animation-delay: 0.4s; }
+    .rec .track {
+      background: rgba(35, 131, 226, 0.08);
+      border: 1px solid rgba(35, 131, 226, 0.18);
+      opacity: 0;
+      animation: recPop 3.2s ease infinite;
+    }
+    .rec .track:nth-child(2) { animation-delay: 1.1s; }
+    .rec .track:nth-child(3) { animation-delay: 1.35s; }
+    .rec .track:nth-child(4) { animation-delay: 1.6s; }
+    .arrow-learn {
+      position: absolute;
+      left: 48%;
+      top: 48%;
+      transform: translate(-50%, -50%);
+      font-family: "JetBrains Mono", ui-monospace, monospace;
+      font-size: 0.68rem;
+      font-weight: 600;
+      color: var(--caption-fg);
+      background: var(--caption-bg);
+      padding: 4px 8px;
+      border-radius: 999px;
+      border: 1px solid var(--hairline);
+      z-index: 2;
+      box-shadow: var(--shadow-soft);
+    }
+    @keyframes fillTrack {
+      0% { width: 0; }
+      40%, 100% { width: 70%; }
+    }
+    @keyframes recPop {
+      0%, 30% { opacity: 0; transform: translateX(8px); }
+      45%, 90% { opacity: 1; transform: translateX(0); }
+      100% { opacity: 0; }
+    }
+
+    /* Face recognition */
+    .face {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 110px;
+      height: 130px;
+      transform: translate(-50%, -50%);
+      border-radius: 55% 55% 48% 48%;
+      background: linear-gradient(180deg, #f0d4b8, #dcb089);
+    }
+    .face::before, .face::after {
+      content: "";
+      position: absolute;
+      top: 48px;
+      width: 14px;
+      height: 14px;
+      background: #2a1c14;
+      border-radius: 50%;
+    }
+    .face::before { left: 28px; }
+    .face::after { right: 28px; }
+    .mouth {
+      position: absolute;
+      left: 38px;
+      bottom: 34px;
+      width: 34px;
+      height: 10px;
+      border-bottom: 3px solid #2a1c14;
+      border-radius: 0 0 20px 20px;
+    }
+    .face-box {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 140px;
+      height: 160px;
+      transform: translate(-50%, -50%);
+      border: 2px solid #0f7b3f;
+      animation: boxScan 2.2s ease-in-out infinite;
+    }
+    .face-box span {
+      position: absolute;
+      top: -18px;
+      left: 0;
+      font-family: "JetBrains Mono", ui-monospace, monospace;
+      background: #0f7b3f;
+      color: #fff;
+      font-size: 0.65rem;
+      font-weight: 600;
+      padding: 2px 6px;
+      border-radius: 2px;
+    }
+    .landmarks span {
+      position: absolute;
+      width: 6px;
+      height: 6px;
+      background: var(--primary);
+      border-radius: 50%;
+      animation: landmark 2.2s ease-in-out infinite;
+    }
+    @keyframes boxScan {
+      0%, 100% { outline: 1px solid transparent; }
+      50% { outline: 1px solid rgba(15, 123, 63, 0.35); }
+    }
+    @keyframes landmark {
+      0%, 100% { opacity: 0.45; }
+      50% { opacity: 1; }
+    }
+
+    /* 3D printer */
+    .printer {
+      position: absolute;
+      left: 50%;
+      top: 18px;
+      transform: translateX(-50%);
+      width: min(220px, 86%);
+      height: 180px;
+      border: 1.5px solid var(--anim-border);
+      border-radius: 10px;
+      background: var(--surface);
+    }
+    .nozzle {
+      position: absolute;
+      top: 20px;
+      left: 12%;
+      width: 18px;
+      height: 28px;
+      background: var(--danger);
+      clip-path: polygon(20% 0, 80% 0, 100% 100%, 0 100%);
+      animation: printMove 3s ease-in-out infinite;
+      z-index: 2;
+    }
+    .print-object {
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      bottom: 24px;
+      width: 36%;
+      height: 0;
+      background: linear-gradient(180deg, #3da06a, #0f7b3f);
+      border-radius: 4px 4px 0 0;
+      animation: growPrint 3s ease-in-out infinite;
+    }
+    .layer-lines {
+      position: absolute;
+      inset: 0;
+      background: repeating-linear-gradient(180deg, transparent 0 6px, rgba(0, 0, 0, 0.12) 6px 7px);
+    }
+    @keyframes printMove {
+      0% { left: 14%; }
+      50% { left: 72%; }
+      100% { left: 14%; }
+    }
+    @keyframes growPrint {
+      0% { height: 8px; }
+      100% { height: 70px; }
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes scalePop {
+      0% { transform: scale(1); }
+      40% { transform: scale(1.02); }
+      100% { transform: scale(1); }
+    }
+
+    .hidden { display: none !important; }
+
+    footer.note {
+      margin-top: 14px;
+      color: var(--muted);
+      font-size: 0.78rem;
+      text-align: center;
+    }
+  </style>
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem("f1-ai-theme");
+        if (t !== "light" && t !== "dark") t = "light";
+        document.documentElement.setAttribute("data-theme", t);
+      } catch (e) {
+        document.documentElement.setAttribute("data-theme", "light");
+      }
+    })();
+  </script>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <div class="header-top">
+        <div class="theme-toggle" role="group" aria-label="Colour mode">
+          <button type="button" id="themeLightBtn" aria-pressed="true">Light</button>
+          <button type="button" id="themeDarkBtn" aria-pressed="false">Dark</button>
+        </div>
+      </div>
+      <div>
+        <div class="eyebrow">Booklet 1 · Unit 1 · Task 2</div>
+        <h1>AI or Not AI?</h1>
+      </div>
+      <div class="progress-wrap" id="progressWrap">
+        <div class="progress-label"><span id="progressText">Ready</span></div>
+        <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+      </div>
+    </header>
+
+    <nav class="jump-nav" id="jumpNav" aria-label="Jump to scenario">
+      <button type="button" data-index="0">A</button>
+      <button type="button" data-index="1">B</button>
+      <button type="button" data-index="2">C</button>
+      <button type="button" data-index="3">D</button>
+      <button type="button" data-index="4">E</button>
+      <button type="button" data-index="5">F</button>
+      <button type="button" data-index="6">G</button>
+      <button type="button" data-index="7">H</button>
+      <button type="button" data-summary>Summary</button>
+    </nav>
+
+    <section class="panel" id="introScreen">
+      <div class="intro">
+        <h2>Can you tell which apps use AI?</h2>
+        <p>
+          Identify which applications <strong>HAVE</strong> or
+          <strong>HAVE NOT</strong> incorporated AI technologies —
+          and see an animated explanation after each answer.
+        </p>
+        <p>
+          Tip: Some technologies (like airport baggage scanners) can work <em>with</em> or
+          <em>without</em> AI, depending on the system design.
+        </p>
+        <div class="nav">
+          <button class="btn btn-primary" id="startBtn">Start Task 2</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel hidden" id="quizScreen">
+      <div class="stage">
+        <div class="stage-title">
+          <span class="badge">Scenario <strong id="scenarioCode">A</strong></span>
+          <span class="badge" id="scenarioName">Airport baggage scanner</span>
+        </div>
+        <div id="animationRoot" style="width:100%;display:grid;place-items:center"></div>
+      </div>
+      <div class="content">
+        <div class="question" id="questionText"></div>
+        <p class="hint" id="questionHint">Choose one answer. Then watch the explanation animation.</p>
+        <div class="choices" id="choices"></div>
+        <div class="explain" id="explain">
+          <div class="verdict" id="verdict"></div>
+          <h3 id="explainTitle"></h3>
+          <div id="explainBody"></div>
+        </div>
+        <div class="nav">
+          <button class="btn btn-ghost" id="backBtn" disabled>Back</button>
+          <button class="btn btn-primary" id="nextBtn">Next</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel hidden" id="summaryScreen">
+      <div class="summary">
+        <h2>Task complete</h2>
+        <p>Great work. Here is how you did on “AI or Not AI?”.</p>
+        <div class="score-grid">
+          <div class="score-card"><span>Correct first try</span><strong id="scoreCorrect">0</strong></div>
+          <div class="score-card"><span>Total scenarios</span><strong>8</strong></div>
+          <div class="score-card"><span>Accuracy</span><strong id="scorePct">0%</strong></div>
+        </div>
+        <p>
+          Key takeaway: <strong>AI is not “anything automatic”.</strong>
+          Look for learning from data, perception (vision/speech), language understanding, or intelligent decision-making.
+        </p>
+        <div class="nav">
+          <button class="btn btn-ghost" id="reviewBtn">Review again</button>
+          <button class="btn btn-primary" id="restartBtn">Restart</button>
+        </div>
+      </div>
+    </section>
+
+    <footer class="note">Based on EDB Booklet 1 Unit 1 · Task 2 (Figure 1.4) by Valtorta College</footer>
+  </div>
+
+  <script>
+    const scenarios = [
+      {
+        id: "A",
+        name: "Airport baggage scanner",
+        question: "Has an airport baggage / security scanner incorporated AI?",
+        hint: "Think carefully — there is more than one possible system design.",
+        options: [
+          { id: "ai", label: "Yes — it uses AI", sub: "Computer vision object detection" },
+          { id: "non", label: "No — it does not use AI", sub: "Traditional X-ray + human operators" },
+          { id: "both", label: "It can be either", sub: "Depends on the machine" },
+        ],
+        correct: ["both", "ai", "non"],
+        preferred: "both",
+        verdict: { type: "both", text: "Can be AI or Not AI" },
+        explainTitle: "Same conveyor — two different brains",
+        explainHtml: `
+          <p><strong>Non-AI:</strong> A traditional security checkpoint uses an X-ray machine and human operators. The image becomes an X-ray view; people interpret it. No learning model is required.</p>
+          <p><strong>AI:</strong> Newer checkpoint machines can use <strong>computer vision / object detection</strong> to automatically highlight items such as laptops, bottles, or phones.</p>
+          <p>So for Scenario A, both answers can be correct — depending on which system you mean.</p>
+        `,
+        render: (root, mode) => renderAirport(root, mode),
+      },
+      {
+        id: "B",
+        name: "RFID",
+        question: "Does RFID technology incorporate AI?",
+        hint: "Focus on how the identity data is transmitted.",
+        options: [
+          { id: "ai", label: "Yes — it uses AI" },
+          { id: "non", label: "No — it does not use AI" },
+        ],
+        correct: ["non"],
+        preferred: "non",
+        verdict: { type: "non", text: "Not AI" },
+        explainTitle: "Radio waves, not learning",
+        explainHtml: `
+          <p>RFID tags use <strong>radio waves</strong> to transmit identity information to an RFID reader.</p>
+          <p>This is automatic communication — but it is <strong>not</strong> artificial intelligence. There is no perception model learning from data.</p>
+        `,
+        render: (root) => {
+          root.innerHTML = `
+            <div class="anim-box">
+              <div class="rfid-tag">RFID</div>
+              <div class="wave"></div><div class="wave"></div><div class="wave"></div>
+              <div class="rfid-reader"></div>
+              <div class="scene-caption">Tag → radio signal → reader (ID only)</div>
+            </div>`;
+        },
+      },
+      {
+        id: "C",
+        name: "Scientific calculator",
+        question: "Does a scientific calculator incorporate AI?",
+        hint: "How does it compute answers?",
+        options: [
+          { id: "ai", label: "Yes — it uses AI" },
+          { id: "non", label: "No — it does not use AI" },
+        ],
+        correct: ["non"],
+        preferred: "non",
+        verdict: { type: "non", text: "Not AI" },
+        explainTitle: "Logic gates, not intelligence",
+        explainHtml: `
+          <p>Calculations on a scientific calculator are executed by <strong>logical gates</strong>.</p>
+          <p>It is a human-operated machine used for mathematics. (Programmable calculators can be more complex, but a normal scientific calculator is still <strong>not AI</strong>.)</p>
+        `,
+        render: (root) => {
+          root.innerHTML = `
+            <div class="anim-box">
+              <div class="calc">
+                <div class="calc-screen"><span id="calcOut">0</span></div>
+                <div class="calc-keys">
+                  <i></i><i></i><i></i><i class="on"></i>
+                  <i></i><i class="on"></i><i></i><i></i>
+                  <i></i><i></i><i class="on"></i><i></i>
+                  <i></i><i></i><i></i><i class="on"></i>
+                </div>
+              </div>
+              <div class="gate-flow">Input → logic gates → output (fixed rules)</div>
+            </div>`;
+          const out = root.querySelector("#calcOut");
+          const frames = ["0", "12", "12×3", "36", "sin(30)", "0.5"];
+          let i = 0;
+          clearInterval(window.__calcTimer);
+          window.__calcTimer = setInterval(() => {
+            out.textContent = frames[i % frames.length];
+            i++;
+          }, 500);
+        },
+      },
+      {
+        id: "D",
+        name: "Self-driving car",
+        question: "Does a self-driving car incorporate AI?",
+        hint: "What helps the car recognise the world around it?",
+        options: [
+          { id: "ai", label: "Yes — it uses AI" },
+          { id: "non", label: "No — it does not use AI" },
+        ],
+        correct: ["ai"],
+        preferred: "ai",
+        verdict: { type: "ai", text: "Uses AI" },
+        explainTitle: "Computer vision on the road",
+        explainHtml: `
+          <p><strong>Computer vision</strong> technologies are used in self-driving cars to recognise barriers, traffic signals, pedestrians, and other objects while driving.</p>
+          <p>Perception + decision-making from sensor data is a classic AI application.</p>
+        `,
+        render: (root) => {
+          root.innerHTML = `
+            <div class="anim-box">
+              <div class="road"></div>
+              <div class="lane"></div>
+              <div class="ped"></div>
+              <div class="sign"></div>
+              <div class="cv-box" style="left:12%;top:30%;width:40px;height:56px"><span>person 0.94</span></div>
+              <div class="cv-box" style="right:10%;top:24%;width:48px;height:48px;border-color:#cb6800"><span style="background:#cb6800">sign 0.91</span></div>
+              <div class="car"></div>
+              <div class="scene-caption">Live object detection while driving</div>
+            </div>`;
+        },
+      },
+      {
+        id: "E",
+        name: "Chatbot",
+        question: "Does a chatbot (e.g. campus chatbot) incorporate AI?",
+        hint: "How does it understand what you type?",
+        options: [
+          { id: "ai", label: "Yes — it uses AI" },
+          { id: "non", label: "No — it does not use AI" },
+        ],
+        correct: ["ai"],
+        preferred: "ai",
+        verdict: { type: "ai", text: "Uses AI" },
+        explainTitle: "Natural Language Processing (NLP)",
+        explainHtml: `
+          <p><strong>Natural language processing</strong> technologies are used to understand user inputs and generate responses.</p>
+          <p>Understanding language meaning (not just keyword matching) is an AI capability.</p>
+        `,
+        render: (root) => {
+          root.innerHTML = `
+            <div class="anim-box">
+              <div class="chat">
+                <div class="bubble user">Where are you going?</div>
+                <div class="nlp-tag">NLP · understand intent → generate reply</div>
+                <div class="bubble bot">I can help you find ERB / campus directions.</div>
+              </div>
+            </div>`;
+        },
+      },
+      {
+        id: "F",
+        name: "Song recommender",
+        question: "Does a song recommender incorporate AI?",
+        hint: "Why does it keep getting better at guessing your taste?",
+        options: [
+          { id: "ai", label: "Yes — it uses AI" },
+          { id: "non", label: "No — it does not use AI" },
+        ],
+        correct: ["ai"],
+        preferred: "ai",
+        verdict: { type: "ai", text: "Uses AI" },
+        explainTitle: "Recommendation from your history",
+        explainHtml: `
+          <p>A song recommender is a <strong>recommendation system</strong>. It can suggest songs based on the user’s interaction history.</p>
+          <p>Learning patterns from data to personalise results is a common AI application.</p>
+        `,
+        render: (root) => {
+          root.innerHTML = `
+            <div class="anim-box">
+              <div class="songs">
+                <div class="hist">
+                  <h4>Listening history</h4>
+                  <div class="track"></div><div class="track"></div><div class="track"></div>
+                </div>
+                <div class="rec">
+                  <h4>Recommended</h4>
+                  <div class="track"></div><div class="track"></div><div class="track"></div>
+                </div>
+              </div>
+              <div class="arrow-learn">learn patterns →</div>
+            </div>`;
+        },
+      },
+      {
+        id: "G",
+        name: "Face recognition",
+        question: "Does face recognition incorporate AI?",
+        hint: "What technology finds a face inside a photo?",
+        options: [
+          { id: "ai", label: "Yes — it uses AI" },
+          { id: "non", label: "No — it does not use AI" },
+        ],
+        correct: ["ai"],
+        preferred: "ai",
+        verdict: { type: "ai", text: "Uses AI" },
+        explainTitle: "Computer vision detects faces",
+        explainHtml: `
+          <p><strong>Computer vision</strong> techniques are used to detect faces in images (and often to match identity).</p>
+          <p>Bounding boxes and landmarks show the model “finding” the face — similar in spirit to object detection.</p>
+        `,
+        render: (root) => {
+          root.innerHTML = `
+            <div class="anim-box">
+              <div class="face"><div class="mouth"></div></div>
+              <div class="face-box"><span>RECOGNIZED 0.97</span></div>
+              <div class="landmarks">
+                <span style="left:42%;top:38%"></span>
+                <span style="left:56%;top:38%"></span>
+                <span style="left:49%;top:48%"></span>
+                <span style="left:45%;top:58%"></span>
+                <span style="left:53%;top:58%"></span>
+              </div>
+              <div class="scene-caption">Face detection + recognition</div>
+            </div>`;
+        },
+      },
+      {
+        id: "H",
+        name: "3D printer",
+        question: "Does a 3D printer incorporate AI?",
+        hint: "Is printing layer-by-layer the same as intelligence?",
+        options: [
+          { id: "ai", label: "Yes — it uses AI" },
+          { id: "non", label: "No — it does not use AI" },
+        ],
+        correct: ["non"],
+        preferred: "non",
+        verdict: { type: "non", text: "Not AI (by itself)" },
+        explainTitle: "A printer that builds in 3D",
+        explainHtml: `
+          <p>A 3D printer is conceptually like an inkjet printer, but it prints <strong>3D objects</strong> layer by layer.</p>
+          <p>By itself it is <strong>not AI</strong>. However, 3D printers <em>can interface with AI</em>, and the two technologies can work together (for example, AI-designed models sent to a printer).</p>
+        `,
+        render: (root) => {
+          root.innerHTML = `
+            <div class="anim-box">
+              <div class="printer">
+                <div class="nozzle"></div>
+                <div class="print-object"><div class="layer-lines"></div></div>
+              </div>
+              <div class="scene-caption">Mechanical layer-by-layer fabrication</div>
+            </div>`;
+        },
+      },
+    ];
+
+    function renderAirport(root, mode) {
+      if (mode === "question" || mode === "both") {
+        root.innerHTML = `
+          <div class="dual">
+            <div class="scene non-ai">
+              <div class="dual-label non">Non-AI · X-ray</div>
+              <div class="belt"></div>
+              <div class="machine"><div class="machine-light"></div></div>
+              <div class="scan-beam"></div>
+              <div class="bag">
+                <div class="bag-handle"></div>
+                <div class="bag-body"><div class="xray-ghost"></div><div class="bag-label"></div></div>
+              </div>
+              <div class="scene-caption">Bag → X-ray view → human checks</div>
+            </div>
+            <div class="scene ai-mode">
+              <div class="dual-label ai">AI · Object detection</div>
+              <div class="belt"></div>
+              <div class="machine"><div class="machine-light"></div></div>
+              <div class="scan-beam"></div>
+              <div class="bag">
+                <div class="bag-handle"></div>
+                <div class="bag-body"><div class="bag-label"></div></div>
+              </div>
+              <div class="detect-box detect-laptop"><span>laptop 0.92</span></div>
+              <div class="detect-box detect-bottle"><span>bottle 0.88</span></div>
+              <div class="detect-box detect-phone"><span>phone 0.85</span></div>
+              <div class="scene-caption">Bag → auto-detect items</div>
+            </div>
+          </div>`;
+        return;
+      }
+      if (mode === "non") {
+        root.innerHTML = `
+          <div class="scene non-ai">
+            <div class="dual-label non">Non-AI · X-ray</div>
+            <div class="belt"></div>
+            <div class="machine"><div class="machine-light"></div></div>
+            <div class="scan-beam"></div>
+            <div class="bag">
+              <div class="bag-handle"></div>
+              <div class="bag-body"><div class="xray-ghost"></div><div class="bag-label"></div></div>
+            </div>
+            <div class="scene-caption">Left → right: bag becomes X-ray silhouette inside the machine</div>
+          </div>`;
+        return;
+      }
+      root.innerHTML = `
+        <div class="scene ai-mode">
+          <div class="dual-label ai">AI · Object detection</div>
+          <div class="belt"></div>
+          <div class="machine"><div class="machine-light"></div></div>
+          <div class="scan-beam"></div>
+          <div class="bag">
+            <div class="bag-handle"></div>
+            <div class="bag-body"><div class="bag-label"></div></div>
+          </div>
+          <div class="detect-box detect-laptop"><span>laptop 0.92</span></div>
+          <div class="detect-box detect-bottle"><span>bottle 0.88</span></div>
+          <div class="detect-box detect-phone"><span>phone 0.85</span></div>
+          <div class="scene-caption">Left → right: detection boxes appear inside the scanner</div>
+        </div>`;
+    }
+
+    const els = {
+      intro: document.getElementById("introScreen"),
+      quiz: document.getElementById("quizScreen"),
+      summary: document.getElementById("summaryScreen"),
+      startBtn: document.getElementById("startBtn"),
+      backBtn: document.getElementById("backBtn"),
+      nextBtn: document.getElementById("nextBtn"),
+      restartBtn: document.getElementById("restartBtn"),
+      reviewBtn: document.getElementById("reviewBtn"),
+      progressText: document.getElementById("progressText"),
+      progressFill: document.getElementById("progressFill"),
+      scenarioCode: document.getElementById("scenarioCode"),
+      scenarioName: document.getElementById("scenarioName"),
+      animationRoot: document.getElementById("animationRoot"),
+      questionText: document.getElementById("questionText"),
+      questionHint: document.getElementById("questionHint"),
+      choices: document.getElementById("choices"),
+      explain: document.getElementById("explain"),
+      verdict: document.getElementById("verdict"),
+      explainTitle: document.getElementById("explainTitle"),
+      explainBody: document.getElementById("explainBody"),
+      scoreCorrect: document.getElementById("scoreCorrect"),
+      scorePct: document.getElementById("scorePct"),
+      jumpNav: document.getElementById("jumpNav"),
+    };
+
+    let index = 0;
+    let answered = false;
+    let firstTryCorrect = 0;
+    let attempts = {};
+
+    function show(screen) {
+      els.intro.classList.toggle("hidden", screen !== "intro");
+      els.quiz.classList.toggle("hidden", screen !== "quiz");
+      els.summary.classList.toggle("hidden", screen !== "summary");
+      updateJumpNav(screen);
+    }
+
+    function updateJumpNav(screen = "quiz") {
+      els.jumpNav.querySelectorAll("button").forEach((btn) => {
+        const active = screen === "summary"
+          ? btn.hasAttribute("data-summary")
+          : screen === "quiz" && Number(btn.dataset.index) === index;
+        if (active) btn.setAttribute("aria-current", "step");
+        else btn.removeAttribute("aria-current");
+      });
+    }
+
+    function updateProgress() {
+      const pct = (index / scenarios.length) * 100;
+      els.progressFill.style.width = `${pct}%`;
+      els.progressText.textContent = `Scenario ${Math.min(index + 1, scenarios.length)} of ${scenarios.length}`;
+    }
+
+    function loadScenario(i) {
+      index = i;
+      answered = false;
+      const s = scenarios[i];
+      updateProgress();
+      els.scenarioCode.textContent = s.id;
+      els.scenarioName.textContent = s.name;
+      els.questionText.textContent = s.question;
+      els.questionHint.textContent = s.hint;
+      els.explain.classList.remove("show");
+      els.backBtn.disabled = i === 0;
+      els.nextBtn.textContent = i === scenarios.length - 1 ? "See results" : "Next scenario";
+      updateJumpNav();
+
+      if (s.id === "A") s.render(els.animationRoot, "question");
+      else s.render(els.animationRoot);
+
+      els.choices.innerHTML = "";
+      s.options.forEach((opt) => {
+        const btn = document.createElement("button");
+        btn.className = "choice";
+        btn.type = "button";
+        btn.dataset.id = opt.id;
+        btn.innerHTML = `${opt.label}${opt.sub ? `<span class="sub">${opt.sub}</span>` : ""}`;
+        btn.addEventListener("click", () => onChoose(opt.id, btn));
+        els.choices.appendChild(btn);
+      });
+    }
+
+    function onChoose(optionId, btn) {
+      const s = scenarios[index];
+      const buttons = [...els.choices.querySelectorAll(".choice")];
+      const isCorrect = s.correct.includes(optionId);
+      const isPreferred = optionId === s.preferred;
+
+      if (!attempts[s.id]) {
+        attempts[s.id] = true;
+        if (isCorrect) firstTryCorrect += 1;
+      }
+
+      buttons.forEach((b) => {
+        b.disabled = true;
+        if (b.dataset.id === s.preferred) b.classList.add("correct");
+        else if (b === btn && !isCorrect) b.classList.add("wrong");
+        else if (b === btn && isCorrect && !isPreferred) b.classList.add("correct");
+      });
+
+      if (s.id === "A" && isCorrect) {
+        buttons.forEach((b) => {
+          if (s.correct.includes(b.dataset.id)) b.classList.add("correct");
+        });
+      }
+
+      els.verdict.className = `verdict ${s.verdict.type}`;
+      els.verdict.textContent = s.verdict.text;
+      els.explainTitle.textContent = s.explainTitle;
+      els.explainBody.innerHTML = s.explainHtml;
+
+      if (s.id === "A") {
+        if (optionId === "ai") {
+          els.explainBody.innerHTML += `<p class="aside">You picked the AI version — correct for modern computer-vision scanners. The fullest answer is that it <strong>can be either</strong>.</p>`;
+          s.render(els.animationRoot, "ai");
+        } else if (optionId === "non") {
+          els.explainBody.innerHTML += `<p class="aside">You picked the traditional X-ray version — also correct. The fullest answer is that it <strong>can be either</strong>.</p>`;
+          s.render(els.animationRoot, "non");
+        } else {
+          s.render(els.animationRoot, "both");
+        }
+      }
+
+      els.explain.classList.add("show");
+      els.nextBtn.disabled = false;
+      answered = true;
+    }
+
+    function showSummary() {
+      show("summary");
+      els.progressFill.style.width = "100%";
+      els.progressText.textContent = "Complete";
+      els.scoreCorrect.textContent = String(firstTryCorrect);
+      els.scorePct.textContent = `${Math.round((firstTryCorrect / scenarios.length) * 100)}%`;
+    }
+
+    els.startBtn.addEventListener("click", () => {
+      firstTryCorrect = 0;
+      attempts = {};
+      show("quiz");
+      loadScenario(0);
+    });
+
+    els.nextBtn.addEventListener("click", () => {
+      if (index >= scenarios.length - 1) showSummary();
+      else loadScenario(index + 1);
+    });
+
+    els.jumpNav.addEventListener("click", (event) => {
+      const btn = event.target.closest("button");
+      if (!btn) return;
+      if (btn.hasAttribute("data-summary")) {
+        showSummary();
+      } else {
+        show("quiz");
+        loadScenario(Number(btn.dataset.index));
+      }
+    });
+
+    els.backBtn.addEventListener("click", () => {
+      if (index > 0) loadScenario(index - 1);
+    });
+
+    els.restartBtn.addEventListener("click", () => {
+      firstTryCorrect = 0;
+      attempts = {};
+      show("quiz");
+      loadScenario(0);
+    });
+
+    els.reviewBtn.addEventListener("click", () => {
+      show("quiz");
+      loadScenario(0);
+    });
+
+    function applyTheme(theme) {
+      const next = theme === "dark" ? "dark" : "light";
+      document.documentElement.setAttribute("data-theme", next);
+      try { localStorage.setItem("f1-ai-theme", next); } catch (e) {}
+      const lightBtn = document.getElementById("themeLightBtn");
+      const darkBtn = document.getElementById("themeDarkBtn");
+      if (lightBtn && darkBtn) {
+        lightBtn.setAttribute("aria-pressed", next === "light" ? "true" : "false");
+        darkBtn.setAttribute("aria-pressed", next === "dark" ? "true" : "false");
+      }
+    }
+
+    document.getElementById("themeLightBtn").addEventListener("click", () => applyTheme("light"));
+    document.getElementById("themeDarkBtn").addEventListener("click", () => applyTheme("dark"));
+    applyTheme(document.documentElement.getAttribute("data-theme") || "light");
+  </script>
+</body>
+</html>

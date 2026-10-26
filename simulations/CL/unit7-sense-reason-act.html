@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Unit 7 — Sense, Reason, Act &amp; Reasoning Levels</title>
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem("f1-ai-theme");
+        document.documentElement.setAttribute("data-theme", t === "dark" ? "dark" : "light");
+      } catch (e) { document.documentElement.setAttribute("data-theme", "light"); }
+    })();
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet" />
+  <style>
+    :root, [data-theme="light"] {
+      --canvas:#fff; --surface:#f7f6f3; --ink:#37352f; --body:#4f4d47; --muted:#787774;
+      --primary:#2383e2; --primary-active:#1a6fc1; --success:#0f7b3f; --warning:#cb6800; --danger:#d44c47;
+      --hairline:rgba(55,53,47,.09); --shadow:0 1px 2px rgba(55,53,47,.04),0 4px 12px rgba(55,53,47,.06);
+      --toggle-bg:#fff; --toggle-border:rgba(55,53,47,.14); --caption-bg:rgba(255,255,255,.96); --caption-fg:#37352f;
+      --anim-bg:#f7f6f3; --anim-panel:#fff; --anim-soft:#e8e6e1; --anim-soft-2:#ddd9d2; --anim-border:#c5c1b8;
+      --ease:cubic-bezier(.16,1,.3,1);
+    }
+    [data-theme="dark"] {
+      --canvas:#202020; --surface:#151515; --ink:#f1f0ec; --body:#cfcbc4; --muted:#9a968e;
+      --primary:#5ba8f5; --primary-active:#7bb8f7; --success:#3dcf7a; --warning:#e0a04a; --danger:#f07171;
+      --hairline:rgba(255,255,255,.1); --shadow:0 1px 2px rgba(0,0,0,.35),0 4px 14px rgba(0,0,0,.28);
+      --toggle-bg:#202020; --toggle-border:rgba(255,255,255,.14); --caption-bg:rgba(32,32,32,.96); --caption-fg:#f1f0ec;
+      --anim-bg:#1a1a1a; --anim-panel:#262626; --anim-soft:#333; --anim-soft-2:#3d3d3d; --anim-border:#555;
+    }
+    * { box-sizing:border-box; margin:0; padding:0; }
+    body { min-height:100vh; min-height:100dvh; font-family:Inter,system-ui,sans-serif; color:var(--body); background:var(--surface); -webkit-font-smoothing:antialiased; }
+    button,a { font:inherit; }
+    .app { width:min(880px,calc(100% - 28px)); margin:auto; padding:28px 0 40px; }
+    header { display:flex; flex-wrap:wrap; align-items:flex-end; justify-content:space-between; gap:14px; margin-bottom:20px; }
+    .header-top { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:12px; width:100%; margin-bottom:4px; }
+    .theme-toggle { display:inline-flex; border:1px solid var(--toggle-border); border-radius:8px; overflow:hidden; background:var(--toggle-bg); }
+    .theme-toggle button { border:0; background:transparent; color:var(--muted); font-size:.78rem; font-weight:600; padding:8px 12px; cursor:pointer; }
+    .theme-toggle button[aria-pressed="true"] { color:#fff; background:var(--primary); }
+    button:focus-visible { outline:2px solid var(--primary); outline-offset:2px; }
+    .eyebrow,.mono { font-family:"JetBrains Mono",ui-monospace,monospace; }
+    .eyebrow { font-size:.72rem; letter-spacing:.04em; color:var(--muted); margin-bottom:6px; }
+    h1,h2 { font-family:"Cormorant Garamond",Georgia,serif; color:var(--ink); }
+    h1 { font-size:clamp(1.85rem,4.5vw,2.45rem); line-height:1.15; }
+    .progress-wrap { min-width:160px; width:min(220px,100%); }
+    .progress-label { font-size:.8rem; color:var(--muted); margin-bottom:8px; text-align:right; }
+    .progress-bar { height:3px; background:var(--hairline); overflow:hidden; }
+    .progress-fill { height:100%; width:0; background:var(--primary); transition:width .36s var(--ease); }
+    .jump-nav { width:100%; display:flex; gap:7px; overflow-x:auto; padding:2px 1px 7px; scrollbar-width:thin; }
+    .jump-btn { flex:0 0 auto; border:1px solid var(--hairline); border-radius:999px; background:var(--canvas); color:var(--muted); padding:6px 10px; font:600 .66rem "JetBrains Mono",monospace; cursor:pointer; }
+    .jump-btn:hover { color:var(--primary); border-color:var(--primary); }
+    .jump-btn.active { color:#fff; background:var(--primary); border-color:var(--primary); }
+    .panel { background:var(--canvas); border:1px solid var(--hairline); border-radius:12px; box-shadow:var(--shadow); overflow:hidden; }
+    .hidden { display:none!important; }
+    footer.note { margin-top:14px; color:var(--muted); font-size:.78rem; text-align:center; }
+    .intro,.summary { padding:28px 22px; }
+    .intro h2,.summary h2,.section-title { font-size:clamp(1.4rem,3vw,1.75rem); margin-bottom:10px; line-height:1.2; }
+    .intro p,.summary p,.section-body { line-height:1.65; margin-bottom:12px; font-size:.95rem; }
+    strong { color:var(--ink); }
+    .chips { display:flex; flex-wrap:wrap; gap:8px; margin:17px 0 21px; }
+    .chip { font-family:"JetBrains Mono",monospace; font-size:.7rem; font-weight:600; padding:6px 10px; border:1px solid var(--hairline); border-radius:6px; background:var(--surface); color:var(--ink); }
+    .stage { padding:18px; border-bottom:1px solid var(--hairline); background:var(--surface); }
+    .badge { display:inline-flex; gap:6px; align-items:center; padding:4px 10px; border:1px solid var(--hairline); border-radius:999px; font-size:.78rem; color:var(--muted); background:var(--canvas); margin-bottom:12px; }
+    .badge strong { font-family:"JetBrains Mono",monospace; }
+    .scene { width:100%; min-height:300px; border:1px solid var(--hairline); border-radius:10px; background:var(--anim-bg); position:relative; overflow:hidden; display:grid; place-items:center; }
+    .scene-caption { position:absolute; z-index:8; left:10px; bottom:8px; max-width:92%; color:var(--caption-fg); background:var(--caption-bg); border:1px solid var(--hairline); border-radius:6px; padding:4px 8px; box-shadow:var(--shadow); font-size:.7rem; font-weight:600; line-height:1.35; }
+    .content { padding:20px 18px 18px; }
+    .definition { border-left:3px solid var(--primary); padding:10px 12px; margin:12px 0 15px; background:var(--surface); color:var(--ink); line-height:1.55; font-size:.92rem; }
+    .definition::before { content:"DEFINITION"; display:block; font:600 .62rem "JetBrains Mono",monospace; color:var(--primary); letter-spacing:.05em; margin-bottom:5px; }
+    .example-box { border:1px solid var(--hairline); border-radius:9px; padding:12px; margin:14px 0 4px; background:var(--surface); font-size:.88rem; line-height:1.55; }
+    .example-box b { display:block; font:600 .65rem "JetBrains Mono",monospace; color:var(--primary); margin-bottom:5px; letter-spacing:.04em; }
+    .nav { display:flex; justify-content:space-between; flex-wrap:wrap; gap:10px; margin-top:17px; }
+    .btn { border:0; border-radius:8px; padding:10px 16px; font-weight:600; font-size:.9rem; cursor:pointer; transition:.18s ease; }
+    .btn:hover:not(:disabled) { transform:translateY(-1px); }
+    .btn-primary { color:#fff; background:var(--primary); margin-left:auto; }
+    .btn-primary:hover:not(:disabled) { background:var(--primary-active); }
+    .btn-ghost { color:var(--muted); background:transparent; border:1px solid var(--hairline); }
+    .recap-list { display:grid; gap:7px; margin:15px 0 18px; }
+    .recap-item { display:grid; grid-template-columns:118px 1fr; gap:10px; padding:9px 10px; border-bottom:1px solid var(--hairline); font-size:.85rem; line-height:1.45; }
+    .recap-item b { font-family:"JetBrains Mono",monospace; color:var(--primary); font-size:.68rem; }
+    .map-grid { display:grid; gap:8px; margin:12px 0; }
+    .map-row { display:grid; grid-template-columns:1.2fr .9fr; gap:10px; padding:10px; border:1px solid var(--hairline); border-radius:8px; background:var(--surface); font-size:.82rem; line-height:1.45; }
+    .map-row b { font:600 .62rem "JetBrains Mono",monospace; color:var(--primary); }
+
+    .frame { width:100%; min-height:300px; padding:22px 18px 44px; display:grid; place-items:center; }
+    .arrow { font:600 1.05rem "JetBrains Mono",monospace; color:var(--primary); animation:nudge 1.2s ease-in-out infinite; }
+
+    /* robot intro */
+    .robot-card { width:min(360px,100%); border:1px solid var(--anim-border); border-radius:12px; background:var(--anim-panel); padding:18px; text-align:center; }
+    .bot { width:72px; height:88px; margin:0 auto 12px; position:relative; }
+    .bot .head { width:42px; height:32px; margin:0 auto; border-radius:8px; background:var(--primary); position:relative; animation:botBlink 3s ease-in-out infinite; }
+    .bot .head::before,.bot .head::after { content:""; position:absolute; top:10px; width:7px; height:7px; border-radius:50%; background:#fff; }
+    .bot .head::before{left:8px}.bot .head::after{right:8px}
+    .bot .body { width:48px; height:40px; margin:6px auto 0; border-radius:8px; border:1px solid var(--primary); background:color-mix(in srgb,var(--primary) 35%,var(--anim-panel)); }
+    .bot-traits { display:flex; justify-content:center; gap:6px; flex-wrap:wrap; }
+    .bot-traits span { padding:4px 8px; border:1px solid var(--anim-border); border-radius:999px; font:600 .55rem "JetBrains Mono",monospace; color:var(--ink); }
+
+    /* sense reason act loop */
+    .sra { width:min(520px,100%); display:grid; gap:14px; }
+    .sra-loop { display:flex; align-items:center; justify-content:center; gap:8px; flex-wrap:wrap; }
+    .sra-node { min-width:110px; padding:12px 10px; border:1px solid var(--anim-border); border-radius:10px; background:var(--anim-panel); text-align:center; font:600 .62rem "JetBrains Mono",monospace; color:var(--ink); opacity:.4; }
+    .sra-node.on { opacity:1; border-color:var(--primary); animation:pulseGlow 1.8s ease-in-out infinite; }
+    .sra-node .mono { display:block; color:var(--primary); font-size:.52rem; margin-bottom:4px; }
+    .compare { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+    .cmp { border:1px solid var(--anim-border); border-radius:8px; background:var(--anim-panel); padding:10px; font-size:.68rem; line-height:1.45; color:var(--ink); }
+    .cmp .mono { display:block; color:var(--primary); margin-bottom:6px; font-size:.58rem; }
+    .intel-flag { text-align:center; font:600 .62rem "JetBrains Mono",monospace; color:var(--warning); }
+
+    /* reasoning levels */
+    .level-stage { width:min(480px,100%); display:grid; gap:10px; }
+    .level-card { border:1px solid var(--anim-border); border-radius:10px; background:var(--anim-panel); padding:12px; display:grid; grid-template-columns:88px 1fr; gap:10px; align-items:center; opacity:.45; }
+    .level-card.on { opacity:1; border-color:var(--primary); box-shadow:0 0 0 2px color-mix(in srgb,var(--primary) 18%,transparent); }
+    .level-badge { padding:10px 6px; border-radius:8px; background:var(--anim-bg); text-align:center; font:700 .58rem "JetBrains Mono",monospace; color:var(--primary); line-height:1.3; }
+    .level-card p { font-size:.68rem; line-height:1.4; color:var(--ink); margin:0; }
+    .level-card .ex { display:block; margin-top:4px; color:var(--muted); font:600 .55rem "JetBrains Mono",monospace; }
+
+    /* wash */
+    .wash { width:min(460px,100%); display:grid; gap:8px; }
+    .wash-item { display:grid; grid-template-columns:28px 1fr auto; gap:8px; align-items:center; padding:10px; border:1px solid var(--anim-border); border-radius:8px; background:var(--anim-panel); font-size:.72rem; color:var(--ink); }
+    .wash-item .tag { font:700 .55rem "JetBrains Mono",monospace; color:#fff; background:var(--primary); border-radius:4px; padding:4px 7px; }
+    .wash-item:nth-child(1) .tag { background:var(--muted); }
+    .wash-item:nth-child(2) .tag { background:var(--warning); }
+    .wash-item:nth-child(3) .tag { background:var(--success); }
+    .wash-item .letter { font:700 .7rem "JetBrains Mono",monospace; color:var(--primary); }
+
+    /* navigation map */
+    .nav-map { width:min(480px,100%); height:180px; position:relative; border:1px solid var(--anim-border); border-radius:10px; background:var(--anim-panel); overflow:hidden; }
+    .room { position:absolute; padding:4px 6px; border:1px solid var(--anim-border); border-radius:4px; font:600 .5rem "JetBrains Mono",monospace; color:var(--muted); background:var(--anim-bg); }
+    .room.a { left:12px; top:20px; }
+    .room.b { right:12px; bottom:28px; }
+    .line-path { position:absolute; left:40px; top:48px; width:3px; height:90px; background:var(--anim-border); }
+    .line-path::after { content:""; position:absolute; bottom:0; left:0; width:260px; height:3px; background:var(--anim-border); }
+    .bot-dot { position:absolute; width:14px; height:14px; border-radius:50%; background:var(--primary); z-index:2; }
+    .bot-dot.line { left:36px; top:44px; animation:followLine 3.2s ease-in-out infinite; }
+    .bot-dot.steps { left:70px; top:70px; animation:followSteps 3.6s steps(4) infinite; }
+    .bot-dot.plan { left:50px; top:50px; animation:followBest 3.2s ease-in-out infinite; }
+    .best-path { position:absolute; left:50px; top:50px; width:280px; height:90px; pointer-events:none; }
+    .best-path path { fill:none; stroke:var(--success); stroke-width:3; stroke-dasharray:6 4; animation:dashMove 1s linear infinite; }
+    .nav-legend { margin-top:10px; display:flex; gap:8px; flex-wrap:wrap; justify-content:center; }
+    .nav-legend span { font:600 .55rem "JetBrains Mono",monospace; padding:4px 8px; border:1px solid var(--anim-border); border-radius:999px; color:var(--ink); background:var(--anim-panel); }
+    .nav-legend span.on { border-color:var(--primary); color:var(--primary); }
+
+    .spectrum { width:min(460px,100%); display:grid; gap:8px; }
+    .spec-bar { height:14px; border-radius:999px; background:linear-gradient(90deg,var(--muted),var(--warning),var(--success)); position:relative; overflow:hidden; }
+    .spec-labels { display:flex; justify-content:space-between; font:600 .55rem "JetBrains Mono",monospace; color:var(--muted); }
+    .spec-needle { position:absolute; top:-3px; width:4px; height:20px; background:var(--ink); border-radius:2px; animation:needleSlide 4s ease-in-out infinite; }
+
+    @keyframes nudge { 50%{transform:translateX(4px)} }
+    @keyframes pulseGlow { 0%,100%{box-shadow:0 0 0 0 transparent}50%{box-shadow:0 0 0 3px color-mix(in srgb,var(--primary) 22%,transparent)} }
+    @keyframes botBlink { 0%,92%,100%{filter:none}94%{filter:brightness(.7)} }
+    @keyframes followLine {
+      0%{top:44px;left:36px}45%{top:130px;left:36px}55%,100%{top:130px;left:280px}
+    }
+    @keyframes followSteps {
+      0%{transform:translate(0,0)}25%{transform:translate(40px,0)}50%{transform:translate(40px,40px)}75%{transform:translate(100px,40px)}100%{transform:translate(160px,70px)}
+    }
+    @keyframes followBest {
+      0%{transform:translate(0,0)}100%{transform:translate(260px,80px)}
+    }
+    @keyframes dashMove { to{stroke-dashoffset:-20} }
+    @keyframes needleSlide { 0%,10%{left:8%}35%{left:48%}65%,100%{left:88%} }
+    @media (prefers-reduced-motion:reduce) {
+      *,*::before,*::after { animation-duration:.01ms!important; animation-iteration-count:1!important; }
+    }
+    @media (max-width:620px) {
+      .compare { grid-template-columns:1fr; }
+      .map-row { grid-template-columns:1fr; }
+      .level-card { grid-template-columns:1fr; }
+      .recap-item { grid-template-columns:96px 1fr; }
+      .scene { min-height:320px; }
+    }
+    @media (max-width:390px) {
+      .app { width:calc(100% - 20px); padding:18px 0 32px; }
+      .content,.intro,.summary { padding-left:14px; padding-right:14px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <div class="header-top">
+        <div class="theme-toggle" role="group" aria-label="Colour theme">
+          <button type="button" id="lightBtn" aria-pressed="true">Light</button>
+          <button type="button" id="darkBtn" aria-pressed="false">Dark</button>
+        </div>
+        <div class="progress-wrap">
+          <div class="progress-label" id="progressText">Ready</div>
+          <div class="progress-bar" aria-hidden="true"><div class="progress-fill" id="progressFill"></div></div>
+        </div>
+      </div>
+      <div>
+        <p class="eyebrow">EDB Booklet 1 · Unit 7</p>
+        <h1>Sense · Reason · Act</h1>
+      </div>
+      <nav class="jump-nav" id="jumpNav" aria-label="Jump to a section"></nav>
+    </header>
+
+    <main class="panel">
+      <section class="intro" id="intro">
+        <h2>How do robots “think” through a task?</h2>
+        <p>Like humans, robots repeatedly <strong>sense</strong>, <strong>reason</strong>, and <strong>act</strong>. This page also introduces three human-like reasoning levels: skill-based, rule-based, and knowledge-based.</p>
+        <div class="chips" aria-label="Key ideas">
+          <span class="chip">SENSING</span>
+          <span class="chip">REASONING</span>
+          <span class="chip">ACTION</span>
+          <span class="chip">3 LEVELS</span>
+        </div>
+        <div class="nav"><span></span><button class="btn btn-primary" id="startBtn" type="button">Start exploring</button></div>
+      </section>
+
+      <section id="mainScreen" class="hidden">
+        <div class="stage">
+          <span class="badge"><strong id="sectionCode">01</strong><span id="sectionName">Robot</span></span>
+          <div class="scene" id="scene" aria-live="polite"></div>
+        </div>
+        <div class="content">
+          <h2 class="section-title" id="sectionTitle"></h2>
+          <div class="definition" id="definition"></div>
+          <p class="section-body" id="sectionBody"></p>
+          <div id="extra"></div>
+          <div class="nav">
+            <button class="btn btn-ghost" id="backBtn" type="button">Back</button>
+            <button class="btn btn-primary" id="nextBtn" type="button">Next</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="summary hidden" id="summary">
+        <h2>Learning summary</h2>
+        <p>A robot performing a task involves <strong>sensing, reasoning and action</strong>. Human-like reasoning can be programmed into the micro-processor.</p>
+        <div class="recap-list">
+          <div class="recap-item"><b>SKILL</b><span>Basic automated tasks; intuitive sensory-motor behaviour.</span></div>
+          <div class="recap-item"><b>RULE</b><span>More involved automated processes using instructions and patterns.</span></div>
+          <div class="recap-item"><b>KNOWLEDGE</b><span>AI robots that analyse situations and adapt — needs more data &amp; ML.</span></div>
+        </div>
+        <p style="font-size:.9rem;line-height:1.55">Generally, the more complex and dynamic the task, the more knowledge-based reasoning is needed.</p>
+        <div class="nav">
+          <button class="btn btn-ghost" id="reviewBtn" type="button">Review from start</button>
+          <button class="btn btn-primary" id="restartBtn" type="button">Restart</button>
+        </div>
+      </section>
+    </main>
+    <footer class="note">Based on EDB Booklet 1 Unit 7 · Sense, Reason, Act &amp; Reasoning Levels by Valtorta College</footer>
+  </div>
+
+  <script>
+    (function () {
+      "use strict";
+      const TOTAL = 8;
+      const $ = (id) => document.getElementById(id);
+      const els = {
+        intro: $("intro"), main: $("mainScreen"), summary: $("summary"), scene: $("scene"),
+        code: $("sectionCode"), name: $("sectionName"), title: $("sectionTitle"),
+        definition: $("definition"), body: $("sectionBody"), extra: $("extra"),
+        back: $("backBtn"), next: $("nextBtn"), progress: $("progressFill"), progressText: $("progressText")
+      };
+      let index = 0;
+      let sraTimer = null;
+      let levelTimer = null;
+      let navMode = 0;
+      let navTimer = null;
+
+      function caption(text) {
+        return `<div class="scene-caption">${text}</div>`;
+      }
+      function clearTimers() {
+        if (sraTimer) { clearInterval(sraTimer); sraTimer = null; }
+        if (levelTimer) { clearInterval(levelTimer); levelTimer = null; }
+        if (navTimer) { clearInterval(navTimer); navTimer = null; }
+      }
+
+      function renderRobot() {
+        clearTimers();
+        els.scene.innerHTML = `<div class="frame"><div class="robot-card">
+          <div class="bot" aria-hidden="true"><div class="head"></div><div class="body"></div></div>
+          <div class="bot-traits"><span>SPEED</span><span>PRECISION</span><span>REPEATABILITY</span></div>
+        </div></div>${caption("A robot is a computer-programmed machine that does specific tasks automatically.")}`;
+      }
+
+      function renderSRA() {
+        clearTimers();
+        els.scene.innerHTML = `<div class="frame"><div class="sra">
+          <div class="sra-loop">
+            <div class="sra-node" data-i="0"><span class="mono">1 · SENSING</span>Know current status</div>
+            <span class="arrow">→</span>
+            <div class="sra-node" data-i="1"><span class="mono">2 · REASONING</span>Decide next step</div>
+            <span class="arrow">→</span>
+            <div class="sra-node" data-i="2"><span class="mono">3 · ACTION</span>Carry out decision</div>
+          </div>
+          <div class="compare">
+            <div class="cmp"><span class="mono">HUMAN</span>Sensory organs → Brain → Muscles</div>
+            <div class="cmp"><span class="mono">ROBOT</span>Sensors → Computer program in micro-processor → Motors</div>
+          </div>
+          <p class="intel-flag">Intelligence mainly comes from the REASONING program</p>
+        </div></div>${caption("Humans and robots both loop: understand → decide → act.")}`;
+        const nodes = [...els.scene.querySelectorAll(".sra-node")];
+        let i = 0;
+        function tick() {
+          nodes.forEach((n, idx) => n.classList.toggle("on", idx === i));
+          i = (i + 1) % 3;
+        }
+        tick();
+        sraTimer = setInterval(tick, 1100);
+      }
+
+      function renderLevelsOverview() {
+        clearTimers();
+        els.scene.innerHTML = `<div class="frame"><div class="spectrum">
+          <div class="spec-labels"><span>SKILL</span><span>RULE</span><span>KNOWLEDGE</span></div>
+          <div class="spec-bar" aria-hidden="true"><i class="spec-needle"></i></div>
+          <p class="mono" style="text-align:center;font-size:.62rem;color:var(--muted);margin-top:8px">SIMPLE / FIXED → STRUCTURED → COMPLEX / DYNAMIC</p>
+        </div></div>${caption("Three levels of human-like reasoning can be programmed into a robot.")}`;
+      }
+
+      function levelCards(active) {
+        const items = [
+          ["SKILL", "Intuitive sensory-motor behaviour — little conscious thinking", "timer · toaster · traffic light"],
+          ["RULE", "Follow instructions, rules, or patterns from experience", "rice cooker adjusting by rules"],
+          ["KNOWLEDGE", "Analyse the situation, prior knowledge, and objectives", "adapt in uncertain settings"]
+        ];
+        return `<div class="level-stage">${items.map((it, i) =>
+          `<div class="level-card${i === active ? " on" : ""}"><div class="level-badge">${it[0]}-BASED</div><p>${it[1]}<span class="ex">${it[2]}</span></p></div>`
+        ).join("")}</div>`;
+      }
+
+      function renderSkill() {
+        clearTimers();
+        els.scene.innerHTML = `<div class="frame">${levelCards(0)}</div>${caption("Skill-based: fast, automatic responses without deep thinking.")}`;
+      }
+      function renderRule() {
+        clearTimers();
+        els.scene.innerHTML = `<div class="frame">${levelCards(1)}</div>${caption("Rule-based: decide by matching instructions and known patterns.")}`;
+      }
+      function renderKnowledge() {
+        clearTimers();
+        els.scene.innerHTML = `<div class="frame">${levelCards(2)}</div>${caption("Knowledge-based: analyse the current situation to choose a better action.")}`;
+      }
+
+      function renderWash() {
+        clearTimers();
+        els.scene.innerHTML = `<div class="frame"><div class="wash">
+          <div class="wash-item"><span class="letter">A</span><span>Wash the clothes for 30 minutes</span><span class="tag">SKILL</span></div>
+          <div class="wash-item"><span class="letter">B</span><span>Execute the wash cycle selected by users</span><span class="tag">RULE</span></div>
+          <div class="wash-item"><span class="letter">C</span><span>Auto-select cycle from materials &amp; weight</span><span class="tag">KNOWLEDGE</span></div>
+        </div></div>${caption("Task 3 concept: washing-machine functions map to the three reasoning levels.")}`;
+      }
+
+      function renderNav(mode) {
+        const modes = [
+          { cls: "line", label: "FOLLOW LINE → SKILL", extra: "" },
+          { cls: "steps", label: "VERBAL STEPS → RULE", extra: "" },
+          { cls: "plan", label: "FLOOR PLAN ‘BEST’ PATH → KNOWLEDGE", extra: `<svg class="best-path" viewBox="0 0 300 100" preserveAspectRatio="none"><path d="M10 10 C80 10, 120 40, 180 55 S270 90, 290 90"/></svg>` }
+        ];
+        const m = modes[mode];
+        els.scene.innerHTML = `<div class="frame"><div style="width:min(480px,100%)">
+          <div class="nav-map" aria-hidden="true">
+            <span class="room a">ROOM A</span>
+            <span class="room b">ROOM B</span>
+            <div class="line-path"></div>
+            ${m.extra}
+            <div class="bot-dot ${m.cls}"></div>
+          </div>
+          <div class="nav-legend">
+            <span class="${mode===0?"on":""}">1 LINE / SKILL</span>
+            <span class="${mode===1?"on":""}">2 STEPS / RULE</span>
+            <span class="${mode===2?"on":""}">3 PLAN / KNOWLEDGE</span>
+          </div>
+        </div></div>${caption(m.label)}`;
+      }
+
+      function renderNavCycle() {
+        clearTimers();
+        navMode = 0;
+        renderNav(0);
+        navTimer = setInterval(() => {
+          navMode = (navMode + 1) % 3;
+          renderNav(navMode);
+        }, 3400);
+      }
+
+      const sections = [
+        {
+          code: "01", name: "Robot", title: "What is a robot?",
+          definition: "Robotics is the intersection of science, engineering and technology relating to the design, construction and operations of robots. A robot is a machine, typically programmed by a computer, that can execute specific tasks automatically with speed, precision and repeatability.",
+          body: "Robots shine when work must be fast, precise, and repeated the same way many times.",
+          extra: "",
+          render: renderRobot
+        },
+        {
+          code: "02", name: "S-R-A", title: "Sense → Reason → Act",
+          definition: "Understanding the situation → deciding the next step to take → acting on the decision. A robot repeatedly goes through sensing, reasoning, and action.",
+          body: "Humans use sensory organs, brain, and muscles. Robots use <strong>sensors</strong>, a <strong>computer program in the micro-processor</strong>, and <strong>motors</strong>.",
+          extra: `<div class="example-box"><b>WHERE IS THE “INTELLIGENCE”?</b>Among sensing, reasoning, and action, the program that <strong>decides the next step</strong> contributes most to intelligence.</div>`,
+          render: renderSRA
+        },
+        {
+          code: "03", name: "3 levels", title: "Three levels of reasoning",
+          definition: "Human-like reasoning can be programmed into the micro-processor of the robot: skill-based, rule-based, and knowledge-based.",
+          body: "As tasks become more complex and dynamic, robots need higher levels of reasoning — and often more data and machine learning.",
+          extra: "",
+          render: renderLevelsOverview
+        },
+        {
+          code: "04", name: "Skill", title: "Skill-based reasoning",
+          definition: "Actions derived based on intuitive sensory-motor behavior without conscious thinking.",
+          body: "Good for straightforward, mechanical tasks with little variation.",
+          extra: `<div class="example-box"><b>EXAMPLES</b>A timer that turns a light off after 30 minutes; a toaster; a traffic light cycle.</div>`,
+          render: renderSkill
+        },
+        {
+          code: "05", name: "Rule", title: "Rule-based reasoning",
+          definition: "Actions derived based on instructions, rules or patterns gained from prior experience.",
+          body: "Fits well-defined, structured tasks with small adaptations.",
+          extra: `<div class="example-box"><b>EXAMPLE</b>A rice cooker follows cooking rules to adjust time and temperature for the amount of rice.</div>`,
+          render: renderRule
+        },
+        {
+          code: "06", name: "Knowledge", title: "Knowledge-based reasoning",
+          definition: "Actions derived from detailed analysis of the current situation, information gained from prior experience, knowledge about the process at hand, and the objectives to be achieved.",
+          body: "Needed for complex, uncertain, dynamic settings. Robots that rely largely on this are often called <strong>AI robots</strong> — they can learn and adapt during operation.",
+          extra: `<div class="example-box"><b>AI ROBOT EXAMPLE</b>Traditional polishing may be inflexible; an AI robot can analyse a 3D watch-case shape and calculate fine polishing trajectories.</div>`,
+          render: renderKnowledge
+        },
+        {
+          code: "07", name: "Washer", title: "Concept check — washing machine",
+          definition: "Match each washing-machine function to a reasoning level.",
+          body: "A fixed 30-minute wash is skill-like. Following a user-selected cycle is rule-like. Choosing a cycle from cloth materials and weight needs knowledge-like analysis.",
+          extra: `<div class="map-grid">
+            <div class="map-row"><span>A. Wash for 30 minutes</span><b>SKILL-BASED</b></div>
+            <div class="map-row"><span>B. Execute the cycle selected by users</span><b>RULE-BASED</b></div>
+            <div class="map-row"><span>C. Auto-select from materials &amp; weight</span><b>KNOWLEDGE-BASED</b></div>
+          </div>`,
+          render: renderWash
+        },
+        {
+          code: "08", name: "Navigate", title: "Concept check — delivery navigation",
+          definition: "Three ways to go from room A to room B map to the three reasoning levels.",
+          body: "Follow a floor line (skill) · follow step-by-step verbal instructions (rule) · use a floor plan to pick the “best” path (knowledge). Intelligence ranking usually rises from line → steps → plan.",
+          extra: `<div class="example-box"><b>CLASSROOM LINK</b>After students try the three methods in class, return here to connect each method to its reasoning level.</div>`,
+          render: renderNavCycle
+        }
+      ];
+
+      const jumpLabels = ["Robot", "S-R-A", "Levels", "Skill", "Rule", "Know", "Wash", "Nav", "Sum"];
+
+      function show(which) {
+        els.intro.classList.toggle("hidden", which !== "intro");
+        els.main.classList.toggle("hidden", which !== "main");
+        els.summary.classList.toggle("hidden", which !== "summary");
+        if (which !== "main") clearTimers();
+      }
+      function updateProgress() {
+        els.progress.style.width = `${((index + 1) / TOTAL) * 100}%`;
+        els.progressText.textContent = `Section ${index + 1} of ${TOTAL}`;
+      }
+      function updateJumpNav(active) {
+        $("jumpNav").querySelectorAll(".jump-btn").forEach((b, i) => b.classList.toggle("active", i === active));
+      }
+      function loadSection(i) {
+        index = i;
+        const s = sections[i];
+        show("main");
+        updateProgress();
+        updateJumpNav(i);
+        els.code.textContent = s.code;
+        els.name.textContent = s.name;
+        els.title.textContent = s.title;
+        els.definition.innerHTML = s.definition;
+        els.body.innerHTML = s.body;
+        els.extra.innerHTML = s.extra || "";
+        els.next.textContent = i === sections.length - 1 ? "See summary" : "Next";
+        s.render();
+      }
+      function showSummary() {
+        clearTimers();
+        show("summary");
+        els.progress.style.width = "100%";
+        els.progressText.textContent = "Complete";
+        updateJumpNav(sections.length);
+      }
+
+      $("jumpNav").innerHTML = jumpLabels.map((label, i) =>
+        `<button type="button" class="jump-btn" data-jump="${i}">${label}</button>`
+      ).join("");
+      $("jumpNav").querySelectorAll(".jump-btn").forEach((button) => {
+        button.addEventListener("click", () => {
+          const t = Number(button.dataset.jump);
+          t === sections.length ? showSummary() : loadSection(t);
+        });
+      });
+      $("startBtn").addEventListener("click", () => loadSection(0));
+      els.next.addEventListener("click", () => index === sections.length - 1 ? showSummary() : loadSection(index + 1));
+      els.back.addEventListener("click", () => {
+        if (index === 0) {
+          show("intro"); updateJumpNav(-1);
+          els.progress.style.width = "0"; els.progressText.textContent = "Ready";
+        } else loadSection(index - 1);
+      });
+      $("restartBtn").addEventListener("click", () => loadSection(0));
+      $("reviewBtn").addEventListener("click", () => {
+        show("intro"); updateJumpNav(-1);
+        els.progress.style.width = "0"; els.progressText.textContent = "Ready";
+      });
+      function theme(t) {
+        const next = t === "dark" ? "dark" : "light";
+        document.documentElement.setAttribute("data-theme", next);
+        try { localStorage.setItem("f1-ai-theme", next); } catch (e) {}
+        $("lightBtn").setAttribute("aria-pressed", next === "light");
+        $("darkBtn").setAttribute("aria-pressed", next === "dark");
+      }
+      $("lightBtn").addEventListener("click", () => theme("light"));
+      $("darkBtn").addEventListener("click", () => theme("dark"));
+      theme(document.documentElement.getAttribute("data-theme"));
+    })();
+  </script>
+</body>
+</html>

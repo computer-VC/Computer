@@ -1,0 +1,2176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Unit 1 Task 4 — Limitations of AI</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root, [data-theme="light"] {
+      --page: #f7f6f3;
+      --surface: #ffffff;
+      --ink: #37352f;
+      --body: #5c5a54;
+      --muted: #78766f;
+      --primary: #2383e2;
+      --primary-soft: rgba(35, 131, 226, 0.08);
+      --primary-line: rgba(35, 131, 226, 0.28);
+      --line: #e9e8e4;
+      --line-strong: #d8d6d0;
+      --ok: #0f7b3c;
+      --ok-soft: rgba(15, 123, 60, 0.08);
+      --ok-line: rgba(15, 123, 60, 0.28);
+      --warn: #9a6700;
+      --warn-soft: rgba(154, 103, 0, 0.1);
+      --danger: #c94440;
+      --danger-soft: rgba(201, 68, 64, 0.08);
+      --danger-line: rgba(201, 68, 64, 0.28);
+      --det: #1a8a4a;
+      --radius: 10px;
+      --radius-sm: 8px;
+      --shadow: 0 1px 2px rgba(55, 53, 47, 0.04);
+      --font-display: "Cormorant Garamond", Georgia, serif;
+      --font-body: "Inter", system-ui, sans-serif;
+      --font-mono: "JetBrains Mono", ui-monospace, monospace;
+      --toggle-bg: #ffffff;
+      --toggle-border: rgba(55, 53, 47, 0.14);
+      --caption-bg: rgba(255, 255, 255, 0.96);
+      --caption-fg: #37352f;
+      --anim-bg: #f7f6f3;
+      --anim-panel: #ffffff;
+      --anim-soft: #e8e6e1;
+      --anim-soft-2: #ddd9d2;
+      --anim-border: #c5c1b8;
+      --face-glow: rgba(255, 220, 190, 0.35);
+      --face-bg-top: #f0eeea;
+      --face-bg-bot: #e8e6e1;
+      --face-fail-top: #d8d6d0;
+      --face-fail-bot: #cfcbc4;
+      --face-fail-overlay: rgba(55, 53, 47, 0.28);
+      --chat-bg-top: #f7f6f3;
+      --chat-bg-bot: #efeee9;
+      --road-sky-top: #8ec4f0;
+      --road-sky-mid: #b5d8f5;
+      --road-sky-bot: #d4e8f7;
+      --road-bed-top: #5a6578;
+      --road-bed-bot: #3d4658;
+      --cargo-sky-top: #9fd0ff;
+      --cargo-sky-mid: #c5dff5;
+      --cargo-sky-bot: #e8f2fc;
+      --cargo-solid-top: #dfe7f0;
+      --cargo-solid-bot: #c8d4e4;
+    }
+
+    [data-theme="dark"] {
+      --page: #151515;
+      --surface: #202020;
+      --ink: #f1f0ec;
+      --body: #cfcbc4;
+      --muted: #9a968e;
+      --primary: #5ba8f5;
+      --primary-soft: rgba(91, 168, 245, 0.12);
+      --primary-line: rgba(91, 168, 245, 0.35);
+      --line: rgba(255, 255, 255, 0.1);
+      --line-strong: rgba(255, 255, 255, 0.16);
+      --ok: #3dcf7a;
+      --ok-soft: rgba(61, 207, 122, 0.12);
+      --ok-line: rgba(61, 207, 122, 0.35);
+      --warn: #e0a04a;
+      --warn-soft: rgba(224, 160, 74, 0.14);
+      --danger: #f07171;
+      --danger-soft: rgba(240, 113, 113, 0.12);
+      --danger-line: rgba(240, 113, 113, 0.35);
+      --det: #3dcf7a;
+      --shadow: 0 1px 2px rgba(0, 0, 0, 0.35), 0 4px 14px rgba(0, 0, 0, 0.28);
+      --toggle-bg: #202020;
+      --toggle-border: rgba(255, 255, 255, 0.14);
+      --caption-bg: rgba(32, 32, 32, 0.96);
+      --caption-fg: #f1f0ec;
+      --anim-bg: #1a1a1a;
+      --anim-panel: #262626;
+      --anim-soft: #333333;
+      --anim-soft-2: #3d3d3d;
+      --anim-border: #555555;
+      --face-glow: rgba(120, 90, 60, 0.22);
+      --face-bg-top: #2a2826;
+      --face-bg-bot: #1f1e1c;
+      --face-fail-top: #1a1a1a;
+      --face-fail-bot: #141414;
+      --face-fail-overlay: rgba(0, 0, 0, 0.45);
+      --chat-bg-top: #1a1a1a;
+      --chat-bg-bot: #161616;
+      --road-sky-top: #243040;
+      --road-sky-mid: #2a3848;
+      --road-sky-bot: #334456;
+      --road-bed-top: #3a404c;
+      --road-bed-bot: #2a2e36;
+      --cargo-sky-top: #3a5570;
+      --cargo-sky-mid: #4a6580;
+      --cargo-sky-bot: #5a7590;
+      --cargo-solid-top: #3a4555;
+      --cargo-solid-bot: #2e3644;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      min-height: 100vh;
+      font-family: var(--font-body);
+      color: var(--ink);
+      background: var(--page);
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .app {
+      width: min(920px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 28px 0 40px;
+    }
+
+    header {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 14px;
+      margin-bottom: 20px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .header-top {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      width: 100%;
+      margin-bottom: 4px;
+    }
+
+    .theme-toggle {
+      display: inline-flex;
+      border: 1px solid var(--toggle-border);
+      border-radius: 8px;
+      overflow: hidden;
+      background: var(--toggle-bg);
+      flex-shrink: 0;
+    }
+
+    .theme-toggle button {
+      appearance: none;
+      border: 0;
+      background: transparent;
+      color: var(--muted);
+      font: inherit;
+      font-size: 0.78rem;
+      font-weight: 600;
+      padding: 8px 12px;
+      cursor: pointer;
+      line-height: 1;
+    }
+
+    .theme-toggle button[aria-pressed="true"] {
+      background: var(--primary);
+      color: #fff;
+    }
+
+    .theme-toggle button:focus-visible {
+      outline: 2px solid var(--primary);
+      outline-offset: 2px;
+    }
+
+    .eyebrow {
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--primary);
+      font-weight: 500;
+      margin-bottom: 8px;
+    }
+
+    h1 {
+      font-family: var(--font-display);
+      font-size: clamp(2rem, 4.5vw, 2.75rem);
+      font-weight: 600;
+      line-height: 1.1;
+      letter-spacing: -0.02em;
+      color: var(--ink);
+    }
+
+    .progress-wrap {
+      min-width: 160px;
+      width: min(220px, 100%);
+    }
+
+    .progress-label {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--muted);
+      margin-bottom: 8px;
+      text-align: right;
+    }
+
+    .progress-bar {
+      height: 4px;
+      border-radius: 2px;
+      background: var(--line);
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      width: 0%;
+      border-radius: inherit;
+      background: var(--primary);
+      transition: width 0.4s ease;
+    }
+
+    .jump-nav {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin: -8px 0 16px;
+    }
+
+    .jump-nav button {
+      appearance: none;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: var(--surface);
+      color: var(--muted);
+      padding: 5px 9px;
+      font-family: var(--font-mono);
+      font-size: 0.68rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .jump-nav button:hover,
+    .jump-nav button[aria-current="step"] {
+      border-color: var(--primary);
+      background: var(--primary-soft);
+      color: var(--primary);
+    }
+
+    .panel {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .stage {
+      padding: 20px 20px 16px;
+      border-bottom: 1px solid var(--line);
+      min-height: 280px;
+      display: grid;
+      place-items: center;
+      background: var(--page);
+    }
+
+    .stage-title {
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 14px;
+      flex-wrap: wrap;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 5px 10px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--line);
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      color: var(--muted);
+      background: var(--surface);
+    }
+
+    .badge strong {
+      color: var(--ink);
+      font-weight: 600;
+      font-family: var(--font-body);
+      font-size: 0.8rem;
+    }
+
+    .step-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 10px;
+      border-radius: var(--radius-sm);
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      font-weight: 500;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      background: var(--primary-soft);
+      color: var(--primary);
+      border: 1px solid var(--primary-line);
+    }
+
+    .content { padding: 24px 22px; }
+
+    .question {
+      font-family: var(--font-display);
+      font-size: clamp(1.35rem, 2.6vw, 1.7rem);
+      font-weight: 600;
+      margin-bottom: 8px;
+      letter-spacing: -0.01em;
+      line-height: 1.25;
+    }
+
+    .hint {
+      color: var(--muted);
+      font-size: 0.92rem;
+      margin-bottom: 18px;
+      line-height: 1.55;
+    }
+
+    .choices {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    .choices.two-col {
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    }
+
+    .choice {
+      appearance: none;
+      border: 1px solid var(--line);
+      background: var(--surface);
+      color: var(--ink);
+      border-radius: var(--radius);
+      padding: 13px 14px;
+      font: inherit;
+      font-weight: 500;
+      font-size: 0.95rem;
+      cursor: pointer;
+      text-align: left;
+      transition: border-color 0.15s ease, background 0.15s ease;
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+    }
+
+    .choice:hover:not(:disabled) {
+      border-color: var(--primary-line);
+      background: var(--primary-soft);
+    }
+
+    .choice:disabled { cursor: default; }
+
+    .choice .mark {
+      flex-shrink: 0;
+      width: 20px;
+      height: 20px;
+      border-radius: 5px;
+      border: 1.5px solid var(--line-strong);
+      margin-top: 1px;
+      display: grid;
+      place-items: center;
+      font-size: 0.7rem;
+      color: transparent;
+      background: var(--page);
+      transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease;
+    }
+
+    .choice.round .mark { border-radius: 50%; }
+
+    .choice.selected {
+      border-color: var(--primary);
+      background: var(--primary-soft);
+    }
+
+    .choice.selected .mark {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: #fff;
+      font-weight: 700;
+    }
+
+    .choice.correct {
+      border-color: var(--ok-line);
+      background: var(--ok-soft);
+    }
+
+    .choice.correct .mark {
+      background: var(--ok);
+      border-color: var(--ok);
+      color: #fff;
+    }
+
+    .choice.wrong {
+      border-color: var(--danger-line);
+      background: var(--danger-soft);
+    }
+
+    .choice.wrong .mark {
+      background: var(--danger);
+      border-color: var(--danger);
+      color: #fff;
+    }
+
+    .choice .label { flex: 1; line-height: 1.45; }
+
+    .choice .sub {
+      display: block;
+      margin-top: 4px;
+      font-size: 0.8rem;
+      font-weight: 400;
+      color: var(--muted);
+    }
+
+    .explain {
+      display: none;
+      margin-top: 18px;
+      padding-top: 18px;
+      border-top: 1px solid var(--line);
+      animation: fadeUp 0.35s ease;
+    }
+
+    .explain.show { display: block; }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .verdict {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 5px 10px;
+      border-radius: var(--radius-sm);
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      font-weight: 500;
+      letter-spacing: 0.02em;
+      margin-bottom: 12px;
+      border: 1px solid transparent;
+    }
+
+    .verdict.ok {
+      background: var(--ok-soft);
+      color: var(--ok);
+      border-color: var(--ok-line);
+    }
+    .verdict.partial {
+      background: var(--warn-soft);
+      color: var(--warn);
+      border-color: rgba(154, 103, 0, 0.25);
+    }
+    .verdict.fail {
+      background: var(--danger-soft);
+      color: var(--danger);
+      border-color: var(--danger-line);
+    }
+    .verdict.info {
+      background: var(--primary-soft);
+      color: var(--primary);
+      border-color: var(--primary-line);
+    }
+
+    .explain h3 {
+      font-family: var(--font-display);
+      font-size: 1.25rem;
+      font-weight: 600;
+      margin-bottom: 8px;
+      letter-spacing: -0.01em;
+    }
+
+    .explain p {
+      color: var(--body);
+      line-height: 1.6;
+      margin-bottom: 10px;
+      font-size: 0.95rem;
+    }
+
+    .explain p strong { color: var(--ink); font-weight: 600; }
+
+    .reason-list {
+      list-style: none;
+      display: grid;
+      gap: 6px;
+      margin: 12px 0 4px;
+    }
+
+    .reason-list li {
+      padding: 10px 12px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--ok-line);
+      background: var(--ok-soft);
+      color: var(--ink);
+      font-size: 0.9rem;
+      line-height: 1.45;
+    }
+
+    .reason-list li::before {
+      content: "✓ ";
+      color: var(--ok);
+      font-weight: 700;
+      font-family: var(--font-mono);
+    }
+
+    .nav {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      margin-top: 20px;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      appearance: none;
+      border: 0;
+      border-radius: var(--radius);
+      padding: 11px 18px;
+      font-family: var(--font-body);
+      font-size: 0.92rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s ease, border-color 0.15s ease, opacity 0.15s ease;
+    }
+
+    .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    .btn-ghost {
+      background: transparent;
+      color: var(--body);
+      border: 1px solid var(--line);
+    }
+
+    .btn-ghost:hover:not(:disabled) {
+      background: var(--page);
+      border-color: var(--line-strong);
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      color: #fff;
+      margin-left: auto;
+    }
+
+    .btn-primary:hover:not(:disabled) {
+      background: #1a73d0;
+    }
+
+    .intro, .summary { padding: 28px 26px; }
+
+    .intro h2, .summary h2 {
+      font-family: var(--font-display);
+      font-size: clamp(1.6rem, 3vw, 2rem);
+      font-weight: 600;
+      margin-bottom: 10px;
+      letter-spacing: -0.015em;
+    }
+
+    .intro p, .summary p {
+      color: var(--body);
+      line-height: 1.65;
+      margin-bottom: 12px;
+      font-size: 0.98rem;
+    }
+
+    .intro p strong, .summary p strong { color: var(--ink); }
+
+    .intro-list {
+      list-style: none;
+      display: grid;
+      gap: 8px;
+      margin: 18px 0 12px;
+    }
+
+    .intro-list li {
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      color: var(--body);
+      line-height: 1.5;
+      font-size: 0.95rem;
+      padding: 10px 12px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--page);
+    }
+
+    .intro-list li span {
+      flex-shrink: 0;
+      width: 22px;
+      height: 22px;
+      border-radius: 6px;
+      background: var(--primary-soft);
+      color: var(--primary);
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      font-weight: 600;
+      display: grid;
+      place-items: center;
+      margin-top: 1px;
+      border: 1px solid var(--primary-line);
+    }
+
+    .score-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+      gap: 10px;
+      margin: 20px 0;
+    }
+
+    .score-card {
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 14px;
+      background: var(--page);
+    }
+
+    .score-card span {
+      display: block;
+      color: var(--muted);
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      letter-spacing: 0.02em;
+      margin-bottom: 6px;
+    }
+
+    .score-card strong {
+      font-family: var(--font-display);
+      font-size: 1.75rem;
+      font-weight: 600;
+      color: var(--ink);
+    }
+
+    .takeaway-grid {
+      display: grid;
+      gap: 8px;
+      margin: 16px 0;
+    }
+
+    .takeaway {
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 14px 16px;
+      background: var(--page);
+    }
+
+    .takeaway h4 {
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+      color: var(--primary);
+    }
+
+    .takeaway p {
+      margin: 0;
+      font-size: 0.9rem;
+      color: var(--body);
+    }
+
+    /* Shared animation scene */
+    .scene {
+      width: min(100%, 820px);
+      aspect-ratio: 16 / 8.2;
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      background: var(--anim-bg);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .scene-caption {
+      position: absolute;
+      left: 12px;
+      bottom: 10px;
+      z-index: 8;
+      font-family: var(--font-mono);
+      font-size: 0.68rem;
+      font-weight: 600;
+      color: var(--caption-fg);
+      background: var(--caption-bg);
+      border: 1px solid var(--line);
+      padding: 4px 8px;
+      border-radius: 6px;
+      max-width: min(92%, 460px);
+      pointer-events: none;
+    }
+
+    .phase-tag {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      z-index: 8;
+      font-family: var(--font-mono);
+      font-size: 0.68rem;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      padding: 4px 8px;
+      border-radius: 6px;
+      border: 1px solid transparent;
+    }
+
+    .phase-tag.ok {
+      background: var(--ok-soft);
+      color: var(--ok);
+      border-color: var(--ok-line);
+    }
+    .phase-tag.fail {
+      background: var(--danger-soft);
+      color: var(--danger);
+      border-color: var(--danger-line);
+    }
+
+    .reason-caption {
+      position: absolute;
+      right: 12px;
+      top: 44px;
+      z-index: 8;
+      max-width: 46%;
+      font-family: var(--font-mono);
+      font-size: 0.68rem;
+      font-weight: 600;
+      line-height: 1.35;
+      color: var(--caption-fg);
+      background: var(--caption-bg);
+      border: 1px solid var(--danger-line);
+      padding: 8px 10px;
+      border-radius: var(--radius-sm);
+      opacity: 0;
+      transform: translateY(4px);
+      pointer-events: none;
+    }
+
+    /* ===== FACE ANIMATION ===== */
+    .face-scene {
+      background:
+        radial-gradient(420px 220px at 50% 40%, var(--face-glow), transparent 60%),
+        linear-gradient(180deg, var(--face-bg-top), var(--face-bg-bot));
+    }
+
+    .face-scene.fail-mode {
+      background:
+        radial-gradient(420px 220px at 50% 40%, rgba(55, 53, 47, 0.08), transparent 60%),
+        linear-gradient(180deg, var(--face-fail-top), var(--face-fail-bot));
+    }
+
+    .face-scene.fail-mode::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: var(--face-fail-overlay);
+      z-index: 1;
+      animation: darkenIn 0.8s ease forwards;
+    }
+
+    @keyframes darkenIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    .face {
+      position: absolute;
+      left: 50%;
+      top: 48%;
+      width: 110px;
+      height: 130px;
+      transform: translate(-50%, -50%);
+      border-radius: 55% 55% 48% 48%;
+      background: linear-gradient(180deg, #ffd7b5, #e8b48a);
+      z-index: 2;
+      transition: filter 0.6s ease, opacity 0.6s ease;
+      border: 1px solid rgba(55, 53, 47, 0.08);
+    }
+
+    .face::before, .face::after {
+      content: "";
+      position: absolute;
+      top: 48px;
+      width: 14px;
+      height: 14px;
+      background: #2a1c14;
+      border-radius: 50%;
+    }
+    .face::before { left: 28px; }
+    .face::after { right: 28px; }
+
+    .mouth {
+      position: absolute;
+      left: 38px;
+      bottom: 34px;
+      width: 34px;
+      height: 10px;
+      border-bottom: 3px solid #2a1c14;
+      border-radius: 0 0 20px 20px;
+    }
+
+    .face-box {
+      position: absolute;
+      left: 50%;
+      top: 48%;
+      width: 140px;
+      height: 160px;
+      transform: translate(-50%, -50%);
+      border: 2px solid var(--det);
+      z-index: 3;
+      animation: boxPulse 2s ease-in-out infinite;
+    }
+
+    .face-box span {
+      position: absolute;
+      top: -20px;
+      left: 0;
+      background: var(--det);
+      color: #fff;
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      font-weight: 600;
+      padding: 2px 6px;
+      border-radius: 3px;
+    }
+
+    @keyframes boxPulse {
+      0%, 100% { outline: 1px solid transparent; }
+      50% { outline: 1px solid rgba(26, 138, 74, 0.35); }
+    }
+
+    .face-fail-seq .face {
+      animation: faceFailCycle 9s ease-in-out infinite;
+    }
+
+    .face-fail-seq .face-box {
+      border-color: var(--danger);
+      animation: failBoxCycle 9s ease-in-out infinite;
+    }
+
+    .face-fail-seq .face-box span {
+      background: var(--danger);
+      color: #fff;
+      animation: failLabelCycle 9s ease-in-out infinite;
+    }
+
+    .hat {
+      position: absolute;
+      left: 50%;
+      top: calc(48% - 78px);
+      width: 128px;
+      height: 36px;
+      transform: translateX(-50%);
+      background: #37352f;
+      border-radius: 8px 8px 4px 4px;
+      z-index: 4;
+      opacity: 0;
+      box-shadow: 0 8px 0 #2a2824;
+    }
+
+    .hat::after {
+      content: "";
+      position: absolute;
+      left: -18px;
+      bottom: -4px;
+      width: 164px;
+      height: 10px;
+      background: #2a2824;
+      border-radius: 6px;
+    }
+
+    .glasses {
+      position: absolute;
+      left: 50%;
+      top: calc(48% - 18px);
+      width: 92px;
+      height: 28px;
+      transform: translateX(-50%);
+      z-index: 4;
+      opacity: 0;
+    }
+
+    .glasses::before, .glasses::after {
+      content: "";
+      position: absolute;
+      top: 0;
+      width: 34px;
+      height: 26px;
+      border: 3px solid #5c5a54;
+      border-radius: 8px;
+      background: rgba(35, 131, 226, 0.08);
+    }
+    .glasses::before { left: 0; }
+    .glasses::after { right: 0; }
+
+    .glasses .bridge {
+      position: absolute;
+      left: 34px;
+      top: 10px;
+      width: 24px;
+      height: 3px;
+      background: #5c5a54;
+    }
+
+    .fail-x {
+      position: absolute;
+      left: 50%;
+      top: 48%;
+      width: 56px;
+      height: 56px;
+      transform: translate(-50%, -50%) scale(0.6);
+      z-index: 6;
+      opacity: 0;
+    }
+
+    .fail-x::before, .fail-x::after {
+      content: "";
+      position: absolute;
+      left: 50%;
+      top: 8px;
+      width: 5px;
+      height: 44px;
+      background: var(--danger);
+      border-radius: 3px;
+    }
+    .fail-x::before { transform: translateX(-50%) rotate(45deg); }
+    .fail-x::after { transform: translateX(-50%) rotate(-45deg); }
+
+    .face-fail-seq .hat { animation: hatCycle 9s ease-in-out infinite; }
+    .face-fail-seq .glasses { animation: glassesCycle 9s ease-in-out infinite; }
+    .face-fail-seq .fail-x { animation: xCycle 9s ease-in-out infinite; }
+    .face-fail-seq .rc-dark { animation: capCycle 9s ease-in-out infinite; animation-delay: 0s; }
+    .face-fail-seq .rc-hat { animation: capCycle 9s ease-in-out infinite; }
+    .face-fail-seq .rc-glasses { animation: capCycle 9s ease-in-out infinite; }
+    .face-fail-seq .rc-data { animation: capCycle 9s ease-in-out infinite; }
+
+    @keyframes faceFailCycle {
+      0%, 8% { filter: none; opacity: 1; }
+      12%, 28% { filter: brightness(0.35) contrast(1.1); opacity: 0.85; }
+      32%, 48% { filter: brightness(0.65); opacity: 1; }
+      52%, 68% { filter: brightness(0.75); opacity: 1; }
+      72%, 88% { filter: brightness(0.5) saturate(0.7); opacity: 0.9; }
+      92%, 100% { filter: none; opacity: 1; }
+    }
+
+    @keyframes failBoxCycle {
+      0%, 8% { opacity: 1; border-color: var(--det); }
+      12%, 88% { opacity: 1; border-color: var(--danger); }
+      92%, 100% { opacity: 1; border-color: var(--det); }
+    }
+
+    @keyframes failLabelCycle {
+      0%, 8% { background: var(--det); color: #fff; }
+      12%, 88% { background: var(--danger); color: #fff; }
+      92%, 100% { background: var(--det); color: #fff; }
+    }
+
+    @keyframes hatCycle {
+      0%, 30% { opacity: 0; transform: translateX(-50%) translateY(-8px); }
+      34%, 48% { opacity: 1; transform: translateX(-50%) translateY(0); }
+      52%, 100% { opacity: 0; transform: translateX(-50%) translateY(-8px); }
+    }
+
+    @keyframes glassesCycle {
+      0%, 50% { opacity: 0; transform: translateX(-50%) translateY(-6px); }
+      54%, 68% { opacity: 1; transform: translateX(-50%) translateY(0); }
+      72%, 100% { opacity: 0; transform: translateX(-50%) translateY(-6px); }
+    }
+
+    @keyframes xCycle {
+      0%, 10% { opacity: 0; transform: translate(-50%, -50%) scale(0.6); }
+      14%, 88% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+      92%, 100% { opacity: 0; transform: translate(-50%, -50%) scale(0.6); }
+    }
+
+    @keyframes capCycle {
+      0%, 11% { opacity: 0; transform: translateY(6px); }
+      14%, 26% { opacity: 1; transform: translateY(0); }
+      28%, 100% { opacity: 0; transform: translateY(6px); }
+    }
+
+    .face-fail-seq .rc-hat { animation-name: capHat; }
+    .face-fail-seq .rc-glasses { animation-name: capGlasses; }
+    .face-fail-seq .rc-data { animation-name: capData; }
+
+    @keyframes capHat {
+      0%, 32% { opacity: 0; transform: translateY(6px); }
+      36%, 48% { opacity: 1; transform: translateY(0); }
+      52%, 100% { opacity: 0; transform: translateY(6px); }
+    }
+    @keyframes capGlasses {
+      0%, 52% { opacity: 0; transform: translateY(6px); }
+      56%, 68% { opacity: 1; transform: translateY(0); }
+      72%, 100% { opacity: 0; transform: translateY(6px); }
+    }
+    @keyframes capData {
+      0%, 70% { opacity: 0; transform: translateY(6px); }
+      74%, 88% { opacity: 1; transform: translateY(0); }
+      92%, 100% { opacity: 0; transform: translateY(6px); }
+    }
+
+    /* ===== CHATBOT ANIMATION ===== */
+    .chat-scene {
+      background: linear-gradient(180deg, var(--chat-bg-top), var(--chat-bg-bot));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 28px 18px 36px;
+    }
+
+    .chat {
+      width: min(92%, 420px);
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      z-index: 2;
+    }
+
+    .bubble {
+      max-width: 88%;
+      padding: 10px 14px;
+      border-radius: 10px;
+      font-size: 0.86rem;
+      line-height: 1.45;
+      opacity: 0;
+      transform: translateY(8px);
+    }
+
+    .bubble.user {
+      align-self: flex-end;
+      background: var(--primary-soft);
+      border: 1px solid var(--primary-line);
+      color: var(--ink);
+      border-bottom-right-radius: 4px;
+    }
+
+    .bubble.bot {
+      align-self: flex-start;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      color: var(--body);
+      border-bottom-left-radius: 4px;
+    }
+
+    .bubble.bot.bad {
+      border-color: var(--danger-line);
+      background: var(--danger-soft);
+      color: var(--danger);
+    }
+
+    .chat-success .b1 { animation: bubbleIn 5.5s ease infinite; }
+    .chat-success .b2 { animation: bubbleIn 5.5s ease infinite 0.55s; }
+
+    .chat-fail .b1 { animation: chatFailUser 8.5s ease infinite; }
+    .chat-fail .b2 { animation: chatFailBotA 8.5s ease infinite; }
+    .chat-fail .b3 { animation: chatFailUser2 8.5s ease infinite; }
+    .chat-fail .b4 { animation: chatFailBotB 8.5s ease infinite; }
+    .chat-fail .rc-amb { animation: chatCapA 8.5s ease infinite; }
+    .chat-fail .rc-ood { animation: chatCapB 8.5s ease infinite; }
+
+    @keyframes bubbleIn {
+      0%, 8% { opacity: 0; transform: translateY(8px); }
+      16%, 78% { opacity: 1; transform: translateY(0); }
+      88%, 100% { opacity: 0; transform: translateY(-4px); }
+    }
+
+    @keyframes chatFailUser {
+      0%, 4% { opacity: 0; transform: translateY(8px); }
+      10%, 38% { opacity: 1; transform: translateY(0); }
+      44%, 100% { opacity: 0.2; transform: translateY(0); }
+    }
+    @keyframes chatFailBotA {
+      0%, 12% { opacity: 0; transform: translateY(8px); }
+      18%, 38% { opacity: 1; transform: translateY(0); }
+      44%, 100% { opacity: 0.2; transform: translateY(0); }
+    }
+    @keyframes chatFailUser2 {
+      0%, 46% { opacity: 0; transform: translateY(8px); }
+      52%, 88% { opacity: 1; transform: translateY(0); }
+      94%, 100% { opacity: 0; transform: translateY(-4px); }
+    }
+    @keyframes chatFailBotB {
+      0%, 54% { opacity: 0; transform: translateY(8px); }
+      60%, 88% { opacity: 1; transform: translateY(0); }
+      94%, 100% { opacity: 0; transform: translateY(-4px); }
+    }
+    @keyframes chatCapA {
+      0%, 16% { opacity: 0; transform: translateY(6px); }
+      20%, 40% { opacity: 1; transform: translateY(0); }
+      46%, 100% { opacity: 0; transform: translateY(6px); }
+    }
+    @keyframes chatCapB {
+      0%, 58% { opacity: 0; transform: translateY(6px); }
+      62%, 88% { opacity: 1; transform: translateY(0); }
+      94%, 100% { opacity: 0; transform: translateY(6px); }
+    }
+
+    .nlp-tag {
+      align-self: center;
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--caption-fg);
+      background: var(--caption-bg);
+      border: 1px solid var(--line);
+      padding: 4px 10px;
+      border-radius: 6px;
+      opacity: 0;
+    }
+
+    .chat-success .nlp-tag { animation: bubbleIn 5.5s ease infinite 0.3s; }
+
+    /* ===== OBSTACLE / SELF-DRIVING ===== */
+    .road-scene {
+      background:
+        linear-gradient(180deg, var(--road-sky-top) 0%, var(--road-sky-mid) 38%, var(--road-sky-bot) 52%, var(--road-bed-top) 52%, var(--road-bed-bot) 100%);
+    }
+
+    .sky-blend {
+      position: absolute;
+      left: 0; right: 0; top: 0;
+      height: 52%;
+      background: linear-gradient(180deg, var(--road-sky-top), var(--road-sky-mid));
+      z-index: 0;
+    }
+
+    .horizon {
+      position: absolute;
+      left: 0; right: 0;
+      top: 52%;
+      height: 1px;
+      background: rgba(255, 255, 255, 0.35);
+      z-index: 1;
+    }
+
+    .road-bed {
+      position: absolute;
+      left: 0; right: 0;
+      top: 52%;
+      bottom: 0;
+      background: linear-gradient(180deg, var(--road-bed-top), var(--road-bed-bot));
+      z-index: 1;
+    }
+
+    .lane {
+      position: absolute;
+      left: 50%;
+      top: 54%;
+      width: 5px;
+      height: 42%;
+      transform: translateX(-50%);
+      background: repeating-linear-gradient(
+        180deg,
+        rgba(255, 255, 255, 0.55) 0 18px,
+        transparent 18px 36px
+      );
+      z-index: 2;
+      animation: laneScroll 1.1s linear infinite;
+    }
+
+    @keyframes laneScroll {
+      from { background-position: 0 0; }
+      to { background-position: 0 36px; }
+    }
+
+    .car {
+      position: absolute;
+      left: 50%;
+      bottom: 18%;
+      width: 54px;
+      height: 78px;
+      transform: translateX(-50%);
+      background: linear-gradient(180deg, #2383e2, #1a5fa8);
+      border-radius: 10px 10px 8px 8px;
+      z-index: 5;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    }
+
+    .car::before {
+      content: "";
+      position: absolute;
+      left: 8px; right: 8px;
+      top: 10px;
+      height: 22px;
+      background: rgba(15, 30, 50, 0.45);
+      border-radius: 5px;
+    }
+
+    .car::after {
+      content: "";
+      position: absolute;
+      left: -6px; right: -6px;
+      bottom: 8px;
+      height: 8px;
+      background: #2a2824;
+      border-radius: 4px;
+    }
+
+    .sensor-arc {
+      position: absolute;
+      left: 50%;
+      bottom: 28%;
+      width: 160px;
+      height: 90px;
+      transform: translateX(-50%);
+      border: 2px solid rgba(35, 131, 226, 0.4);
+      border-bottom: 0;
+      border-radius: 160px 160px 0 0;
+      z-index: 4;
+      opacity: 0.7;
+      animation: sensorPulse 2s ease-in-out infinite;
+    }
+
+    @keyframes sensorPulse {
+      0%, 100% { opacity: 0.35; transform: translateX(-50%) scale(0.95); }
+      50% { opacity: 0.75; transform: translateX(-50%) scale(1.04); }
+    }
+
+    .obj {
+      position: absolute;
+      z-index: 3;
+    }
+
+    .obj.tree {
+      left: 12%;
+      bottom: 30%;
+      width: 28px;
+      height: 48px;
+      background: #2f7a4a;
+      clip-path: polygon(50% 0, 100% 70%, 75% 70%, 75% 100%, 25% 100%, 25% 70%, 0 70%);
+    }
+
+    .obj.sign {
+      right: 14%;
+      bottom: 32%;
+      width: 26px;
+      height: 26px;
+      background: #c94440;
+      border-radius: 4px;
+      transform: rotate(45deg);
+    }
+
+    .det-box {
+      position: absolute;
+      border: 2px solid var(--det);
+      z-index: 4;
+    }
+
+    .det-box span {
+      position: absolute;
+      top: -16px;
+      left: -1px;
+      font-family: var(--font-mono);
+      font-size: 0.6rem;
+      font-weight: 600;
+      background: var(--det);
+      color: #fff;
+      padding: 1px 4px;
+      border-radius: 2px;
+      white-space: nowrap;
+    }
+
+    .det-tree { left: 9%; bottom: 28%; width: 40px; height: 56px; }
+    .det-sign { right: 11%; bottom: 30%; width: 40px; height: 40px; border-color: #c9a227; }
+    .det-sign span { background: #c9a227; }
+
+    .truck {
+      position: absolute;
+      left: 58%;
+      bottom: 34%;
+      width: 120px;
+      height: 70px;
+      z-index: 3;
+    }
+
+    .truck-cab {
+      position: absolute;
+      left: 0;
+      bottom: 0;
+      width: 38px;
+      height: 42px;
+      background: linear-gradient(180deg, var(--anim-soft), var(--anim-border));
+      border-radius: 6px 4px 4px 4px;
+      border: 1px solid rgba(55, 53, 47, 0.12);
+    }
+
+    .truck-cab::before {
+      content: "";
+      position: absolute;
+      left: 6px; right: 6px;
+      top: 8px;
+      height: 14px;
+      background: rgba(35, 80, 120, 0.35);
+      border-radius: 3px;
+    }
+
+    .truck-cargo {
+      position: absolute;
+      left: 34px;
+      bottom: 8px;
+      width: 82px;
+      height: 58px;
+      background: linear-gradient(180deg, var(--cargo-sky-top) 0%, var(--cargo-sky-mid) 45%, var(--cargo-sky-bot) 100%);
+      border: 1px solid rgba(255, 255, 255, 0.45);
+      border-radius: 4px;
+      box-shadow: inset 0 0 16px rgba(110, 182, 255, 0.3);
+    }
+
+    .truck-wheel {
+      position: absolute;
+      bottom: -4px;
+      width: 14px;
+      height: 14px;
+      background: #2a2824;
+      border-radius: 50%;
+      border: 2px solid #78766f;
+    }
+    .truck-wheel.w1 { left: 10px; }
+    .truck-wheel.w2 { left: 55px; }
+    .truck-wheel.w3 { left: 90px; }
+
+    .road-success .det-tree,
+    .road-success .det-sign,
+    .road-success .det-truck {
+      animation: detPop 3.2s ease-in-out infinite;
+    }
+
+    .det-truck {
+      left: 56%;
+      bottom: 32%;
+      width: 128px;
+      height: 78px;
+    }
+
+    @keyframes detPop {
+      0%, 15% { opacity: 0; }
+      25%, 85% { opacity: 1; }
+      95%, 100% { opacity: 0; }
+    }
+
+    .road-fail .truck-cargo {
+      animation: blendSky 7s ease-in-out infinite;
+    }
+
+    .road-fail .det-tree,
+    .road-fail .det-sign {
+      animation: detPop 7s ease-in-out infinite;
+    }
+
+    .road-fail .miss-mark {
+      position: absolute;
+      left: 62%;
+      bottom: 48%;
+      z-index: 6;
+      font-family: var(--font-mono);
+      font-size: 0.68rem;
+      font-weight: 600;
+      color: var(--danger);
+      background: var(--caption-bg);
+      border: 1px solid var(--danger-line);
+      padding: 4px 8px;
+      border-radius: 6px;
+      opacity: 0;
+      animation: missPop 7s ease-in-out infinite;
+    }
+
+    .road-fail .ghost-box {
+      position: absolute;
+      left: 56%;
+      bottom: 32%;
+      width: 128px;
+      height: 78px;
+      border: 2px dashed rgba(201, 68, 64, 0.55);
+      z-index: 4;
+      opacity: 0;
+      animation: ghostBox 7s ease-in-out infinite;
+    }
+
+    .road-fail .ghost-box span {
+      position: absolute;
+      top: -18px;
+      left: 0;
+      font-family: var(--font-mono);
+      font-size: 0.6rem;
+      font-weight: 600;
+      background: var(--danger);
+      color: #fff;
+      padding: 1px 4px;
+      border-radius: 2px;
+    }
+
+    .road-fail .rc-blend { animation: blendCap 7s ease-in-out infinite; }
+
+    @keyframes blendSky {
+      0%, 20% {
+        background: linear-gradient(180deg, var(--cargo-solid-top), var(--cargo-solid-bot));
+        border-color: rgba(120, 118, 111, 0.4);
+        box-shadow: none;
+      }
+      35%, 75% {
+        background: linear-gradient(180deg, var(--cargo-sky-top) 0%, var(--cargo-sky-mid) 40%, var(--cargo-sky-bot) 100%);
+        border-color: transparent;
+        box-shadow: inset 0 0 20px rgba(110, 182, 255, 0.4);
+        opacity: 0.55;
+      }
+      90%, 100% {
+        background: linear-gradient(180deg, var(--cargo-solid-top), var(--cargo-solid-bot));
+        border-color: rgba(120, 118, 111, 0.4);
+        opacity: 1;
+      }
+    }
+
+    @keyframes missPop {
+      0%, 30% { opacity: 0; transform: translateY(6px); }
+      40%, 75% { opacity: 1; transform: translateY(0); }
+      85%, 100% { opacity: 0; }
+    }
+
+    @keyframes ghostBox {
+      0%, 32% { opacity: 0; }
+      40%, 75% { opacity: 1; }
+      85%, 100% { opacity: 0; }
+    }
+
+    @keyframes blendCap {
+      0%, 35% { opacity: 0; transform: translateY(6px); }
+      42%, 75% { opacity: 1; transform: translateY(0); }
+      85%, 100% { opacity: 0; }
+    }
+
+    .hidden { display: none !important; }
+
+    footer.note {
+      margin-top: 16px;
+      color: var(--muted);
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      text-align: center;
+    }
+
+    @media (max-width: 640px) {
+      .app {
+        width: calc(100% - 24px);
+        padding: 20px 0 36px;
+      }
+      .content, .intro, .summary { padding: 20px 16px; }
+      .stage { padding: 14px 12px 12px; }
+      .scene { aspect-ratio: 16 / 11; }
+      .reason-caption {
+        max-width: 58%;
+        left: 12px;
+        right: auto;
+        top: auto;
+        bottom: 40px;
+        font-size: 0.62rem;
+        padding: 6px 8px;
+      }
+      .truck { left: 48%; width: 100px; height: 60px; }
+      .truck-cargo { width: 68px; height: 48px; }
+      .choices.two-col { grid-template-columns: 1fr; }
+      .nav { flex-direction: column; }
+      .btn-primary { margin-left: 0; width: 100%; }
+      .btn-ghost { width: 100%; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+  </style>
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem("f1-ai-theme");
+        if (t !== "light" && t !== "dark") t = "light";
+        document.documentElement.setAttribute("data-theme", t);
+      } catch (e) {
+        document.documentElement.setAttribute("data-theme", "light");
+      }
+    })();
+  </script>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <div class="header-top">
+        <div class="theme-toggle" role="group" aria-label="Colour mode">
+          <button type="button" id="themeLightBtn" aria-pressed="true">Light</button>
+          <button type="button" id="themeDarkBtn" aria-pressed="false">Dark</button>
+        </div>
+      </div>
+      <div>
+        <div class="eyebrow">Booklet 1 · Unit 1 · Task 4</div>
+        <h1>Limitations of AI</h1>
+      </div>
+      <div class="progress-wrap" id="progressWrap">
+        <div class="progress-label"><span id="progressText">Ready</span></div>
+        <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+      </div>
+    </header>
+
+    <nav class="jump-nav" id="jumpNav" aria-label="Jump to example">
+      <button type="button" data-index="0">Ex1 · Face</button>
+      <button type="button" data-index="1">Ex2 · Chatbot</button>
+      <button type="button" data-index="2">Ex3 · Obstacle</button>
+      <button type="button" data-summary>Summary</button>
+    </nav>
+
+    <section class="panel" id="introScreen">
+      <div class="intro">
+        <h2>AI does not always work as expected</h2>
+        <p>
+          In this task you will study real situations where AI systems can
+          <strong>fail or behave unexpectedly</strong>.
+          For each example, identify <strong>what goes wrong</strong>
+          and <strong>why</strong>.
+        </p>
+        <ul class="intro-list">
+          <li><span>1</span>Choose the limitation — what the AI may fail to do.</li>
+          <li><span>2</span>Select all valid reasons that explain the failure.</li>
+          <li><span>3</span>Watch a short SUCCESS → FAILURE animation with captions.</li>
+        </ul>
+        <p>
+          Tip: AI depends on data, sensors, and training conditions. Unusual lighting,
+          unclear language, or visual camouflage can all break performance.
+        </p>
+        <div class="nav">
+          <button class="btn btn-primary" id="startBtn">Start Task 4</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel hidden" id="quizScreen">
+      <div class="stage">
+        <div class="stage-title">
+          <span class="badge">Example <strong id="scenarioCode">1</strong></span>
+          <span class="badge" id="scenarioName">Facial Recognition System</span>
+          <span class="step-pill" id="stepPill">Step 1 · Limitation</span>
+        </div>
+        <div id="animationRoot" style="width:100%;display:grid;place-items:center"></div>
+      </div>
+      <div class="content">
+        <div class="question" id="questionText"></div>
+        <p class="hint" id="questionHint"></p>
+        <div class="choices" id="choices"></div>
+        <div class="explain" id="explain">
+          <div class="verdict" id="verdict"></div>
+          <h3 id="explainTitle"></h3>
+          <div id="explainBody"></div>
+        </div>
+        <div class="nav">
+          <button class="btn btn-ghost" id="backBtn" disabled>Back</button>
+          <button class="btn btn-primary" id="checkBtn">Check answer</button>
+          <button class="btn btn-primary" id="nextBtn">Next</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel hidden" id="summaryScreen">
+      <div class="summary">
+        <h2>Task complete</h2>
+        <p>Nice work. Here is how you did on “Limitations of AI”.</p>
+        <div class="score-grid">
+          <div class="score-card"><span>Correct first try</span><strong id="scoreCorrect">0</strong></div>
+          <div class="score-card"><span>Total examples</span><strong>3</strong></div>
+          <div class="score-card"><span>Accuracy</span><strong id="scorePct">0%</strong></div>
+        </div>
+        <div class="takeaway-grid">
+          <div class="takeaway">
+            <h4>Facial recognition</h4>
+            <p>May fail to recognise a face when data is limited, lighting is dark, or appearance changes (hat, glasses, hairstyle).</p>
+          </div>
+          <div class="takeaway">
+            <h4>Chatbot</h4>
+            <p>May fail to reply appropriately when input is too complex/ambiguous, or the request is outside the system’s knowledge.</p>
+          </div>
+          <div class="takeaway">
+            <h4>Obstacle detection</h4>
+            <p>May miss a white truck cargo that reflects sky colour and is mistaken for the sky.</p>
+          </div>
+        </div>
+        <p>
+          Key takeaway: <strong>AI is powerful but not perfect.</strong>
+          Always ask what could go wrong — and why — before trusting an AI decision in the real world.
+        </p>
+        <div class="nav">
+          <button class="btn btn-ghost" id="reviewBtn">Review again</button>
+          <button class="btn btn-primary" id="restartBtn">Restart</button>
+        </div>
+      </div>
+    </section>
+
+    <footer class="note">Based on EDB Booklet 1 Unit 1 · Task 4 — Limitations of AI by Valtorta College</footer>
+  </div>
+
+  <script>
+    const scenarios = [
+      {
+        id: "1",
+        name: "Facial Recognition System",
+        limitation: {
+          question: "What limitation may occur with a facial recognition system?",
+          hint: "Choose the best description of how the AI may not work as expected.",
+          options: [
+            { id: "L1", label: "Failure in recognising a human face", correct: true },
+            { id: "L2", label: "It always identifies every person instantly", correct: false },
+            { id: "L3", label: "It can only work on black-and-white photos", correct: false },
+            { id: "L4", label: "It replaces the camera hardware automatically", correct: false },
+          ],
+        },
+        reasons: {
+          question: "Why might facial recognition fail? Select all that apply.",
+          hint: "More than one reason is valid. Select every correct option, then press Check.",
+          options: [
+            { id: "R1", label: "Insufficient data for face recognition", correct: true },
+            { id: "R2", label: "Dark environment / poor lighting", correct: true },
+            { id: "R3", label: "Confused by hairstyles, hats, glasses, etc.", correct: true },
+            { id: "R4", label: "The face is too perfectly lit and centred", correct: false },
+            { id: "R5", label: "The system has unlimited training examples", correct: false },
+          ],
+        },
+        explainTitle: "When the face is clear — then when it is not",
+        explainHtml: `
+          <p><strong>Limitation:</strong> Failure in recognising a human face.</p>
+          <p>Watch the animation: first the system succeeds on a bright, clear face. Then conditions change and recognition fails.</p>
+          <ul class="reason-list">
+            <li>Insufficient data for face recognition</li>
+            <li>Dark environment</li>
+            <li>Confused by hairstyles, hats, glasses, etc.</li>
+          </ul>
+        `,
+        renderIdle: (root) => renderFace(root, "idle"),
+        renderExplain: (root) => renderFace(root, "fail"),
+      },
+      {
+        id: "2",
+        name: "Chatbot",
+        limitation: {
+          question: "What limitation may occur with a chatbot?",
+          hint: "Think about what happens when the bot cannot handle the user’s message well.",
+          options: [
+            { id: "L1", label: "Failure in providing the user with an appropriate response", correct: true },
+            { id: "L2", label: "It always answers every question correctly", correct: false },
+            { id: "L3", label: "It can only send emoji replies", correct: false },
+            { id: "L4", label: "It permanently deletes the user’s account", correct: false },
+          ],
+        },
+        reasons: {
+          question: "Why might a chatbot fail to respond appropriately? Select all that apply.",
+          hint: "Select every valid reason, then press Check.",
+          options: [
+            { id: "R1", label: "User’s input is too complex or ambiguous", correct: true },
+            { id: "R2", label: "Out-of-domain request (beyond system knowledge)", correct: true },
+            { id: "R3", label: "The user typed in perfect simple English about a known topic", correct: false },
+            { id: "R4", label: "The chatbot has infinite knowledge of every subject", correct: false },
+          ],
+        },
+        explainTitle: "Clear questions work — unclear or out-of-domain ones may not",
+        explainHtml: `
+          <p><strong>Limitation:</strong> Failure in providing the user with an appropriate response.</p>
+          <p>In the animation, a normal Q&amp;A succeeds. Then an ambiguous question gets “I don’t understand”, and an out-of-domain request is beyond knowledge.</p>
+          <ul class="reason-list">
+            <li>User’s input too complex or ambiguous</li>
+            <li>Out-of-domain request (beyond system knowledge)</li>
+          </ul>
+        `,
+        renderIdle: (root) => renderChat(root, "success"),
+        renderExplain: (root) => renderChat(root, "fail"),
+      },
+      {
+        id: "3",
+        name: "Obstacle Detection (Self-driving)",
+        limitation: {
+          question: "What limitation may occur in self-driving obstacle detection?",
+          hint: "Focus on a famous failure case involving a truck and the sky.",
+          options: [
+            { id: "L1", label: "Failure in detecting the white cargo of a truck", correct: true },
+            { id: "L2", label: "The car always detects every object perfectly", correct: false },
+            { id: "L3", label: "Sensors only work underground", correct: false },
+            { id: "L4", label: "The car refuses to start if the sky is blue", correct: false },
+          ],
+        },
+        reasons: {
+          question: "Why might the white truck cargo be missed? Select all that apply.",
+          hint: "Select the correct reason(s), then press Check.",
+          options: [
+            { id: "R1", label: "White cargo reflects sky colour and is detected as the sky", correct: true },
+            { id: "R2", label: "The truck was invisible because it had no wheels", correct: false },
+            { id: "R3", label: "Self-driving cars never use cameras or sensors", correct: false },
+            { id: "R4", label: "White objects are always easier to detect than dark ones", correct: false },
+          ],
+        },
+        explainTitle: "Detected objects — until the cargo blends with the sky",
+        explainHtml: `
+          <p><strong>Limitation:</strong> Failure in detecting the white cargo of a truck.</p>
+          <p>Sensors first box normal objects successfully. Then a white truck cargo reflects sky colour and is treated as sky — so detection is missed.</p>
+          <ul class="reason-list">
+            <li>White cargo reflects sky colour and is detected as the sky</li>
+          </ul>
+        `,
+        renderIdle: (root) => renderRoad(root, "success"),
+        renderExplain: (root) => renderRoad(root, "fail"),
+      },
+    ];
+
+    function renderFace(root, mode) {
+      if (mode === "idle") {
+        root.innerHTML = `
+          <div class="scene face-scene">
+            <div class="phase-tag ok">Success · clear face</div>
+            <div class="face"><div class="mouth"></div></div>
+            <div class="face-box"><span>RECOGNIZED 0.97</span></div>
+            <div class="scene-caption">Bright lighting · frontal face · recognition succeeds</div>
+          </div>`;
+        return;
+      }
+      root.innerHTML = `
+        <div class="scene face-scene fail-mode face-fail-seq">
+          <div class="phase-tag fail">Failure cases</div>
+          <div class="face"><div class="mouth"></div></div>
+          <div class="hat" aria-hidden="true"></div>
+          <div class="glasses" aria-hidden="true"><div class="bridge"></div></div>
+          <div class="face-box"><span>FAILED</span></div>
+          <div class="fail-x" aria-hidden="true"></div>
+          <div class="reason-caption rc-dark">Dark environment → features hard to detect</div>
+          <div class="reason-caption rc-hat">Hat / hairstyle change → model confused</div>
+          <div class="reason-caption rc-glasses">Glasses occlude landmarks → match fails</div>
+          <div class="reason-caption rc-data">Insufficient training data → weak recognition</div>
+          <div class="scene-caption">SUCCESS conditions reverse → red X + reason captions</div>
+        </div>`;
+    }
+
+    function renderChat(root, mode) {
+      if (mode === "success") {
+        root.innerHTML = `
+          <div class="scene chat-scene">
+            <div class="phase-tag ok">Success · normal Q&amp;A</div>
+            <div class="chat chat-success">
+              <div class="bubble user b1">What time does the library close?</div>
+              <div class="nlp-tag">NLP · intent understood</div>
+              <div class="bubble bot b2">The library closes at 9:00 p.m. on weekdays.</div>
+            </div>
+            <div class="scene-caption">Clear in-domain question → appropriate reply</div>
+          </div>`;
+        return;
+      }
+      root.innerHTML = `
+        <div class="scene chat-scene">
+          <div class="phase-tag fail">Failure · ambiguous / out-of-domain</div>
+          <div class="chat chat-fail">
+            <div class="bubble user b1">Can you do the thing with the stuff from earlier somehow?</div>
+            <div class="bubble bot bad b2">I don't understand. Could you rephrase?</div>
+            <div class="bubble user b3">Predict next week's lottery numbers exactly.</div>
+            <div class="bubble bot bad b4">That request is beyond my knowledge / domain.</div>
+          </div>
+          <div class="reason-caption rc-amb">Ambiguous / complex input → no clear intent</div>
+          <div class="reason-caption rc-ood">Out-of-domain request → beyond system knowledge</div>
+          <div class="scene-caption">Normal chat breaks when language is unclear or outside scope</div>
+        </div>`;
+    }
+
+    function renderRoad(root, mode) {
+      if (mode === "success") {
+        root.innerHTML = `
+          <div class="scene road-scene road-success">
+            <div class="phase-tag ok">Success · objects detected</div>
+            <div class="sky-blend"></div>
+            <div class="horizon"></div>
+            <div class="road-bed"></div>
+            <div class="lane"></div>
+            <div class="obj tree"></div>
+            <div class="obj sign"></div>
+            <div class="truck">
+              <div class="truck-cab"></div>
+              <div class="truck-cargo" style="background:linear-gradient(180deg,var(--cargo-solid-top),var(--cargo-solid-bot));opacity:1"></div>
+              <div class="truck-wheel w1"></div>
+              <div class="truck-wheel w2"></div>
+              <div class="truck-wheel w3"></div>
+            </div>
+            <div class="det-box det-tree"><span>tree 0.93</span></div>
+            <div class="det-box det-sign"><span>sign 0.90</span></div>
+            <div class="det-box det-truck"><span>truck 0.88</span></div>
+            <div class="sensor-arc"></div>
+            <div class="car"></div>
+            <div class="scene-caption">Sensors draw boxes on trees, signs, and the truck</div>
+          </div>`;
+        return;
+      }
+      root.innerHTML = `
+        <div class="scene road-scene road-fail">
+          <div class="phase-tag fail">Failure · white cargo = sky?</div>
+          <div class="sky-blend"></div>
+          <div class="horizon"></div>
+          <div class="road-bed"></div>
+          <div class="lane"></div>
+          <div class="obj tree"></div>
+          <div class="obj sign"></div>
+          <div class="truck">
+            <div class="truck-cab"></div>
+            <div class="truck-cargo"></div>
+            <div class="truck-wheel w1"></div>
+            <div class="truck-wheel w2"></div>
+            <div class="truck-wheel w3"></div>
+          </div>
+          <div class="det-box det-tree"><span>tree 0.93</span></div>
+          <div class="det-box det-sign"><span>sign 0.90</span></div>
+          <div class="ghost-box"><span>MISSED · cargo</span></div>
+          <div class="miss-mark">✗ cargo not detected</div>
+          <div class="sensor-arc"></div>
+          <div class="car"></div>
+          <div class="reason-caption rc-blend">White cargo reflects sky colour → detected as sky</div>
+          <div class="scene-caption">Other objects still boxed — white cargo blends into the sky</div>
+        </div>`;
+    }
+
+    const els = {
+      intro: document.getElementById("introScreen"),
+      quiz: document.getElementById("quizScreen"),
+      summary: document.getElementById("summaryScreen"),
+      startBtn: document.getElementById("startBtn"),
+      backBtn: document.getElementById("backBtn"),
+      checkBtn: document.getElementById("checkBtn"),
+      nextBtn: document.getElementById("nextBtn"),
+      restartBtn: document.getElementById("restartBtn"),
+      reviewBtn: document.getElementById("reviewBtn"),
+      progressText: document.getElementById("progressText"),
+      progressFill: document.getElementById("progressFill"),
+      scenarioCode: document.getElementById("scenarioCode"),
+      scenarioName: document.getElementById("scenarioName"),
+      stepPill: document.getElementById("stepPill"),
+      animationRoot: document.getElementById("animationRoot"),
+      questionText: document.getElementById("questionText"),
+      questionHint: document.getElementById("questionHint"),
+      choices: document.getElementById("choices"),
+      explain: document.getElementById("explain"),
+      verdict: document.getElementById("verdict"),
+      explainTitle: document.getElementById("explainTitle"),
+      explainBody: document.getElementById("explainBody"),
+      scoreCorrect: document.getElementById("scoreCorrect"),
+      scorePct: document.getElementById("scorePct"),
+      jumpNav: document.getElementById("jumpNav"),
+    };
+
+    let index = 0;
+    let phase = "limitation"; // limitation | reasons | explain
+    let selected = new Set();
+    let answered = false;
+    let firstTryCorrect = 0;
+    let attempts = {};
+    let examplePassed = {};
+
+    function show(screen) {
+      els.intro.classList.toggle("hidden", screen !== "intro");
+      els.quiz.classList.toggle("hidden", screen !== "quiz");
+      els.summary.classList.toggle("hidden", screen !== "summary");
+      updateJumpNav(screen);
+    }
+
+    function updateJumpNav(screen = "quiz") {
+      els.jumpNav.querySelectorAll("button").forEach((btn) => {
+        const active = screen === "summary"
+          ? btn.hasAttribute("data-summary")
+          : screen === "quiz" && Number(btn.dataset.index) === index;
+        if (active) btn.setAttribute("aria-current", "step");
+        else btn.removeAttribute("aria-current");
+      });
+    }
+
+    function updateProgress() {
+      const totalSteps = scenarios.length * 2;
+      let done = index * 2;
+      if (phase === "reasons") done += 1;
+      if (phase === "explain") done += 2;
+      const pct = Math.min(100, (done / totalSteps) * 100);
+      els.progressFill.style.width = `${pct}%`;
+      els.progressText.textContent = `Example ${Math.min(index + 1, scenarios.length)} of ${scenarios.length}`;
+    }
+
+    function currentBlock() {
+      const s = scenarios[index];
+      return phase === "limitation" ? s.limitation : s.reasons;
+    }
+
+    function loadScenario(i, startPhase = "limitation") {
+      index = i;
+      phase = startPhase;
+      selected = new Set();
+      answered = false;
+      const s = scenarios[i];
+      updateProgress();
+      els.scenarioCode.textContent = s.id;
+      els.scenarioName.textContent = s.name;
+      els.explain.classList.remove("show");
+      els.checkBtn.classList.remove("hidden");
+      els.checkBtn.disabled = true;
+      els.nextBtn.classList.remove("hidden");
+      els.nextBtn.disabled = false;
+      els.backBtn.disabled = i === 0 && phase === "limitation";
+      updateJumpNav();
+
+      if (phase === "limitation") {
+        els.stepPill.textContent = "Step 1 · Limitation";
+        s.renderIdle(els.animationRoot);
+        els.nextBtn.textContent = "Continue to reasons";
+      } else if (phase === "reasons") {
+        els.stepPill.textContent = "Step 2 · Reasons";
+        s.renderIdle(els.animationRoot);
+        els.nextBtn.textContent = "See explanation";
+      } else {
+        els.stepPill.textContent = "Explanation";
+        s.renderExplain(els.animationRoot);
+        els.checkBtn.classList.add("hidden");
+        els.nextBtn.classList.remove("hidden");
+        els.nextBtn.disabled = false;
+        els.nextBtn.textContent = i === scenarios.length - 1 ? "See results" : "Next example";
+        showExplanation(true);
+        return;
+      }
+
+      const block = currentBlock();
+      els.questionText.textContent = block.question;
+      els.questionHint.textContent = block.hint;
+      renderChoices(block);
+    }
+
+    function renderChoices(block) {
+      const multi = phase === "reasons";
+      els.choices.className = multi ? "choices" : "choices two-col";
+      els.choices.innerHTML = "";
+      block.options.forEach((opt) => {
+        const btn = document.createElement("button");
+        btn.className = `choice${multi ? "" : " round"}`;
+        btn.type = "button";
+        btn.dataset.id = opt.id;
+        btn.innerHTML = `<span class="mark">${multi ? "✓" : ""}</span><span class="label">${opt.label}</span>`;
+        btn.addEventListener("click", () => onToggle(opt.id, btn, multi));
+        els.choices.appendChild(btn);
+      });
+    }
+
+    function onToggle(id, btn, multi) {
+      if (answered) return;
+      if (multi) {
+        if (selected.has(id)) {
+          selected.delete(id);
+          btn.classList.remove("selected");
+        } else {
+          selected.add(id);
+          btn.classList.add("selected");
+        }
+      } else {
+        selected = new Set([id]);
+        [...els.choices.querySelectorAll(".choice")].forEach((b) => {
+          b.classList.toggle("selected", b.dataset.id === id);
+          b.querySelector(".mark").textContent = b.dataset.id === id ? "●" : "";
+        });
+      }
+      els.checkBtn.disabled = selected.size === 0;
+    }
+
+    function evaluateSelection(block) {
+      const correctIds = block.options.filter((o) => o.correct).map((o) => o.id);
+      const selectedArr = [...selected];
+      const allCorrectSelected = correctIds.every((id) => selected.has(id));
+      const noWrongSelected = selectedArr.every((id) => correctIds.includes(id));
+      return {
+        correctIds,
+        isPerfect: allCorrectSelected && noWrongSelected && selectedArr.length === correctIds.length,
+        allCorrectSelected,
+        noWrongSelected,
+      };
+    }
+
+    function onCheck() {
+      if (answered || selected.size === 0) return;
+      const s = scenarios[index];
+      const block = currentBlock();
+      const result = evaluateSelection(block);
+      const key = `${s.id}-${phase}`;
+
+      if (!attempts[key]) {
+        attempts[key] = true;
+        if (result.isPerfect) {
+          if (!examplePassed[s.id]) examplePassed[s.id] = { limitation: false, reasons: false };
+          examplePassed[s.id][phase] = true;
+        }
+      }
+
+      answered = true;
+      const buttons = [...els.choices.querySelectorAll(".choice")];
+      buttons.forEach((b) => {
+        b.disabled = true;
+        const id = b.dataset.id;
+        const opt = block.options.find((o) => o.id === id);
+        if (opt.correct) b.classList.add("correct");
+        if (selected.has(id) && !opt.correct) b.classList.add("wrong");
+        b.classList.remove("selected");
+      });
+
+      els.checkBtn.classList.add("hidden");
+      els.nextBtn.classList.remove("hidden");
+      els.nextBtn.disabled = false;
+
+      els.verdict.className = `verdict ${result.isPerfect ? "ok" : "partial"}`;
+      els.verdict.textContent = result.isPerfect
+        ? (phase === "limitation" ? "Correct limitation" : "All reasons correct")
+        : (phase === "limitation" ? "Not quite — see the correct limitation" : "Review the highlighted reasons");
+
+      els.explainTitle.textContent = phase === "limitation"
+        ? "Limitation identified"
+        : "Possible reasons";
+
+      if (phase === "limitation") {
+        const correct = block.options.find((o) => o.correct);
+        els.explainBody.innerHTML = result.isPerfect
+          ? `<p>Yes — <strong>${correct.label}</strong>.</p><p>Next, explain <strong>why</strong> this may happen.</p>`
+          : `<p>The expected answer is: <strong>${correct.label}</strong>.</p><p>Continue to explore possible reasons.</p>`;
+      } else {
+        const list = block.options
+          .filter((o) => o.correct)
+          .map((o) => `<li>${o.label}</li>`)
+          .join("");
+        els.explainBody.innerHTML = `
+          <p>${result.isPerfect ? "Excellent — you selected every valid reason." : "Here are the teacher answers for this example:"}</p>
+          <ul class="reason-list">${list}</ul>
+          <p>Press next to watch the SUCCESS → FAILURE animation.</p>`;
+      }
+
+      els.explain.classList.add("show");
+    }
+
+    function showExplanation(fromLoad) {
+      const s = scenarios[index];
+      phase = "explain";
+      answered = true;
+      updateProgress();
+      els.stepPill.textContent = "Explanation · SUCCESS → FAILURE";
+      els.questionText.textContent = "Animated explanation";
+      els.questionHint.textContent = "Compare how the AI works when conditions are good — then when they break.";
+      els.choices.innerHTML = "";
+      els.checkBtn.classList.add("hidden");
+      els.nextBtn.classList.remove("hidden");
+      els.nextBtn.disabled = false;
+      els.nextBtn.textContent = index === scenarios.length - 1 ? "See results" : "Next example";
+      els.backBtn.disabled = false;
+
+      s.renderExplain(els.animationRoot);
+
+      els.verdict.className = "verdict info";
+      els.verdict.textContent = "Teacher explanation";
+      els.explainTitle.textContent = s.explainTitle;
+      els.explainBody.innerHTML = s.explainHtml;
+      els.explain.classList.add("show");
+
+      // Score example only when both steps were first-try perfect
+      if (!fromLoad) return;
+    }
+
+    function tallyScore() {
+      firstTryCorrect = scenarios.reduce((n, s) => {
+        const p = examplePassed[s.id];
+        return n + (p && p.limitation && p.reasons ? 1 : 0);
+      }, 0);
+    }
+
+    function showSummary() {
+      tallyScore();
+      show("summary");
+      els.progressFill.style.width = "100%";
+      els.progressText.textContent = "Complete";
+      els.scoreCorrect.textContent = String(firstTryCorrect);
+      els.scorePct.textContent = `${Math.round((firstTryCorrect / scenarios.length) * 100)}%`;
+    }
+
+    function resetState() {
+      firstTryCorrect = 0;
+      attempts = {};
+      examplePassed = {};
+    }
+
+    els.startBtn.addEventListener("click", () => {
+      resetState();
+      show("quiz");
+      loadScenario(0);
+    });
+
+    els.checkBtn.addEventListener("click", onCheck);
+
+    els.nextBtn.addEventListener("click", () => {
+      if (phase === "limitation") {
+        loadScenario(index, "reasons");
+      } else if (phase === "reasons") {
+        // credit example if both first-try perfect already recorded
+        showExplanation(true);
+      } else if (phase === "explain") {
+        if (index >= scenarios.length - 1) showSummary();
+        else loadScenario(index + 1);
+      }
+    });
+
+    els.jumpNav.addEventListener("click", (event) => {
+      const btn = event.target.closest("button");
+      if (!btn) return;
+      if (btn.hasAttribute("data-summary")) {
+        showSummary();
+      } else {
+        show("quiz");
+        loadScenario(Number(btn.dataset.index));
+      }
+    });
+
+    els.backBtn.addEventListener("click", () => {
+      if (phase === "explain") {
+        loadScenario(index, "reasons");
+      } else if (phase === "reasons") {
+        loadScenario(index, "limitation");
+      } else if (index > 0) {
+        loadScenario(index - 1, "explain");
+      }
+    });
+
+    els.restartBtn.addEventListener("click", () => {
+      resetState();
+      show("quiz");
+      loadScenario(0);
+    });
+
+    els.reviewBtn.addEventListener("click", () => {
+      show("quiz");
+      loadScenario(0);
+    });
+
+    function applyTheme(theme) {
+      const next = theme === "dark" ? "dark" : "light";
+      document.documentElement.setAttribute("data-theme", next);
+      try { localStorage.setItem("f1-ai-theme", next); } catch (e) {}
+      const lightBtn = document.getElementById("themeLightBtn");
+      const darkBtn = document.getElementById("themeDarkBtn");
+      if (lightBtn && darkBtn) {
+        lightBtn.setAttribute("aria-pressed", next === "light" ? "true" : "false");
+        darkBtn.setAttribute("aria-pressed", next === "dark" ? "true" : "false");
+      }
+    }
+
+    document.getElementById("themeLightBtn").addEventListener("click", () => applyTheme("light"));
+    document.getElementById("themeDarkBtn").addEventListener("click", () => applyTheme("dark"));
+    applyTheme(document.documentElement.getAttribute("data-theme") || "light");
+  </script>
+</body>
+</html>

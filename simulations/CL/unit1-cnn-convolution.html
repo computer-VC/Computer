@@ -1,0 +1,1031 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Unit 1 — Why Convolution Finds Features (Stamp)</title>
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem("f3-ai-theme");
+        document.documentElement.setAttribute("data-theme", t === "dark" ? "dark" : "light");
+      } catch (e) { document.documentElement.setAttribute("data-theme", "light"); }
+    })();
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet" />
+  <style>
+:root, [data-theme="light"] {
+  --canvas: #ffffff;
+  --surface: #f7f6f3;
+  --ink: #37352f;
+  --body: #4f4d47;
+  --muted: #787774;
+  --primary: #2383e2;
+  --primary-active: #1a6fc1;
+  --success: #0f7b3f;
+  --warning: #cb6800;
+  --danger: #d44c47;
+  --hairline: rgba(55, 53, 47, 0.09);
+  --radius: 10px;
+  --ease: cubic-bezier(0.16, 1, 0.3, 1);
+  --shadow: 0 1px 2px rgba(55, 53, 47, 0.04), 0 4px 12px rgba(55, 53, 47, 0.06);
+  --toggle-bg: #ffffff;
+  --toggle-border: rgba(55, 53, 47, 0.14);
+  --caption-bg: rgba(255, 255, 255, 0.96);
+  --caption-fg: #37352f;
+  --anim-bg: #f7f6f3;
+  --anim-panel: #ffffff;
+  --anim-soft: #e8e6e1;
+  --anim-soft-2: #ddd9d2;
+  --anim-border: #c5c1b8;
+}
+
+[data-theme="dark"] {
+  --canvas: #202020;
+  --surface: #151515;
+  --ink: #f1f0ec;
+  --body: #cfcbc4;
+  --muted: #9a968e;
+  --primary: #5ba8f5;
+  --primary-active: #7bb8f7;
+  --success: #3dcf7a;
+  --warning: #e0a04a;
+  --danger: #f07171;
+  --hairline: rgba(255, 255, 255, 0.1);
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.35), 0 4px 14px rgba(0, 0, 0, 0.28);
+  --toggle-bg: #202020;
+  --toggle-border: rgba(255, 255, 255, 0.14);
+  --caption-bg: rgba(32, 32, 32, 0.96);
+  --caption-fg: #f1f0ec;
+  --anim-bg: #1a1a1a;
+  --anim-panel: #262626;
+  --anim-soft: #333333;
+  --anim-soft-2: #3d3d3d;
+  --anim-border: #555555;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  min-height: 100vh;
+  min-height: 100dvh;
+  font-family: Inter, system-ui, sans-serif;
+  color: var(--body);
+  background: var(--surface);
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+button, a { font: inherit; }
+button:focus-visible, a:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+.app {
+  width: min(880px, calc(100% - 28px));
+  margin: 0 auto;
+  padding: 28px 0 40px;
+}
+
+header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 20px;
+}
+
+.header-top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  margin-bottom: 4px;
+}
+
+.theme-toggle {
+  display: inline-flex;
+  border: 1px solid var(--toggle-border);
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--toggle-bg);
+}
+
+.theme-toggle button {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 8px 12px;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.theme-toggle button[aria-pressed="true"] {
+  background: var(--primary);
+  color: #fff;
+}
+
+.eyebrow, .mono {
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+}
+
+.eyebrow {
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+  font-weight: 500;
+  margin-bottom: 6px;
+}
+
+h1, h2 { font-family: "Cormorant Garamond", Georgia, serif; color: var(--ink); }
+h1 { font-size: clamp(1.85rem, 4.5vw, 2.45rem); line-height: 1.15; }
+
+.progress-wrap { min-width: 160px; width: min(220px, 100%); }
+.progress-label { font-size: 0.8rem; color: var(--muted); margin-bottom: 8px; text-align: right; }
+.progress-bar { height: 3px; background: var(--hairline); overflow: hidden; }
+.progress-fill { height: 100%; width: 0; background: var(--primary); transition: width 0.36s var(--ease); }
+
+.jump-nav {
+  width: 100%;
+  display: flex;
+  gap: 7px;
+  overflow-x: auto;
+  padding: 2px 1px 7px;
+  scrollbar-width: thin;
+}
+
+.jump-btn {
+  flex: 0 0 auto;
+  border: 1px solid var(--hairline);
+  border-radius: 999px;
+  background: var(--canvas);
+  color: var(--muted);
+  padding: 6px 10px;
+  font: 600 0.66rem "JetBrains Mono", monospace;
+  cursor: pointer;
+}
+
+.jump-btn:hover { color: var(--primary); border-color: var(--primary); }
+.jump-btn.active { color: #fff; background: var(--primary); border-color: var(--primary); }
+
+.panel {
+  background: var(--canvas);
+  border: 1px solid var(--hairline);
+  border-radius: 12px;
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+
+.hidden { display: none !important; }
+
+footer.note {
+  margin-top: 14px;
+  color: var(--muted);
+  font-size: 0.78rem;
+  text-align: center;
+}
+
+
+.intro, .summary { padding: 28px 22px; }
+.intro h2, .summary h2, .section-title {
+  font-size: clamp(1.4rem, 3vw, 1.75rem);
+  margin-bottom: 10px;
+  line-height: 1.2;
+}
+
+.intro p, .summary p, .section-body {
+  line-height: 1.65;
+  margin-bottom: 12px;
+  font-size: 0.95rem;
+}
+
+strong { color: var(--ink); }
+
+.chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 17px 0 21px; }
+.chip {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 6px 10px;
+  border: 1px solid var(--hairline);
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--ink);
+}
+
+.stage {
+  padding: 18px;
+  border-bottom: 1px solid var(--hairline);
+  background: var(--surface);
+}
+
+.badge {
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+  padding: 4px 10px;
+  border: 1px solid var(--hairline);
+  border-radius: 999px;
+  font-size: 0.78rem;
+  color: var(--muted);
+  background: var(--canvas);
+  margin-bottom: 12px;
+}
+
+.badge strong { font-family: "JetBrains Mono", monospace; }
+
+.scene {
+  width: 100%;
+  min-height: 300px;
+  border: 1px solid var(--hairline);
+  border-radius: 10px;
+  background: var(--anim-bg);
+  position: relative;
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+}
+
+.scene-caption {
+  position: absolute;
+  z-index: 8;
+  left: 10px;
+  bottom: 8px;
+  max-width: 92%;
+  color: var(--caption-fg);
+  background: var(--caption-bg);
+  border: 1px solid var(--hairline);
+  border-radius: 6px;
+  padding: 4px 8px;
+  box-shadow: var(--shadow);
+  font-size: 0.7rem;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.content { padding: 20px 18px 18px; }
+
+.definition {
+  border-left: 3px solid var(--primary);
+  padding: 10px 12px;
+  margin: 12px 0 15px;
+  background: var(--surface);
+  color: var(--ink);
+  line-height: 1.55;
+  font-size: 0.92rem;
+}
+
+.definition::before {
+  content: "DEFINITION";
+  display: block;
+  font: 600 0.62rem "JetBrains Mono", monospace;
+  color: var(--primary);
+  letter-spacing: 0.05em;
+  margin-bottom: 5px;
+}
+
+.example-box {
+  border: 1px solid var(--hairline);
+  border-radius: 9px;
+  padding: 12px;
+  margin: 14px 0 4px;
+  background: var(--surface);
+  font-size: 0.88rem;
+  line-height: 1.55;
+}
+
+.example-box b {
+  display: block;
+  font: 600 0.65rem "JetBrains Mono", monospace;
+  color: var(--primary);
+  margin-bottom: 5px;
+  letter-spacing: 0.04em;
+}
+
+.nav {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 17px;
+}
+
+.btn {
+  border: 0;
+  border-radius: 8px;
+  padding: 10px 16px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: 0.18s ease;
+}
+
+.btn:hover:not(:disabled) { transform: translateY(-1px); }
+.btn-primary { color: #fff; background: var(--primary); margin-left: auto; }
+.btn-primary:hover:not(:disabled) { background: var(--primary-active); }
+.btn-ghost { color: var(--muted); background: transparent; border: 1px solid var(--hairline); }
+
+.recap-list { display: grid; gap: 7px; margin: 15px 0 18px; }
+.recap-item {
+  display: grid;
+  grid-template-columns: 118px 1fr;
+  gap: 10px;
+  padding: 9px 10px;
+  border-bottom: 1px solid var(--hairline);
+  font-size: 0.85rem;
+  line-height: 1.45;
+}
+.recap-item b {
+  font-family: "JetBrains Mono", monospace;
+  color: var(--primary);
+  font-size: 0.68rem;
+}
+
+.frame {
+  width: 100%;
+  min-height: 300px;
+  padding: 18px 14px 44px;
+  display: grid;
+  place-items: center;
+}
+
+.arrow {
+  font: 600 1.05rem "JetBrains Mono", monospace;
+  color: var(--primary);
+  animation: nudge 1.2s ease-in-out infinite;
+}
+
+@keyframes nudge { 50% { transform: translateX(4px); } }
+@keyframes pulseGlow {
+  0%, 100% { box-shadow: 0 0 0 2px color-mix(in srgb, var(--primary) 18%, transparent); }
+  50% { box-shadow: 0 0 0 5px color-mix(in srgb, var(--primary) 10%, transparent); }
+}
+
+@media (max-width: 560px) {
+  .recap-item { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 390px) {
+  .app { width: calc(100% - 20px); padding: 18px 0 32px; }
+  .content, .intro, .summary { padding-left: 14px; padding-right: 14px; }
+}
+
+.puzzle-row {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 7px;
+  width: min(640px, 100%);
+}
+.puzzle-cell { text-align: center; }
+.puzzle-crop {
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: 8px;
+  border: 1px solid var(--anim-border);
+  background-image: url("../F3 AI assets/img/cnn-feature-levels.png");
+  background-size: 600% 400%;
+  background-repeat: no-repeat;
+}
+.puzzle-cell b {
+  display: block;
+  margin-top: 5px;
+  font: 600 0.52rem "JetBrains Mono", monospace;
+  color: var(--muted);
+}
+.puzzle-cell.late b { color: var(--warning); }
+.puzzle-q {
+  margin-top: 12px;
+  text-align: center;
+  font: 600 0.72rem "JetBrains Mono", monospace;
+  color: var(--ink);
+}
+
+.conv-board, .vs-grid, .stack-flow, .puzzle-row, .stamp-wrap { margin-bottom: 8px; }
+.puzzle-q { margin-bottom: 18px; }
+
+.stamp-wrap { width: min(560px, 100%); display: grid; gap: 10px; padding-bottom: 22px; }
+.stamp-row {
+  display: grid;
+  grid-template-columns: minmax(160px, 1fr) 170px;
+  gap: 12px;
+  align-items: center;
+}
+.spy-photo {
+  position: relative;
+  width: min(240px, 100%);
+  aspect-ratio: 1;
+  margin: 0 auto;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid var(--anim-border);
+  background: #111 url("../F3 AI assets/img/bluebird-sq.png") center / cover no-repeat;
+}
+.spy-window {
+  position: absolute;
+  width: 32%;
+  height: 32%;
+  border: 3px solid #fff;
+  border-radius: 6px;
+  box-shadow: 0 0 0 200px rgba(0,0,0,0.38), 0 0 0 3px var(--primary);
+  transition: left 0.4s var(--ease), top 0.4s var(--ease), border-color 0.3s ease;
+  pointer-events: none;
+}
+.spy-window.hit { border-color: var(--success); box-shadow: 0 0 0 200px rgba(0,0,0,0.38), 0 0 0 3px var(--success); }
+.spy-window.miss { border-color: var(--warning); box-shadow: 0 0 0 200px rgba(0,0,0,0.38), 0 0 0 3px var(--warning); }
+
+.stamp-card {
+  border: 1px solid var(--anim-border);
+  border-radius: 10px;
+  background: var(--anim-panel);
+  padding: 12px 10px;
+  text-align: center;
+}
+.stamp-card .mono { display: block; color: var(--primary); font-size: 0.55rem; margin-bottom: 8px; }
+.stamp-face {
+  width: 84px;
+  height: 84px;
+  margin: 0 auto 8px;
+  border-radius: 10px;
+  border: 2px dashed var(--primary);
+  background: var(--anim-soft);
+  display: grid;
+  place-items: center;
+  font: 700 0.72rem "JetBrains Mono", monospace;
+  color: var(--ink);
+  letter-spacing: 0.04em;
+  box-shadow: 2px 3px 0 color-mix(in srgb, var(--primary) 25%, transparent);
+}
+.stamp-face.ink { background: color-mix(in srgb, var(--success) 22%, var(--anim-panel)); border-style: solid; border-color: var(--success); }
+.stamp-verdict {
+  font: 700 0.85rem Inter, sans-serif;
+  color: var(--ink);
+  min-height: 2.4em;
+  line-height: 1.35;
+}
+.stamp-verdict.hit { color: var(--success); }
+.stamp-verdict.miss { color: var(--warning); }
+
+.pass-nav {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 5px;
+}
+.pass-btn {
+  border: 1px solid var(--hairline);
+  background: var(--anim-panel);
+  color: var(--muted);
+  border-radius: 999px;
+  padding: 5px 8px;
+  font: 600 0.55rem "JetBrains Mono", monospace;
+  cursor: pointer;
+}
+.pass-btn[aria-pressed="true"] {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #fff;
+}
+
+.vs-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  width: min(560px, 100%);
+}
+.vs-card {
+  border: 1px solid var(--anim-border);
+  border-radius: 10px;
+  background: var(--anim-panel);
+  padding: 12px 10px;
+  text-align: center;
+}
+.vs-card .mono { color: var(--primary); font-size: 0.55rem; margin-bottom: 8px; display: block; }
+.vs-card p { font-size: 0.72rem; line-height: 1.45; color: var(--ink); }
+.stamp-list { display: grid; gap: 6px; margin: 8px 0; }
+.stamp-line {
+  display: grid;
+  grid-template-columns: 64px 1fr auto;
+  gap: 6px;
+  align-items: center;
+  font: 600 0.62rem "JetBrains Mono", monospace;
+  text-align: left;
+}
+.stamp-line b { color: var(--primary); }
+.pill {
+  padding: 2px 7px;
+  border-radius: 999px;
+  font-size: 0.55rem;
+}
+.pill.yes { background: color-mix(in srgb, var(--success) 18%, var(--anim-panel)); color: var(--success); }
+.pill.no { background: color-mix(in srgb, var(--warning) 18%, var(--anim-panel)); color: var(--warning); }
+
+.notes-box {
+  width: min(420px, 100%);
+  border: 1px solid var(--anim-border);
+  border-radius: 10px;
+  background: var(--anim-panel);
+  padding: 12px 14px;
+  text-align: left;
+}
+.notes-box .mono { color: var(--primary); font-size: 0.55rem; margin-bottom: 8px; display: block; }
+.notes-box li {
+  list-style: none;
+  font-size: 0.82rem;
+  line-height: 1.55;
+  color: var(--ink);
+  padding-left: 18px;
+  position: relative;
+}
+.notes-box li::before {
+  content: "✓";
+  position: absolute;
+  left: 0;
+  color: var(--success);
+  font-weight: 700;
+}
+
+.conv-board {
+  width: min(560px, 100%);
+  display: grid;
+  gap: 10px;
+}
+.conv-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+.grid4, .grid3, .grid2 {
+  display: grid;
+  gap: 3px;
+  background: var(--anim-border);
+  padding: 3px;
+  border-radius: 6px;
+}
+.grid4 { grid-template-columns: repeat(4, 28px); }
+.grid3 { grid-template-columns: repeat(3, 28px); }
+.grid2 { grid-template-columns: repeat(2, 36px); }
+.cell {
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  font: 700 0.72rem "JetBrains Mono", monospace;
+  background: var(--anim-panel);
+  color: var(--ink);
+}
+.cell.on { background: #111; color: #fff; }
+.cell.win { outline: 2px solid var(--primary); outline-offset: -2px; z-index: 1; }
+.grid2 .cell { width: 36px; height: 36px; font-size: 0.95rem; }
+.grid2 .cell.hit {
+  background: var(--primary);
+  color: #fff;
+  animation: pulseGlow 1.6s ease-in-out infinite;
+}
+.conv-cap {
+  font: 600 0.5rem "JetBrains Mono", monospace;
+  color: var(--muted);
+  text-align: center;
+  margin-top: 4px;
+}
+.math-line {
+  text-align: center;
+  font: 600 0.72rem "JetBrains Mono", monospace;
+  color: var(--ink);
+  min-height: 1.3em;
+}
+.conv-nav { display: flex; justify-content: center; gap: 8px; }
+
+.stack-flow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: min(560px, 100%);
+}
+.stack-step {
+  min-width: 78px;
+  padding: 8px 7px;
+  border: 1px solid var(--anim-border);
+  border-radius: 8px;
+  background: var(--anim-panel);
+  text-align: center;
+  font: 600 0.52rem "JetBrains Mono", monospace;
+  color: var(--ink);
+  opacity: 0.4;
+}
+.stack-step b { display: block; color: var(--primary); font-size: 0.48rem; margin-bottom: 3px; }
+.stack-step.on { opacity: 1; border-color: var(--primary); animation: pulseGlow 1.8s ease-in-out infinite; }
+.stack-step.out { opacity: 1; border-color: var(--success); color: var(--success); }
+
+.pair-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin: 12px 0;
+}
+.pair-card {
+  border: 1px solid var(--hairline);
+  border-radius: 8px;
+  padding: 10px;
+  background: var(--surface);
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+.pair-card b {
+  display: block;
+  font: 600 0.62rem "JetBrains Mono", monospace;
+  color: var(--primary);
+  margin-bottom: 5px;
+}
+
+@media (max-width: 560px) {
+  .puzzle-row { gap: 4px; }
+  .puzzle-cell b { font-size: 0.42rem; }
+  .vs-grid, .pair-grid, .stamp-row { grid-template-columns: 1fr; }
+  .grid4 { grid-template-columns: repeat(4, 24px); }
+  .grid3 { grid-template-columns: repeat(3, 24px); }
+  .cell { width: 24px; height: 24px; font-size: 0.62rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .arrow, .stack-step.on, .grid2 .cell.hit, .spy-window { animation: none !important; transition: none !important; }
+}
+  </style>
+</head>
+<body>
+  <div class="app" id="app"></div>
+  <script>
+(function () {
+  "use strict";
+
+  function $(id) { return document.getElementById(id); }
+
+  function caption(text) {
+    return `<div class="scene-caption">${text}</div>`;
+  }
+
+  function applyTheme(theme) {
+    const next = theme === "dark" ? "dark" : "light";
+    document.documentElement.setAttribute("data-theme", next);
+    try { localStorage.setItem("f3-ai-theme", next); } catch (e) {}
+    const light = $("lightBtn");
+    const dark = $("darkBtn");
+    if (light) light.setAttribute("aria-pressed", next === "light" ? "true" : "false");
+    if (dark) dark.setAttribute("aria-pressed", next === "dark" ? "true" : "false");
+  }
+
+  function initTheme() {
+    let t = "light";
+    try {
+      const saved = localStorage.getItem("f3-ai-theme");
+      if (saved === "dark" || saved === "light") t = saved;
+    } catch (e) {}
+    applyTheme(t);
+    $("lightBtn") && $("lightBtn").addEventListener("click", () => applyTheme("light"));
+    $("darkBtn") && $("darkBtn").addEventListener("click", () => applyTheme("dark"));
+  }
+
+  function mount(config) {
+    const sections = config.sections || [];
+    const jumpLabels = config.jumpLabels || sections.map((s) => s.name);
+    const summaryItems = (config.summary && config.summary.items) || [];
+    let index = 0;
+    const root = $("app");
+    if (!root) return;
+
+    root.innerHTML = `
+      <header>
+        <div class="header-top">
+          <div class="theme-toggle" role="group" aria-label="Colour theme">
+            <button type="button" id="lightBtn" aria-pressed="true">Light</button>
+            <button type="button" id="darkBtn" aria-pressed="false">Dark</button>
+          </div>
+          <div class="progress-wrap">
+            <div class="progress-label" id="progressText">Ready</div>
+            <div class="progress-bar" aria-hidden="true"><div class="progress-fill" id="progressFill"></div></div>
+          </div>
+        </div>
+        <div>
+          <p class="eyebrow">${config.eyebrow || ""}</p>
+          <h1>${config.title || ""}</h1>
+        </div>
+        <nav class="jump-nav" id="jumpNav" aria-label="Jump to a section"></nav>
+      </header>
+      <main class="panel">
+        <section class="intro" id="intro">
+          <h2>${(config.intro && config.intro.h2) || ""}</h2>
+          <p>${(config.intro && config.intro.p) || ""}</p>
+          <div class="chips" aria-label="Topics">${(config.intro && config.intro.chips || [])
+            .map((c) => `<span class="chip">${c}</span>`).join("")}</div>
+          <div class="nav"><span></span><button class="btn btn-primary" id="startBtn" type="button">Start exploring</button></div>
+        </section>
+        <section id="mainScreen" class="hidden">
+          <div class="stage">
+            <span class="badge"><strong id="sectionCode">01</strong><span id="sectionName"></span></span>
+            <div class="scene" id="scene" aria-live="polite"></div>
+          </div>
+          <div class="content">
+            <h2 class="section-title" id="sectionTitle"></h2>
+            <div class="definition" id="definition"></div>
+            <p class="section-body" id="sectionBody"></p>
+            <div id="extra"></div>
+            <div class="nav">
+              <button class="btn btn-ghost" id="backBtn" type="button">Back</button>
+              <button class="btn btn-primary" id="nextBtn" type="button">Next</button>
+            </div>
+          </div>
+        </section>
+        <section class="summary hidden" id="summary">
+          <h2>${(config.summary && config.summary.title) || "Learning summary"}</h2>
+          <p>${(config.summary && config.summary.p) || ""}</p>
+          <div class="recap-list">
+            ${summaryItems.map((it) => `<div class="recap-item"><b>${it.b}</b><span>${it.span}</span></div>`).join("")}
+          </div>
+          <div class="nav">
+            <button class="btn btn-ghost" id="reviewBtn" type="button">Review from start</button>
+            <button class="btn btn-primary" id="restartBtn" type="button">Restart</button>
+          </div>
+        </section>
+      </main>
+      <footer class="note">Based on EDB Booklet 3 Unit 1 · Why Convolution Finds Features (Figures 1.1–1.7) by Valtorta College</footer>
+    `;
+
+    initTheme();
+
+    const els = {
+      intro: $("intro"), main: $("mainScreen"), summary: $("summary"),
+      scene: $("scene"), code: $("sectionCode"), name: $("sectionName"),
+      title: $("sectionTitle"), definition: $("definition"), body: $("sectionBody"),
+      extra: $("extra"), back: $("backBtn"), next: $("nextBtn"),
+      progress: $("progressFill"), progressText: $("progressText"), jumpNav: $("jumpNav")
+    };
+
+    function show(which) {
+      els.intro.classList.toggle("hidden", which !== "intro");
+      els.main.classList.toggle("hidden", which !== "main");
+      els.summary.classList.toggle("hidden", which !== "summary");
+    }
+    function updateProgress() {
+      els.progress.style.width = `${((index + 1) / sections.length) * 100}%`;
+      els.progressText.textContent = `Section ${index + 1} of ${sections.length}`;
+    }
+    function updateJumpNav(active) {
+      els.jumpNav.querySelectorAll(".jump-btn").forEach((b, i) => {
+        b.classList.toggle("active", i === active);
+      });
+    }
+    function loadSection(i) {
+      index = i;
+      const s = sections[i];
+      show("main");
+      updateProgress();
+      updateJumpNav(i);
+      els.code.textContent = s.code;
+      els.name.textContent = s.name;
+      els.title.textContent = s.title;
+      els.definition.innerHTML = s.definition;
+      els.body.innerHTML = s.body;
+      els.extra.innerHTML = s.extra || "";
+      els.next.textContent = i === sections.length - 1 ? "See summary" : "Next";
+      if (typeof s.render === "function") s.render(els.scene, caption);
+    }
+    function showSummary() {
+      show("summary");
+      els.progress.style.width = "100%";
+      els.progressText.textContent = "Complete";
+      updateJumpNav(sections.length);
+    }
+
+    const allLabels = jumpLabels.concat([(config.summary && config.summary.jump) || "Sum"]);
+    els.jumpNav.innerHTML = allLabels
+      .map((label, i) => `<button type="button" class="jump-btn" data-jump="${i}">${label}</button>`)
+      .join("");
+    els.jumpNav.querySelectorAll(".jump-btn").forEach((button) => {
+      button.addEventListener("click", () => {
+        const t = Number(button.dataset.jump);
+        if (t === sections.length) showSummary();
+        else loadSection(t);
+      });
+    });
+    $("startBtn").addEventListener("click", () => loadSection(0));
+    els.next.addEventListener("click", () =>
+      index === sections.length - 1 ? showSummary() : loadSection(index + 1)
+    );
+    els.back.addEventListener("click", () => {
+      if (index === 0) {
+        show("intro");
+        updateJumpNav(-1);
+        els.progress.style.width = "0";
+        els.progressText.textContent = "Ready";
+      } else loadSection(index - 1);
+    });
+    $("restartBtn").addEventListener("click", () => loadSection(0));
+    $("reviewBtn").addEventListener("click", () => {
+      show("intro");
+      updateJumpNav(-1);
+      els.progress.style.width = "0";
+      els.progressText.textContent = "Ready";
+    });
+  }
+
+  window.F3Lesson = { mount, caption, applyTheme };
+})();
+  </script>
+  <script>
+    (function () {
+      var SPOTS = [
+        { id: 0, label: "Sky", left: "58%", top: "4%", hit: false, say: "Sky. The WING stamp does not line up." },
+        { id: 1, label: "Wing", left: "38%", top: "10%", hit: true, say: "Feather edges match. Feature extracted: WING." },
+        { id: 2, label: "Body", left: "22%", top: "46%", hit: false, say: "Body colour — not a wing shape. Weak match." },
+        { id: 3, label: "Beak", left: "2%", top: "50%", hit: false, say: "That's a beak. Wrong stamp. Need a BEAK stamp." }
+      ];
+
+      F3Lesson.mount({
+        eyebrow: "EDB Booklet 3 · Unit 1",
+        title: "Why convolution can find features — the stamp idea",
+        intro: {
+          h2: "A filter is a stamp. Convolution slides it across the photo.",
+          p: "Convolution does not copy the picture. It takes a small <strong>stamp</strong> (the filter) and presses it on every patch: “Does this bit look like a wing? an X? an edge?” A strong print means the feature is there. After many stamps, the computer keeps a <strong>notebook of finds</strong> — not a photo — and still knows it is a bird.",
+          chips: ["STAMP", "FILTER", "PATCH", "SCORE", "NOTEBOOK"]
+        },
+        jumpLabels: ["Puzzle", "Stamp", "Stamps", "Score", "Notes"],
+        sections: [
+          {
+            code: "01",
+            name: "Puzzle",
+            title: "After many layers, the picture looks like notes",
+            definition: "A CNN can have multiple convolutional layers, and each layer can have multiple filters. Different filters look for different features. After convolution, the output often no longer looks like a photo.",
+            body: "Figure 1.1 shows one photo after <strong>Conv 2 → 5 → 9 → 13 → 17</strong>. Late maps look messy because we are no longer looking at a photo. We are looking at the computer’s <strong>notebook</strong>: a list of “found this pattern here”.",
+            extra: `<div class="example-box"><b>LIKE A ZOO TRIP</b>You may forget the photo, but if your notes say “blue wings + small beak”, you still know it was a bird. Late CNN layers are those notes.</div>`,
+            render: function (scene, caption) {
+              var labels = ["Input", "Conv 2", "Conv 5", "Conv 9", "Conv 13", "Conv 17"];
+              var cells = labels.map(function (lab, i) {
+                var late = i >= 4 ? " late" : "";
+                return '<div class="puzzle-cell' + late + '"><div class="puzzle-crop" style="background-position:' + (i * 20) + '% 0%"></div><b>' + lab + "</b></div>";
+              }).join("");
+              scene.innerHTML = '<div class="frame"><div class="puzzle-row">' + cells + '</div><p class="puzzle-q">Late columns = notes, not a photo — still enough to score “bird”.</p></div>' +
+                caption("Bird row of Figure 1.1: Input · Conv 2 · 5 · 9 · 13 · 17.");
+            }
+          },
+          {
+            code: "02",
+            name: "Stamp",
+            title: "Slide one stamp across the photo",
+            definition: "A filter is like a rubber stamp (or a marking stencil). Convolution slides that stamp over every small patch of the image. A strong print means “this feature is here”.",
+            body: "This stamp only looks for a <strong>wing</strong>. Press the spots. Sky / body / beak do not match, so the stamp stays faint. On the wing, the edges line up — that is <strong>extracting a feature</strong>. The computer is not copying pixels; it is asking a yes/no question at each place.",
+            extra: `<div class="example-box"><b>HONG KONG CLASSROOM</b>Same idea as a marking stencil on a multiple-choice sheet: the stencil only “clicks” where the pattern matches. One stamp = one filter = one kind of feature.</div>`,
+            render: function (scene, caption) {
+              function paint(i) {
+                var s = SPOTS[i];
+                var cls = s.hit ? "hit" : "miss";
+                scene.innerHTML =
+                  '<div class="frame"><div class="stamp-wrap"><div class="stamp-row">' +
+                    '<div class="spy-photo"><div class="spy-window ' + cls + '" style="left:' + s.left + ';top:' + s.top + '"></div></div>' +
+                    '<div class="stamp-card"><span class="mono">FILTER = STAMP</span>' +
+                      '<div class="stamp-face' + (s.hit ? " ink" : "") + '">WING</div>' +
+                      '<p class="stamp-verdict ' + cls + '">' + (s.hit ? "✓ Match — feature found" : "✗ No match") + "</p>" +
+                    "</div></div>" +
+                    '<div class="pass-nav">' + SPOTS.map(function (x) {
+                      return '<button type="button" class="pass-btn" data-spot="' + x.id + '" aria-pressed="' + (x.id === i ? "true" : "false") + '">' + x.label + "</button>";
+                    }).join("") + "</div>" +
+                    '<p class="math-line">' + s.say + "</p>" +
+                  "</div></div>" +
+                  caption("One stamp, four places. Only the wing patch extracts the WING feature.");
+                scene.querySelectorAll(".pass-btn").forEach(function (btn) {
+                  btn.addEventListener("click", function () { paint(Number(btn.dataset.spot)); });
+                });
+              }
+              paint(0);
+            }
+          },
+          {
+            code: "03",
+            name: "Stamps",
+            title: "Different stamps look for different features",
+            definition: "Each convolutional layer can have multiple filters. Different filters are responsible for looking for different features during training.",
+            body: "Need a beak? Use a <strong>beak stamp</strong>. Need stripes? Use a <strong>stripe stamp</strong>. A bird photo makes the beak stamp print dark and the stripe stamp stay faint. A zebra does the opposite. That is why convolution can pull out features: each stamp answers one question, then we read the whole set of answers.",
+            extra: `<div class="pair-grid"><div class="pair-card"><b>ONE STAMP</b>Looks for one pattern only (edge, X, beak, stripe).</div><div class="pair-card"><b>MANY STAMPS</b>Together they build a checklist: wings? beak? stripes? → bird or zebra.</div></div>`,
+            render: function (scene, caption) {
+              scene.innerHTML = '<div class="frame"><div class="vs-grid">' +
+                '<div class="vs-card"><span class="mono">BIRD PHOTO</span><div class="stamp-list">' +
+                  '<div class="stamp-line"><b>BEAK</b><span>small pointed shape</span><span class="pill yes">YES</span></div>' +
+                  '<div class="stamp-line"><b>WING</b><span>feather edges</span><span class="pill yes">YES</span></div>' +
+                  '<div class="stamp-line"><b>STRIPE</b><span>black–white bars</span><span class="pill no">NO</span></div>' +
+                '</div><p>Checklist → <strong>bird</strong></p></div>' +
+                '<div class="vs-card"><span class="mono">ZEBRA PHOTO</span><div class="stamp-list">' +
+                  '<div class="stamp-line"><b>BEAK</b><span>small pointed shape</span><span class="pill no">NO</span></div>' +
+                  '<div class="stamp-line"><b>WING</b><span>feather edges</span><span class="pill no">NO</span></div>' +
+                  '<div class="stamp-line"><b>STRIPE</b><span>black–white bars</span><span class="pill yes">YES</span></div>' +
+                '</div><p>Checklist → <strong>zebra</strong></p></div>' +
+              "</div></div>" + caption("Same three stamps, two photos — different YES/NO lists, different class.");
+            }
+          },
+          {
+            code: "04",
+            name: "Score",
+            title: "How the stamp gets a score (the 4×4 X)",
+            definition: "Convolution multiplies each number in an image patch by the number in the same place in the filter, then sums them. If every 1 in the filter is preserved, the feature is present at that location.",
+            body: "Booklet Figures 1.2–1.7: a 4×4 black-and-white picture and a 3×3 <strong>X stamp</strong> (1 = black, 0 = white). Slide the stamp. Only the bottom-right patch lines up, so the score is <strong>5</strong> — a dark print. That number is the extracted feature, not a tiny photo.",
+            extra: `<div class="example-box"><b>BOOKLET POINT</b>The computer stores “X is at the bottom-right”, not a tiny photo. Other stamps store “wing here / beak here”. Those notes are the features.</div>`,
+            render: function (scene, caption) {
+              var IMG = [
+                [0,1,1,1],
+                [0,1,0,1],
+                [0,0,1,0],
+                [0,1,0,1]
+              ];
+              var FILT = [
+                [1,0,1],
+                [0,1,0],
+                [1,0,1]
+              ];
+              var POS = [
+                { r: 0, c: 0, sum: 3, note: "Top-left · stamp score 3 — not a full X." },
+                { r: 0, c: 1, sum: 2, note: "Top-right · stamp score 2 — weak print." },
+                { r: 1, c: 0, sum: 0, note: "Bottom-left · stamp score 0 — no X." },
+                { r: 1, c: 1, sum: 5, note: "Bottom-right · stamp score 5 — every 1 lines up. Feature found." }
+              ];
+
+              function draw(step) {
+                var p = POS[step];
+                var imgCells = "";
+                for (var r = 0; r < 4; r++) {
+                  for (var c = 0; c < 4; c++) {
+                    var inWin = r >= p.r && r < p.r + 3 && c >= p.c && c < p.c + 3;
+                    imgCells += '<div class="cell' + (IMG[r][c] ? " on" : "") + (inWin ? " win" : "") + '">' + IMG[r][c] + "</div>";
+                  }
+                }
+                var fCells = FILT.map(function (row) {
+                  return row.map(function (v) { return '<div class="cell' + (v ? " on" : "") + '">' + v + "</div>"; }).join("");
+                }).join("");
+                var out = POS.map(function (x, i) {
+                  var show = i <= step ? String(x.sum) : "·";
+                  var cls = "cell";
+                  if (i === step) cls += " win";
+                  if (i <= step && x.sum === 5) cls += " hit";
+                  return '<div class="' + cls + '">' + show + "</div>";
+                }).join("");
+                scene.innerHTML =
+                  '<div class="frame"><div class="conv-board"><div class="conv-row">' +
+                    '<div><div class="grid4">' + imgCells + '</div><div class="conv-cap">IMAGE 4×4</div></div>' +
+                    '<span class="arrow">×</span>' +
+                    '<div><div class="grid3">' + fCells + '</div><div class="conv-cap">X STAMP 3×3</div></div>' +
+                    '<span class="arrow">→</span>' +
+                    '<div><div class="grid2">' + out + '</div><div class="conv-cap">PRINT SCORES</div></div>' +
+                  '</div><p class="math-line">' + p.note + '</p>' +
+                  '<div class="conv-nav"><button type="button" class="btn btn-ghost" id="convPrev">Prev patch</button><button type="button" class="btn btn-primary" id="convNext" style="margin-left:0">Next patch</button></div>' +
+                  "</div></div>" + caption("The stamp is the filter. Score 5 = a dark print = the X feature is here.");
+                document.getElementById("convPrev").addEventListener("click", function () { draw((step + 3) % 4); });
+                document.getElementById("convNext").addEventListener("click", function () { draw((step + 1) % 4); });
+              }
+              draw(0);
+            }
+          },
+          {
+            code: "05",
+            name: "Notes",
+            title: "Later layers read the notebook, not the photo",
+            definition: "Earlier convolutional layers look for features in a smaller region (lower-level). Later layers look in a larger region (higher-level). The class label comes from the notebook of stamp scores.",
+            body: "Layer 2 stamps find edges. Later stamps press on those results and find wings and beaks. Figure 1.1 looks empty at Conv 17 because we are staring at the <strong>notes</strong>. The computer is reading: wings ✓, beak ✓, stripes ✗ → bird.",
+            extra: `<div class="example-box"><b>BACK TO FIGURE 1.1</b>Humans want a photo. The CNN wants a checklist. That is why it can still name the object after many layers.</div>`,
+            render: function (scene, caption) {
+              scene.innerHTML = '<div class="frame"><div class="stack-flow">' +
+                '<div class="stack-step on"><b>L2</b>edge stamps</div><span class="arrow">→</span>' +
+                '<div class="stack-step on"><b>L5</b>texture</div><span class="arrow">→</span>' +
+                '<div class="stack-step on"><b>L13</b>beak + wing</div><span class="arrow">→</span>' +
+                '<div class="stack-step out"><b>NOTES</b>BIRD 96%</div>' +
+              '</div><div class="notes-box" style="margin-top:12px"><span class="mono">ZOO NOTEBOOK</span><ul>' +
+                "<li>Has a pointed beak</li><li>Has wing edges</li><li>No zebra stripes</li><li>Decision: bird</li>" +
+              "</ul></div></div>" + caption("Stamps fill the notebook. The notebook does not look like a bird — it is enough to know.");
+            }
+          }
+        ],
+        summary: {
+          title: "Unit 1 learning summary",
+          p: "Convolution extracts features by sliding stamps (filters) over patches. A dark print is a found pattern. After many layers we read the notebook of prints, not a photo — so the computer can still tell what the object is.",
+          jump: "Sum",
+          items: [
+            { b: "PUZZLE", span: "Late feature maps look like notes, not photos." },
+            { b: "STAMP", span: "A filter is a stamp: press it on each patch; a match extracts that feature." },
+            { b: "MANY STAMPS", span: "Beak / wing / stripe stamps build a checklist → bird vs zebra." },
+            { b: "SCORE", span: "Patch × stamp, then sum. A 5 means the X lined up." },
+            { b: "NOTES", span: "Later layers read the checklist and pick the class." }
+          ]
+        }
+      });
+    })();
+  </script>
+</body>
+</html>

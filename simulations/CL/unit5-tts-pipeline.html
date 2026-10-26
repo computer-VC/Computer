@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Unit 5 — TTS Pipeline</title>
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem("f1-ai-theme");
+        document.documentElement.setAttribute("data-theme", t === "dark" ? "dark" : "light");
+      } catch (e) { document.documentElement.setAttribute("data-theme", "light"); }
+    })();
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet" />
+  <style>
+    :root, [data-theme="light"] {
+      --canvas:#fff; --surface:#f7f6f3; --ink:#37352f; --body:#4f4d47; --muted:#787774;
+      --primary:#2383e2; --primary-active:#1a6fc1; --success:#0f7b3f; --warning:#cb6800; --danger:#d44c47;
+      --hairline:rgba(55,53,47,.09); --shadow:0 1px 2px rgba(55,53,47,.04),0 4px 12px rgba(55,53,47,.06);
+      --toggle-bg:#fff; --toggle-border:rgba(55,53,47,.14); --caption-bg:rgba(255,255,255,.96); --caption-fg:#37352f;
+      --anim-bg:#f7f6f3; --anim-panel:#fff; --anim-soft:#e8e6e1; --anim-soft-2:#ddd9d2; --anim-border:#c5c1b8;
+      --ease:cubic-bezier(.16,1,.3,1);
+    }
+    [data-theme="dark"] {
+      --canvas:#202020; --surface:#151515; --ink:#f1f0ec; --body:#cfcbc4; --muted:#9a968e;
+      --primary:#5ba8f5; --primary-active:#7bb8f7; --success:#3dcf7a; --warning:#e0a04a; --danger:#f07171;
+      --hairline:rgba(255,255,255,.1); --shadow:0 1px 2px rgba(0,0,0,.35),0 4px 14px rgba(0,0,0,.28);
+      --toggle-bg:#202020; --toggle-border:rgba(255,255,255,.14); --caption-bg:rgba(32,32,32,.96); --caption-fg:#f1f0ec;
+      --anim-bg:#1a1a1a; --anim-panel:#262626; --anim-soft:#333; --anim-soft-2:#3d3d3d; --anim-border:#555;
+    }
+    * { box-sizing:border-box; margin:0; padding:0; }
+    body { min-height:100vh; min-height:100dvh; font-family:Inter,system-ui,sans-serif; color:var(--body); background:var(--surface); -webkit-font-smoothing:antialiased; }
+    button,a { font:inherit; }
+    .app { width:min(880px,calc(100% - 28px)); margin:auto; padding:28px 0 40px; }
+    header { display:flex; flex-wrap:wrap; align-items:flex-end; justify-content:space-between; gap:14px; margin-bottom:20px; }
+    .header-top { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:12px; width:100%; margin-bottom:4px; }
+    .theme-toggle { display:inline-flex; border:1px solid var(--toggle-border); border-radius:8px; overflow:hidden; background:var(--toggle-bg); }
+    .theme-toggle button { border:0; background:transparent; color:var(--muted); font-size:.78rem; font-weight:600; padding:8px 12px; cursor:pointer; }
+    .theme-toggle button[aria-pressed="true"] { color:#fff; background:var(--primary); }
+    button:focus-visible { outline:2px solid var(--primary); outline-offset:2px; }
+    .eyebrow,.mono { font-family:"JetBrains Mono",ui-monospace,monospace; }
+    .eyebrow { font-size:.72rem; letter-spacing:.04em; color:var(--muted); margin-bottom:6px; }
+    h1,h2 { font-family:"Cormorant Garamond",Georgia,serif; color:var(--ink); }
+    h1 { font-size:clamp(1.85rem,4.5vw,2.45rem); line-height:1.15; }
+    .progress-wrap { min-width:160px; width:min(220px,100%); }
+    .progress-label { font-size:.8rem; color:var(--muted); margin-bottom:8px; text-align:right; }
+    .progress-bar { height:3px; background:var(--hairline); overflow:hidden; }
+    .progress-fill { height:100%; width:0; background:var(--primary); transition:width .36s var(--ease); }
+    .jump-nav { width:100%; display:flex; gap:7px; overflow-x:auto; padding:2px 1px 7px; scrollbar-width:thin; }
+    .jump-btn { flex:0 0 auto; border:1px solid var(--hairline); border-radius:999px; background:var(--canvas); color:var(--muted); padding:6px 10px; font:600 .66rem "JetBrains Mono",monospace; cursor:pointer; }
+    .jump-btn:hover { color:var(--primary); border-color:var(--primary); }
+    .jump-btn.active { color:#fff; background:var(--primary); border-color:var(--primary); }
+    .panel { background:var(--canvas); border:1px solid var(--hairline); border-radius:12px; box-shadow:var(--shadow); overflow:hidden; }
+    .hidden { display:none!important; }
+    footer.note { margin-top:14px; color:var(--muted); font-size:.78rem; text-align:center; }
+    .intro,.summary { padding:28px 22px; }
+    .intro h2,.summary h2,.section-title { font-size:clamp(1.4rem,3vw,1.75rem); margin-bottom:10px; line-height:1.2; }
+    .intro p,.summary p,.section-body { line-height:1.65; margin-bottom:12px; font-size:.95rem; }
+    strong { color:var(--ink); }
+    .chips { display:flex; flex-wrap:wrap; gap:8px; margin:17px 0 21px; }
+    .chip { font-family:"JetBrains Mono",monospace; font-size:.7rem; font-weight:600; padding:6px 10px; border:1px solid var(--hairline); border-radius:6px; background:var(--surface); color:var(--ink); }
+    .stage { padding:18px; border-bottom:1px solid var(--hairline); background:var(--surface); }
+    .badge { display:inline-flex; gap:6px; align-items:center; padding:4px 10px; border:1px solid var(--hairline); border-radius:999px; font-size:.78rem; color:var(--muted); background:var(--canvas); margin-bottom:12px; }
+    .badge strong { font-family:"JetBrains Mono",monospace; }
+    .scene { width:100%; min-height:300px; border:1px solid var(--hairline); border-radius:10px; background:var(--anim-bg); position:relative; overflow:hidden; display:grid; place-items:center; }
+    .scene-caption { position:absolute; z-index:8; left:10px; bottom:8px; max-width:92%; color:var(--caption-fg); background:var(--caption-bg); border:1px solid var(--hairline); border-radius:6px; padding:4px 8px; box-shadow:var(--shadow); font-size:.7rem; font-weight:600; line-height:1.35; }
+    .content { padding:20px 18px 18px; }
+    .definition { border-left:3px solid var(--primary); padding:10px 12px; margin:12px 0 15px; background:var(--surface); color:var(--ink); line-height:1.55; font-size:.92rem; }
+    .definition::before { content:"DEFINITION"; display:block; font:600 .62rem "JetBrains Mono",monospace; color:var(--primary); letter-spacing:.05em; margin-bottom:5px; }
+    .example-box { border:1px solid var(--hairline); border-radius:9px; padding:12px; margin:14px 0 4px; background:var(--surface); font-size:.88rem; line-height:1.55; }
+    .example-box b { display:block; font:600 .65rem "JetBrains Mono",monospace; color:var(--primary); margin-bottom:5px; letter-spacing:.04em; }
+    .nav { display:flex; justify-content:space-between; flex-wrap:wrap; gap:10px; margin-top:17px; }
+    .btn { border:0; border-radius:8px; padding:10px 16px; font-weight:600; font-size:.9rem; cursor:pointer; transition:.18s ease; }
+    .btn:hover:not(:disabled) { transform:translateY(-1px); }
+    .btn-primary { color:#fff; background:var(--primary); margin-left:auto; }
+    .btn-primary:hover:not(:disabled) { background:var(--primary-active); }
+    .btn-ghost { color:var(--muted); background:transparent; border:1px solid var(--hairline); }
+    .recap-list { display:grid; gap:7px; margin:15px 0 18px; }
+    .recap-item { display:grid; grid-template-columns:110px 1fr; gap:10px; padding:9px 10px; border-bottom:1px solid var(--hairline); font-size:.85rem; line-height:1.45; }
+    .recap-item b { font-family:"JetBrains Mono",monospace; color:var(--primary); font-size:.68rem; }
+    .pair-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin:12px 0; }
+    .pair-card { border:1px solid var(--hairline); border-radius:9px; padding:11px; background:var(--surface); font-size:.82rem; line-height:1.5; }
+    .pair-card b { display:block; font:600 .65rem "JetBrains Mono",monospace; color:var(--primary); margin-bottom:4px; }
+
+    .frame { width:100%; min-height:300px; padding:22px 18px 44px; display:grid; place-items:center; }
+    .arrow { font:600 1.05rem "JetBrains Mono",monospace; color:var(--primary); animation:nudge 1.2s ease-in-out infinite; }
+
+    /* TTS overview */
+    .tts-flow { width:min(520px,100%); display:flex; align-items:center; justify-content:center; gap:8px; flex-wrap:wrap; }
+    .tts-node { min-width:100px; padding:14px 12px; border:1px solid var(--anim-border); border-radius:8px; background:var(--anim-panel); text-align:center; font:600 .68rem "JetBrains Mono",monospace; color:var(--ink); animation:pulseGlow 2.4s ease-in-out infinite; }
+    .tts-node .mono { display:block; color:var(--primary); font-size:.55rem; margin-bottom:4px; }
+    .tts-node:nth-child(3){animation-delay:.4s}.tts-node:nth-child(5){animation-delay:.8s}
+
+    /* pyramid */
+    .pyramid { width:min(420px,100%); display:grid; gap:6px; justify-items:center; }
+    .pyr { width:100%; text-align:center; padding:9px 8px; border:1px solid var(--anim-border); border-radius:7px; background:var(--anim-panel); font:600 .62rem "JetBrains Mono",monospace; color:var(--ink); animation:pyrPulse 3.2s ease-in-out infinite; }
+    .pyr:nth-child(1){width:52%;animation-delay:0s}.pyr:nth-child(2){width:64%;animation-delay:.15s}
+    .pyr:nth-child(3){width:76%;animation-delay:.3s}.pyr:nth-child(4){width:88%;animation-delay:.45s}
+    .pyr:nth-child(5){width:100%;animation-delay:.6s}
+    .pyr span { display:block; color:var(--primary); font-size:.52rem; margin-bottom:2px; }
+
+    /* pipeline strip */
+    .pipe { width:100%; display:flex; align-items:stretch; justify-content:center; gap:6px; flex-wrap:wrap; }
+    .pipe-step { flex:1; min-width:100px; max-width:130px; padding:10px 8px; border:1px solid var(--anim-border); border-radius:8px; background:var(--anim-panel); text-align:center; font:600 .55rem "JetBrains Mono",monospace; color:var(--ink); line-height:1.35; opacity:.45; }
+    .pipe-step.on { opacity:1; border-color:var(--primary); box-shadow:0 0 0 2px color-mix(in srgb,var(--primary) 20%,transparent); animation:pulseGlow 1.8s ease-in-out infinite; }
+    .pipe-step b { display:block; color:var(--primary); font-size:.5rem; margin-bottom:4px; }
+
+    /* normalize */
+    .norm { width:min(440px,100%); display:grid; gap:10px; }
+    .norm-row { display:flex; align-items:center; justify-content:center; gap:10px; }
+    .norm-box { min-width:120px; padding:12px 10px; border:1px solid var(--anim-border); border-radius:8px; background:var(--anim-panel); text-align:center; font:600 .72rem "JetBrains Mono",monospace; color:var(--ink); }
+    .norm-box.raw { border-style:dashed; color:var(--warning); animation:shakeSoft 2.4s ease-in-out infinite; }
+    .norm-box.clean { border-color:var(--success); color:var(--success); }
+
+    /* G2P */
+    .g2p { width:min(460px,100%); display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+    .g2p-card { border:1px solid var(--anim-border); border-radius:10px; background:var(--anim-panel); padding:14px 10px; text-align:center; }
+    .g2p-card .word { font:700 1.1rem "Cormorant Garamond",serif; color:var(--ink); margin-bottom:8px; }
+    .g2p-card .ph { font:600 .85rem "JetBrains Mono",monospace; color:var(--primary); animation:pulseGlow 2s ease-in-out infinite; }
+    .g2p-card .hint { margin-top:8px; font:600 .55rem "JetBrains Mono",monospace; color:var(--muted); }
+
+    /* prosody */
+    .prosody { width:min(480px,100%); display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+    .pitch-card { border:1px solid var(--anim-border); border-radius:10px; background:var(--anim-panel); padding:12px; min-height:150px; }
+    .pitch-card .mono { color:var(--primary); font-size:.58rem; margin-bottom:8px; }
+    .pitch-card .sent { font:600 .72rem Inter,sans-serif; color:var(--ink); margin-bottom:12px; }
+    .wave-line { height:54px; position:relative; border-bottom:1px solid var(--anim-border); overflow:hidden; }
+    .wave-line svg { width:100%; height:100%; display:block; }
+    .wave-line path { fill:none; stroke:var(--primary); stroke-width:2.5; stroke-linecap:round; }
+    .pitch-card.q path { animation:drawQ 2.4s ease-in-out infinite; }
+    .pitch-card.s path { animation:drawS 2.4s ease-in-out infinite; }
+    .pitch-tag { margin-top:8px; font:600 .55rem "JetBrains Mono",monospace; color:var(--muted); }
+
+    /* waveform */
+    .wave-stage { width:min(460px,100%); display:grid; gap:12px; justify-items:center; }
+    .mel { width:100%; height:70px; border:1px solid var(--anim-border); border-radius:8px; background:var(--anim-panel); display:flex; align-items:flex-end; gap:3px; padding:8px; }
+    .mel i { flex:1; border-radius:2px 2px 0 0; background:color-mix(in srgb,var(--primary) 70%,var(--anim-soft)); animation:barDance 1.4s ease-in-out infinite alternate; }
+    .mel i:nth-child(odd){animation-delay:.15s}.mel i:nth-child(3n){animation-delay:.35s}
+    .vocoder { padding:8px 14px; border:1px solid var(--primary); border-radius:999px; font:600 .62rem "JetBrains Mono",monospace; color:var(--primary); animation:nudge 1.2s ease-in-out infinite; }
+    .speaker { width:100%; height:56px; border:1px solid var(--anim-border); border-radius:8px; background:var(--anim-panel); position:relative; overflow:hidden; }
+    .speaker::before { content:""; position:absolute; inset:18px 12px; border-radius:4px; background:repeating-linear-gradient(90deg,var(--primary) 0 2px,transparent 2px 8px); opacity:.55; animation:scrollWave 1.2s linear infinite; }
+    .speaker-label { position:absolute; inset:0; display:grid; place-items:center; font:700 .7rem "JetBrains Mono",monospace; color:var(--ink); }
+
+    /* eval */
+    .eval-stage { width:min(520px,100%); display:grid; gap:12px; }
+    .eval-row { width:100%; display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+    .eval-card { border:1px solid var(--anim-border); border-radius:10px; background:var(--anim-panel); padding:12px 10px; min-height:0; display:flex; flex-direction:column; gap:8px; }
+    .eval-card .mono { color:var(--primary); font-size:.58rem; }
+    .eval-card h4 { font:700 .78rem "JetBrains Mono",monospace; color:var(--ink); margin:0; }
+    .eval-card p { margin:0; font-size:.68rem; line-height:1.4; color:var(--body); }
+
+    .wave-compare { display:grid; gap:6px; }
+    .wave-lane { display:grid; grid-template-columns:52px 1fr; gap:6px; align-items:center; }
+    .wave-lane span { font:600 .5rem "JetBrains Mono",monospace; color:var(--muted); }
+    .wave-plot { height:36px; border:1px solid var(--anim-border); border-radius:5px; background:var(--anim-bg); position:relative; overflow:hidden; }
+    .wave-plot svg { width:100%; height:100%; display:block; }
+    .wave-plot path { fill:none; stroke-width:2; stroke-linecap:round; }
+    .wave-plot.real path { stroke:var(--success); }
+    .wave-plot.tts path { stroke:var(--warning); animation:waveShift 2.4s ease-in-out infinite; }
+    .dist-box { margin-top:4px; padding:7px 8px; border-radius:6px; border:1px dashed var(--primary); background:color-mix(in srgb,var(--primary) 8%,var(--anim-bg)); text-align:center; font:600 .58rem "JetBrains Mono",monospace; color:var(--primary); line-height:1.35; }
+    .dist-box b { display:block; font-size:.72rem; color:var(--ink); animation:pulseGlow 1.8s ease-in-out infinite; }
+    .dist-note { font:600 .5rem "JetBrains Mono",monospace; color:var(--muted); }
+
+    .listen-row { display:flex; align-items:flex-end; justify-content:center; gap:8px; margin-top:2px; }
+    .listener { width:48px; text-align:center; }
+    .listener .face { width:28px; height:28px; margin:0 auto 4px; border-radius:50%; border:2px solid var(--anim-border); background:var(--anim-soft-2); position:relative; }
+    .listener .face::before,.listener .face::after { content:""; position:absolute; top:9px; width:4px; height:4px; border-radius:50%; background:var(--ink); opacity:.55; }
+    .listener .face::before{left:6px}.listener .face::after{right:6px}
+    .listener .ear { width:100%; height:10px; border:1px solid var(--primary); border-radius:999px; margin-bottom:4px; opacity:.5; animation:listenPulse 1.4s ease-in-out infinite; }
+    .listener:nth-child(2) .ear{animation-delay:.2s}.listener:nth-child(3) .ear{animation-delay:.4s}
+    .score-chip { display:inline-block; padding:3px 6px; border-radius:4px; background:var(--primary); color:#fff; font:700 .55rem "JetBrains Mono",monospace; animation:stampIn 2.2s ease-in-out infinite; }
+    .listener:nth-child(2) .score-chip{animation-delay:.25s}.listener:nth-child(3) .score-chip{animation-delay:.5s}
+    .mos-bar { margin-top:8px; display:flex; align-items:center; gap:8px; }
+    .mos-track { flex:1; height:8px; border-radius:999px; background:var(--anim-soft); overflow:hidden; border:1px solid var(--anim-border); }
+    .mos-fill { height:100%; width:78%; background:var(--success); animation:mosFill 2.8s ease-in-out infinite; }
+    .mos-label { font:700 .62rem "JetBrains Mono",monospace; color:var(--success); white-space:nowrap; }
+
+    @keyframes nudge { 50%{transform:translateX(4px)} }
+    @keyframes waveShift { 0%,100%{transform:translateX(0)}50%{transform:translateX(3px)} }
+    @keyframes listenPulse { 0%,100%{opacity:.35;transform:scaleX(.9)}50%{opacity:1;transform:scaleX(1)} }
+    @keyframes stampIn { 0%,40%{opacity:0;transform:scale(.7)}55%,85%{opacity:1;transform:scale(1)}100%{opacity:.85} }
+    @keyframes mosFill { 0%,100%{width:72%}50%{width:84%} }
+    @keyframes pulseGlow { 0%,100%{box-shadow:0 0 0 0 transparent}50%{box-shadow:0 0 0 3px color-mix(in srgb,var(--primary) 22%,transparent)} }
+    @keyframes pyrPulse { 0%,100%{opacity:.7}40%,60%{opacity:1;border-color:var(--primary)} }
+    @keyframes shakeSoft { 0%,80%,100%{transform:none}85%{transform:translateX(-2px)}90%{transform:translateX(2px)} }
+    @keyframes drawQ { 0%,100%{stroke-dashoffset:0}50%{stroke-dashoffset:8} }
+    @keyframes drawS { 0%,100%{opacity:.85}50%{opacity:1} }
+    @keyframes barDance { from{height:18%}to{height:88%} }
+    @keyframes scrollWave { to{transform:translateX(8px)} }
+    @media (prefers-reduced-motion:reduce) {
+      *,*::before,*::after { animation-duration:.01ms!important; animation-iteration-count:1!important; }
+    }
+    @media (max-width:620px) {
+      .g2p,.prosody,.eval-row,.pair-grid { grid-template-columns:1fr; }
+      .recap-item { grid-template-columns:90px 1fr; }
+      .scene { min-height:320px; }
+    }
+    @media (max-width:390px) {
+      .app { width:calc(100% - 20px); padding:18px 0 32px; }
+      .content,.intro,.summary { padding-left:14px; padding-right:14px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <div class="header-top">
+        <div class="theme-toggle" role="group" aria-label="Colour theme">
+          <button type="button" id="lightBtn" aria-pressed="true">Light</button>
+          <button type="button" id="darkBtn" aria-pressed="false">Dark</button>
+        </div>
+        <div class="progress-wrap">
+          <div class="progress-label" id="progressText">Ready</div>
+          <div class="progress-bar" aria-hidden="true"><div class="progress-fill" id="progressFill"></div></div>
+        </div>
+      </div>
+      <div>
+        <p class="eyebrow">EDB Booklet 1 · Unit 5</p>
+        <h1>Text-to-Speech Pipeline</h1>
+      </div>
+      <nav class="jump-nav" id="jumpNav" aria-label="Jump to a section"></nav>
+    </header>
+
+    <main class="panel">
+      <section class="intro" id="intro">
+        <h2>How does written text become spoken sound?</h2>
+        <p>Speech synthesis (TTS) accepts <strong>text input</strong> and generates <strong>speech output</strong>. This page follows the booklet: <strong>linguistic hierarchy</strong>, then the TTS process from text analysis to waveform generation.</p>
+        <div class="chips" aria-label="Pipeline steps">
+          <span class="chip">NORMALISATION</span>
+          <span class="chip">TEXT→PHONEME</span>
+          <span class="chip">PROSODY</span>
+          <span class="chip">WAVEFORM</span>
+        </div>
+        <div class="nav"><span></span><button class="btn btn-primary" id="startBtn" type="button">Start exploring</button></div>
+      </section>
+
+      <section id="mainScreen" class="hidden">
+        <div class="stage">
+          <span class="badge"><strong id="sectionCode">01</strong><span id="sectionName">TTS</span></span>
+          <div class="scene" id="scene" aria-live="polite"></div>
+        </div>
+        <div class="content">
+          <h2 class="section-title" id="sectionTitle"></h2>
+          <div class="definition" id="definition"></div>
+          <p class="section-body" id="sectionBody"></p>
+          <div id="extra"></div>
+          <div class="nav">
+            <button class="btn btn-ghost" id="backBtn" type="button">Back</button>
+            <button class="btn btn-primary" id="nextBtn" type="button">Next</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="summary hidden" id="summary">
+        <h2>Learning summary</h2>
+        <p>Text-to-speech (TTS) synthesis accepts text input and generates synthesized speech output. The goal is to enable machines to “speak” clearly, naturally and may even be expressively.</p>
+        <div class="recap-list">
+          <div class="recap-item"><b>HIERARCHY</b><span>Sentence → grammar → words/phrases → phones → acoustics.</span></div>
+          <div class="recap-item"><b>NORMALISE</b><span>Change written text into “speakable” words.</span></div>
+          <div class="recap-item"><b>PHONEME</b><span>Map words to phonetic labels.</span></div>
+          <div class="recap-item"><b>PROSODY</b><span>Predict intonation, duration, and energy.</span></div>
+          <div class="recap-item"><b>WAVEFORM</b><span>Transform the linguistic representation into sound.</span></div>
+          <div class="recap-item"><b>EVALUATE</b><span>Objective: math distance (e.g. Euclidean). Subjective: humans listen &amp; score (MOS).</span></div>
+        </div>
+        <div class="nav">
+          <button class="btn btn-ghost" id="reviewBtn" type="button">Review from start</button>
+          <button class="btn btn-primary" id="restartBtn" type="button">Restart</button>
+        </div>
+      </section>
+    </main>
+    <footer class="note">Based on EDB Booklet 1 Unit 5 · Text-to-Speech Pipeline by Valtorta College</footer>
+  </div>
+
+  <script>
+    (function () {
+      "use strict";
+      const TOTAL = 8;
+      const $ = (id) => document.getElementById(id);
+      const els = {
+        intro: $("intro"), main: $("mainScreen"), summary: $("summary"), scene: $("scene"),
+        code: $("sectionCode"), name: $("sectionName"), title: $("sectionTitle"),
+        definition: $("definition"), body: $("sectionBody"), extra: $("extra"),
+        back: $("backBtn"), next: $("nextBtn"), progress: $("progressFill"), progressText: $("progressText")
+      };
+      let index = 0;
+
+      function caption(text) {
+        return `<div class="scene-caption">${text}</div>`;
+      }
+      function pipeStrip(active) {
+        const steps = [
+          ["01", "Text Normalisation"],
+          ["02", "Text-to-Phoneme"],
+          ["03", "Prosody Prediction"],
+          ["04", "Waveform Generation"]
+        ];
+        return `<div class="pipe">${steps.map((s, i) =>
+          `<div class="pipe-step${i === active ? " on" : ""}"><b>STEP ${s[0]}</b>${s[1]}</div>${i < 3 ? '<span class="arrow">→</span>' : ""}`
+        ).join("")}</div>`;
+      }
+
+      function renderWhat() {
+        els.scene.innerHTML = `<div class="frame"><div class="tts-flow">
+          <div class="tts-node"><span class="mono">INPUT</span>Text input</div>
+          <span class="arrow">→</span>
+          <div class="tts-node"><span class="mono">TTS</span>Speech synthesis</div>
+          <span class="arrow">→</span>
+          <div class="tts-node"><span class="mono">OUTPUT</span>Speech output</div>
+        </div></div>${caption("Speech synthesis (TTS) accepts text input and generates speech output.")}`;
+      }
+
+      function renderLevels() {
+        els.scene.innerHTML = `<div class="frame"><div class="pyramid">
+          <div class="pyr"><span>SENTENCE</span>“I love Hong Kong”</div>
+          <div class="pyr"><span>GRAMMAR</span>pronoun · verb · noun</div>
+          <div class="pyr"><span>WORDS / PHRASES</span>I · love · Hong Kong</div>
+          <div class="pyr"><span>PHONES</span>aɪ lʌv hɔŋ kɔŋ</div>
+          <div class="pyr"><span>ACOUSTICS</span>I · love · Hong Kong</div>
+        </div></div>${caption("Linguistic hierarchy (PPT): the same sentence broken from meaning down to sound.")}`;
+      }
+
+      function renderPipeOverview() {
+        els.scene.innerHTML = `<div class="frame">${pipeStrip(-1)}
+          <p class="mono" style="margin-top:16px;font-size:.62rem;color:var(--muted);text-align:center">TEXT ANALYSES → WAVEFORM GENERATION</p>
+        </div>${caption("The process of TTS: text analyses, followed by waveform generation.")}`;
+      }
+
+      function renderNorm() {
+        els.scene.innerHTML = `<div class="frame"><div class="norm">
+          ${pipeStrip(0)}
+          <div class="norm-row">
+            <div class="norm-box raw">“I am the 1st”</div>
+            <span class="arrow">→</span>
+            <div class="norm-box clean">“I am the first”</div>
+          </div>
+        </div></div>${caption("Text normalisation: written text is changed into “speakable” words.")}`;
+      }
+
+      function renderG2P() {
+        els.scene.innerHTML = `<div class="frame"><div class="norm">
+          ${pipeStrip(1)}
+          <div class="norm-row">
+            <div class="norm-box raw">“I am the first”</div>
+            <span class="arrow">→</span>
+            <div class="norm-box clean" style="min-width:180px;font-size:.62rem;line-height:1.45">“/aɪ/ /æm/ /ðə/ /fɜrst/”</div>
+          </div>
+        </div></div>${caption("Text-to-phoneme mapping: words are changed into phonetic labels.")}`;
+      }
+
+      function renderProsody() {
+        els.scene.innerHTML = `<div class="frame"><div style="width:min(480px,100%);display:grid;gap:12px">
+          ${pipeStrip(2)}
+          <p class="mono" style="text-align:center;font-size:.62rem;color:var(--muted)">“I am the first” · Is it a question?</p>
+          <div class="prosody">
+            <div class="pitch-card q">
+              <div class="mono">YES</div>
+              <div class="sent">I am the first?</div>
+              <div class="wave-line" aria-hidden="true"><svg viewBox="0 0 120 54" preserveAspectRatio="none"><path d="M4 40 C30 38, 50 36, 70 28 S110 8, 116 6"/></svg></div>
+              <div class="pitch-tag">Intonation rises</div>
+            </div>
+            <div class="pitch-card s">
+              <div class="mono">NO</div>
+              <div class="sent">I am the first.</div>
+              <div class="wave-line" aria-hidden="true"><svg viewBox="0 0 120 54" preserveAspectRatio="none"><path d="M4 18 C35 20, 55 24, 75 32 S105 44, 116 46"/></svg></div>
+              <div class="pitch-tag">Intonation falls</div>
+            </div>
+          </div>
+        </div></div>${caption("Prosody prediction: intonation, duration, energy (loudness).")}`;
+      }
+
+      function renderWave() {
+        const bars = Array.from({ length: 18 }, (_, i) => `<i style="height:${20 + ((i * 17) % 70)}%"></i>`).join("");
+        els.scene.innerHTML = `<div class="frame"><div class="wave-stage">
+          ${pipeStrip(3)}
+          <div class="norm-row" style="width:100%">
+            <div class="norm-box" style="font-size:.58rem;line-height:1.4">“/aɪ/ /æm/ /ðə/ /fɜrst/”</div>
+            <span class="arrow">→</span>
+            <div class="norm-box clean">I am the first.</div>
+          </div>
+          <div class="mel" aria-hidden="true">${bars}</div>
+          <div class="speaker"><span class="speaker-label">SYNTHESIZED SPEECH OUTPUT</span></div>
+        </div></div>${caption("Waveform generation: transforms the linguistic representation into a waveform.")}`;
+      }
+
+      function renderEval() {
+        els.scene.innerHTML = `<div class="frame"><div class="eval-stage">
+          <div class="eval-row">
+            <div class="eval-card">
+              <div class="mono">OBJECTIVE MEASUREMENT</div>
+              <h4>Euclidean distance</h4>
+              <p>Compare TTS output waveform with a real human recording of the same sentence.</p>
+              <div class="wave-compare" aria-hidden="true">
+                <div class="wave-lane"><span>REAL</span><div class="wave-plot real"><svg viewBox="0 0 120 36" preserveAspectRatio="none"><path d="M2 18 Q10 6 20 18 T38 18 T56 18 T74 18 T92 18 T110 18 T118 18"/></svg></div></div>
+                <div class="wave-lane"><span>TTS</span><div class="wave-plot tts"><svg viewBox="0 0 120 36" preserveAspectRatio="none"><path d="M2 18 Q10 10 20 22 T38 14 T56 20 T74 16 T92 22 T110 14 T118 18"/></svg></div></div>
+              </div>
+              <div class="dist-box">
+                distance = √Σ (real − tts)²
+                <b>d = 0.42</b>
+                <span class="dist-note">lower distance → better quality</span>
+              </div>
+            </div>
+            <div class="eval-card">
+              <div class="mono">SUBJECTIVE MEASUREMENT</div>
+              <h4>Real humans listening</h4>
+              <p>Listeners hear the speech and give opinion scores (e.g. MOS 1–5).</p>
+              <div class="listen-row" aria-hidden="true">
+                <div class="listener"><div class="ear"></div><div class="face"></div><span class="score-chip">4</span></div>
+                <div class="listener"><div class="ear"></div><div class="face"></div><span class="score-chip">5</span></div>
+                <div class="listener"><div class="ear"></div><div class="face"></div><span class="score-chip">4</span></div>
+              </div>
+              <div class="mos-bar">
+                <div class="mos-track"><div class="mos-fill"></div></div>
+                <span class="mos-label">MOS ≈ 4.3</span>
+              </div>
+            </div>
+          </div>
+        </div></div>${caption("Objective: math distance (e.g. Euclidean). Subjective: humans listen and score (e.g. MOS).")}`;
+      }
+
+      const sections = [
+        {
+          code: "01", name: "What is TTS", title: "Speech and Intelligence",
+          definition: "Speech synthesis, also referred to as text-to-speech (TTS), accepts text input and generates speech output.",
+          body: "The ability to process human language is considered a sign of intelligence. Technologies that can generate speech output are core to AI.",
+          extra: `<div class="example-box"><b>FROM THE PPT</b>TTS = text in → synthesized speech out.</div>`,
+          render: renderWhat
+        },
+        {
+          code: "02", name: "Hierarchy", title: "Linguistic Hierarchy",
+          definition: "The design of text-to-speech synthesis systems draws inspiration from linguistic knowledge about the structure of speech.",
+          body: "From higher to lower levels: <strong>sentence → grammar → words/phrases → phones → acoustics</strong>. The booklet example is “I love Hong Kong”.",
+          extra: `<div class="example-box"><b>PPT EXAMPLE</b>Sentence: “I love Hong Kong” · Grammar: pronoun / verb / noun · Phones: <strong>aɪ lʌv hɔŋ kɔŋ</strong></div>`,
+          render: renderLevels
+        },
+        {
+          code: "03", name: "Process", title: "Process of Text-to-Speech Synthesis",
+          definition: "The process of TTS involves the text analyses, followed by waveform generation.",
+          body: "Text analysis covers normalisation, text-to-phoneme mapping, and prosody prediction — then the system generates a waveform.",
+          extra: "",
+          render: renderPipeOverview
+        },
+        {
+          code: "04", name: "Normalise", title: "Text Analysis: Text Normalisation",
+          definition: "Text normalisation: The written text is changed into “speakable” words.",
+          body: "Numbers and short written forms are expanded so the system can say them naturally.",
+          extra: `<div class="example-box"><b>PPT EXAMPLE</b>“I am the 1st” → “I am the first”</div>`,
+          render: renderNorm
+        },
+        {
+          code: "05", name: "Phoneme", title: "Text Analysis: Text-to-Phoneme Mapping",
+          definition: "Text-to-phoneme mapping: Words are changed into phonetic labels.",
+          body: "After normalisation, each word is mapped to phones the synthesizer can use.",
+          extra: `<div class="example-box"><b>PPT EXAMPLE</b>“I am the first” → “/aɪ/ /æm/ /ðə/ /fɜrst/”</div>`,
+          render: renderG2P
+        },
+        {
+          code: "06", name: "Prosody", title: "Text Analysis: Prosody Prediction",
+          definition: "Prosody prediction: Predicts features of the sentence — intonation, duration, energy (i.e. loudness).",
+          body: "For “I am the first”, ask: is it a question? Yes → intonation rises (“I am the first?”). No → intonation falls (“I am the first.”).",
+          extra: `<div class="example-box"><b>PPT BRANCH</b>Same words, different intonation → different spoken form.</div>`,
+          render: renderProsody
+        },
+        {
+          code: "07", name: "Waveform", title: "Waveform Generation",
+          definition: "Waveform Generation: Transforms the linguistic representation into a waveform.",
+          body: "Phonetic labels plus prosody (for example, intonation falls) become synthesized speech output — e.g. “I am the first.”",
+          extra: `<div class="example-box"><b>TRAINING / TESTING</b>The booklet also shows the IPO process of TTS (training) and testing with a trained model M*.</div>`,
+          render: renderWave
+        },
+        {
+          code: "08", name: "Evaluation", title: "TTS Evaluation",
+          definition: "Evaluation of synthesized speech generated by a TTS system can be done by objective and subjective evaluation.",
+          body: "<strong>Objective measurement</strong> computes the mathematical distance between a synthetic speech waveform and the corresponding human speech waveform — the lower the distance, the better the quality. One common way to picture this is <strong>Euclidean distance</strong> between sample points of the TTS output and a real recording.<br><br><strong>Subjective measurement</strong> is the comparison of opinion scores for various factors, e.g. mean opinion score (MOS): real humans listen to the speech and rate how good it sounds.",
+          extra: `<div class="pair-grid">
+            <div class="pair-card"><b>OBJECTIVE · MACHINE MATH</b>Align REAL vs TTS waveforms → compute distance (e.g. Euclidean √Σ(real−tts)²). Small gap = closer to human speech.</div>
+            <div class="pair-card"><b>SUBJECTIVE · HUMAN EARS</b>Listeners hear the same clip and give scores (often 1–5). Average them → MOS. High MOS = people judge it natural/clear.</div>
+          </div>
+          <div class="example-box"><b>CLASSROOM TIP</b>Same sentence “I am the first.”: first show two waveforms and a distance number (objective), then ask three students to score 1–5 and average (subjective). Both checks matter.</div>`,
+          render: renderEval
+        }
+      ];
+
+      const jumpLabels = ["TTS", "Hierarchy", "Process", "Norm", "Phoneme", "Prosody", "Wave", "Eval", "Sum"];
+
+      function show(which) {
+        els.intro.classList.toggle("hidden", which !== "intro");
+        els.main.classList.toggle("hidden", which !== "main");
+        els.summary.classList.toggle("hidden", which !== "summary");
+      }
+      function updateProgress() {
+        els.progress.style.width = `${((index + 1) / TOTAL) * 100}%`;
+        els.progressText.textContent = `Section ${index + 1} of ${TOTAL}`;
+      }
+      function updateJumpNav(active) {
+        $("jumpNav").querySelectorAll(".jump-btn").forEach((b, i) => b.classList.toggle("active", i === active));
+      }
+      function loadSection(i) {
+        index = i;
+        const s = sections[i];
+        show("main");
+        updateProgress();
+        updateJumpNav(i);
+        els.code.textContent = s.code;
+        els.name.textContent = s.name;
+        els.title.textContent = s.title;
+        els.definition.innerHTML = s.definition;
+        els.body.innerHTML = s.body;
+        els.extra.innerHTML = s.extra || "";
+        els.next.textContent = i === sections.length - 1 ? "See summary" : "Next";
+        s.render();
+      }
+      function showSummary() {
+        show("summary");
+        els.progress.style.width = "100%";
+        els.progressText.textContent = "Complete";
+        updateJumpNav(sections.length);
+      }
+
+      $("jumpNav").innerHTML = jumpLabels.map((label, i) =>
+        `<button type="button" class="jump-btn" data-jump="${i}">${label}</button>`
+      ).join("");
+      $("jumpNav").querySelectorAll(".jump-btn").forEach((button) => {
+        button.addEventListener("click", () => {
+          const t = Number(button.dataset.jump);
+          t === sections.length ? showSummary() : loadSection(t);
+        });
+      });
+      $("startBtn").addEventListener("click", () => loadSection(0));
+      els.next.addEventListener("click", () => index === sections.length - 1 ? showSummary() : loadSection(index + 1));
+      els.back.addEventListener("click", () => {
+        if (index === 0) {
+          show("intro"); updateJumpNav(-1);
+          els.progress.style.width = "0"; els.progressText.textContent = "Ready";
+        } else loadSection(index - 1);
+      });
+      $("restartBtn").addEventListener("click", () => loadSection(0));
+      $("reviewBtn").addEventListener("click", () => {
+        show("intro"); updateJumpNav(-1);
+        els.progress.style.width = "0"; els.progressText.textContent = "Ready";
+      });
+      function theme(t) {
+        const next = t === "dark" ? "dark" : "light";
+        document.documentElement.setAttribute("data-theme", next);
+        try { localStorage.setItem("f1-ai-theme", next); } catch (e) {}
+        $("lightBtn").setAttribute("aria-pressed", next === "light");
+        $("darkBtn").setAttribute("aria-pressed", next === "dark");
+      }
+      $("lightBtn").addEventListener("click", () => theme("light"));
+      $("darkBtn").addEventListener("click", () => theme("dark"));
+      theme(document.documentElement.getAttribute("data-theme"));
+    })();
+  </script>
+</body>
+</html>

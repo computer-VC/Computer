@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Unit 2 — Big Data and the 5Vs</title>
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem("f1-ai-theme");
+        document.documentElement.setAttribute("data-theme", t === "dark" ? "dark" : "light");
+      } catch (e) { document.documentElement.setAttribute("data-theme", "light"); }
+    })();
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet" />
+  <style>
+    :root, [data-theme="light"] {
+      --canvas:#fff; --surface:#f7f6f3; --ink:#37352f; --body:#4f4d47; --muted:#787774;
+      --primary:#2383e2; --primary-active:#1a6fc1; --success:#0f7b3f; --warning:#cb6800; --danger:#d44c47;
+      --hairline:rgba(55,53,47,.09); --shadow:0 1px 2px rgba(55,53,47,.04),0 4px 12px rgba(55,53,47,.06);
+      --toggle-bg:#fff; --toggle-border:rgba(55,53,47,.14); --caption-bg:rgba(255,255,255,.96); --caption-fg:#37352f;
+      --anim-bg:#f7f6f3; --anim-panel:#fff; --anim-soft:#e8e6e1; --anim-soft-2:#ddd9d2; --anim-border:#c5c1b8;
+      --photo-bg:#e9e5dc;
+      --ease:cubic-bezier(.16,1,.3,1);
+    }
+    [data-theme="dark"] {
+      --canvas:#202020; --surface:#151515; --ink:#f1f0ec; --body:#cfcbc4; --muted:#9a968e;
+      --primary:#5ba8f5; --primary-active:#7bb8f7; --success:#3dcf7a; --warning:#e0a04a; --danger:#f07171;
+      --hairline:rgba(255,255,255,.1); --shadow:0 1px 2px rgba(0,0,0,.35),0 4px 14px rgba(0,0,0,.28);
+      --toggle-bg:#202020; --toggle-border:rgba(255,255,255,.14); --caption-bg:rgba(32,32,32,.96); --caption-fg:#f1f0ec;
+      --anim-bg:#1a1a1a; --anim-panel:#262626; --anim-soft:#333; --anim-soft-2:#3d3d3d; --anim-border:#555;
+      --photo-bg:#302e2a;
+    }
+    * { box-sizing:border-box; margin:0; padding:0; }
+    body { min-height:100vh; min-height:100dvh; font-family:Inter,system-ui,sans-serif; color:var(--body); background:var(--surface); -webkit-font-smoothing:antialiased; }
+    button,a { font:inherit; }
+    .app { width:min(880px,calc(100% - 28px)); margin:auto; padding:28px 0 40px; }
+    header { display:flex; flex-wrap:wrap; align-items:flex-end; justify-content:space-between; gap:14px; margin-bottom:20px; }
+    .header-top { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:12px; width:100%; margin-bottom:4px; }
+    .theme-toggle { display:inline-flex; border:1px solid var(--toggle-border); border-radius:8px; overflow:hidden; background:var(--toggle-bg); }
+    .theme-toggle button { border:0; background:transparent; color:var(--muted); font-size:.78rem; font-weight:600; padding:8px 12px; cursor:pointer; }
+    .theme-toggle button[aria-pressed="true"] { color:#fff; background:var(--primary); }
+    button:focus-visible,a:focus-visible { outline:2px solid var(--primary); outline-offset:2px; }
+    .eyebrow,.mono { font-family:"JetBrains Mono",ui-monospace,monospace; }
+    .eyebrow { font-size:.72rem; letter-spacing:.04em; color:var(--muted); margin-bottom:6px; }
+    h1,h2,h3 { font-family:"Cormorant Garamond",Georgia,serif; color:var(--ink); }
+    h1 { font-size:clamp(1.85rem,4.5vw,2.45rem); line-height:1.15; }
+    .progress-wrap { min-width:160px; width:min(220px,100%); }
+    .progress-label { font-size:.8rem; color:var(--muted); margin-bottom:8px; text-align:right; }
+    .progress-bar { height:3px; background:var(--hairline); overflow:hidden; }
+    .progress-fill { height:100%; width:0; background:var(--primary); transition:width .36s var(--ease); }
+    .jump-nav { width:100%; display:flex; gap:7px; overflow-x:auto; padding:2px 1px 7px; scrollbar-width:thin; }
+    .jump-btn { flex:0 0 auto; border:1px solid var(--hairline); border-radius:999px; background:var(--canvas); color:var(--muted); padding:6px 10px; font:600 .66rem "JetBrains Mono",monospace; cursor:pointer; transition:.18s ease; }
+    .jump-btn:hover { color:var(--primary); border-color:var(--primary); }
+    .jump-btn.active { color:#fff; background:var(--primary); border-color:var(--primary); }
+    .panel { background:var(--canvas); border:1px solid var(--hairline); border-radius:12px; box-shadow:var(--shadow); overflow:hidden; }
+    .hidden { display:none!important; }
+    footer.note { margin-top:14px; color:var(--muted); font-size:.78rem; text-align:center; }
+    .intro,.summary { padding:28px 22px; }
+    .intro h2,.summary h2,.section-title { font-size:clamp(1.4rem,3vw,1.75rem); margin-bottom:10px; line-height:1.2; }
+    .intro p,.summary p,.section-body { line-height:1.65; margin-bottom:12px; font-size:.95rem; }
+    strong { color:var(--ink); }
+    .chips { display:flex; flex-wrap:wrap; gap:8px; margin:17px 0 21px; }
+    .chip { font-family:"JetBrains Mono",monospace; font-size:.7rem; font-weight:600; padding:6px 10px; border:1px solid var(--hairline); border-radius:6px; background:var(--surface); color:var(--ink); }
+    .stage { padding:18px; border-bottom:1px solid var(--hairline); background:var(--surface); }
+    .stage-title { display:flex; justify-content:space-between; margin-bottom:12px; }
+    .badge { display:inline-flex; gap:6px; align-items:center; padding:4px 10px; border:1px solid var(--hairline); border-radius:999px; font-size:.78rem; color:var(--muted); background:var(--canvas); }
+    .badge strong { font-family:"JetBrains Mono",monospace; }
+    .scene { width:100%; min-height:285px; border:1px solid var(--hairline); border-radius:10px; background:var(--anim-bg); position:relative; overflow:hidden; display:grid; place-items:center; }
+    .scene-caption { position:absolute; z-index:8; left:10px; bottom:8px; max-width:92%; color:var(--caption-fg); background:var(--caption-bg); border:1px solid var(--hairline); border-radius:6px; padding:4px 8px; box-shadow:var(--shadow); font-size:.7rem; font-weight:600; line-height:1.35; }
+    .content { padding:20px 18px 18px; }
+    .definition { border-left:3px solid var(--primary); padding:10px 12px; margin:12px 0 15px; background:var(--surface); color:var(--ink); line-height:1.55; font-size:.92rem; }
+    .definition::before { content:"DEFINITION"; display:block; font:600 .62rem "JetBrains Mono",monospace; color:var(--primary); letter-spacing:.05em; margin-bottom:5px; }
+    .question { font-size:clamp(1.2rem,3vw,1.5rem); margin:10px 0 6px; line-height:1.3; }
+    .hint { font-size:.88rem; color:var(--muted); line-height:1.5; margin-bottom:14px; }
+    .step-pills { display:flex; flex-wrap:wrap; gap:6px; margin:10px 0 14px; }
+    .step-pill { font:600 .66rem "JetBrains Mono",monospace; padding:4px 8px; border:1px solid var(--hairline); border-radius:999px; color:var(--muted); background:var(--surface); cursor:pointer; }
+    .step-pill.active { color:#fff; background:var(--primary); border-color:var(--primary); }
+    .step-pill.done { color:var(--success); border-color:color-mix(in srgb,var(--success) 35%,transparent); }
+    .choices { display:grid; gap:10px; }
+    .choice { border:1px solid var(--hairline); background:var(--canvas); color:var(--ink); border-radius:10px; padding:12px 14px; text-align:left; font-weight:500; font-size:.88rem; line-height:1.45; cursor:pointer; transition:.18s ease; }
+    .choice:hover:not(:disabled) { border-color:var(--primary); background:color-mix(in srgb,var(--primary) 5%,var(--canvas)); transform:translateY(-1px); }
+    .choice.primary-choice { border-color:var(--primary); color:#fff; background:var(--primary); text-align:center; }
+    .choice.primary-choice:hover:not(:disabled) { background:var(--primary-active); }
+    .choice:disabled { cursor:default; }
+    .choice.correct { border-color:var(--success); background:color-mix(in srgb,var(--success) 9%,var(--canvas)); }
+    .choice.wrong { border-color:var(--danger); background:color-mix(in srgb,var(--danger) 8%,var(--canvas)); }
+    .explain { display:none; margin-top:15px; padding-top:15px; border-top:1px solid var(--hairline); animation:fadeUp .35s var(--ease); }
+    .explain.show { display:block; }
+    .verdict { display:inline-block; font:600 .7rem "JetBrains Mono",monospace; color:var(--success); border:1px solid color-mix(in srgb,var(--success) 30%,transparent); background:color-mix(in srgb,var(--success) 8%,transparent); border-radius:999px; padding:4px 9px; margin-bottom:8px; }
+    .verdict.partial { color:var(--warning); border-color:color-mix(in srgb,var(--warning) 30%,transparent); background:color-mix(in srgb,var(--warning) 8%,transparent); }
+    .explain h3 { font-size:1.15rem; margin-bottom:6px; }
+    .explain p { font-size:.9rem; line-height:1.55; }
+    .nav { display:flex; justify-content:space-between; flex-wrap:wrap; gap:10px; margin-top:17px; }
+    .btn { border:0; border-radius:8px; padding:10px 16px; font-weight:600; font-size:.9rem; cursor:pointer; transition:.18s ease; }
+    .btn:hover:not(:disabled) { transform:translateY(-1px); }
+    .btn:disabled { opacity:.35; cursor:not-allowed; }
+    .btn-primary { color:#fff; background:var(--primary); margin-left:auto; }
+    .btn-primary:hover:not(:disabled) { background:var(--primary-active); }
+    .btn-ghost { color:var(--muted); background:transparent; border:1px solid var(--hairline); }
+    .link-note { padding:10px 12px; border:1px solid var(--hairline); border-radius:8px; background:var(--surface); font-size:.82rem; line-height:1.5; margin-top:14px; }
+    .link-note a { color:var(--primary); overflow-wrap:anywhere; }
+    .score-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin:18px 0; }
+    .score-card { border:1px solid var(--hairline); border-radius:10px; padding:14px 12px; background:var(--surface); }
+    .score-card span { display:block; color:var(--muted); font-size:.74rem; margin-bottom:4px; }
+    .score-card strong { font:700 1.55rem "Cormorant Garamond",serif; }
+    .recap-list { display:grid; gap:7px; margin:15px 0 18px; }
+    .recap-item { display:grid; grid-template-columns:85px 1fr; gap:10px; padding:9px 10px; border-bottom:1px solid var(--hairline); font-size:.85rem; line-height:1.45; }
+    .recap-item b { font-family:"JetBrains Mono",monospace; color:var(--primary); font-size:.72rem; }
+
+    /* scenes */
+    .v-stage { width:100%; height:100%; min-height:285px; padding:26px 24px 42px; display:grid; grid-template-columns:110px 1fr; align-items:center; gap:24px; }
+    .v-mark { font:700 clamp(4rem,12vw,7.5rem) "JetBrains Mono",monospace; color:var(--primary); opacity:.9; line-height:1; text-align:center; }
+    .visual { min-width:0; height:180px; position:relative; border-left:1px solid var(--anim-border); padding-left:20px; display:flex; align-items:center; justify-content:center; }
+    .stack { width:min(280px,95%); height:150px; position:relative; }
+    .data-block { position:absolute; width:74px; height:30px; display:grid; place-items:center; border:1px solid var(--anim-border); border-radius:5px; background:var(--anim-panel); color:var(--ink); font:600 .59rem "JetBrains Mono",monospace; opacity:0; animation:stackIn 3s var(--ease) infinite; }
+    .data-block:nth-child(1){left:10%;bottom:0}.data-block:nth-child(2){left:38%;bottom:0;animation-delay:.25s}.data-block:nth-child(3){left:66%;bottom:0;animation-delay:.5s}
+    .data-block:nth-child(4){left:22%;bottom:37px;animation-delay:.75s}.data-block:nth-child(5){left:50%;bottom:37px;animation-delay:1s}.data-block:nth-child(6){left:36%;bottom:74px;animation-delay:1.25s}
+    .count { position:absolute; top:0; right:4px; font:600 .7rem "JetBrains Mono",monospace; color:var(--primary); }
+    .stream { width:100%; height:120px; position:relative; overflow:hidden; border-top:1px solid var(--anim-border); border-bottom:1px solid var(--anim-border); }
+    .packet { position:absolute; left:-70px; padding:5px 8px; border:1px solid var(--anim-border); border-radius:4px; background:var(--anim-panel); color:var(--ink); font:600 .56rem "JetBrains Mono",monospace; animation:packet 2s linear infinite; }
+    .packet:nth-child(1){top:13px}.packet:nth-child(2){top:47px;animation-delay:.3s}.packet:nth-child(3){top:81px;animation-delay:.65s}.packet:nth-child(4){top:28px;animation-delay:1s}.packet:nth-child(5){top:68px;animation-delay:1.3s}
+    .type-grid { width:100%; display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
+    .type-tile { min-height:58px; display:grid; place-items:center; text-align:center; border:1px solid var(--anim-border); border-radius:7px; background:var(--anim-panel); color:var(--ink); font:600 .59rem "JetBrains Mono",monospace; animation:typeCycle 3s ease-in-out infinite; }
+    .type-tile:nth-child(2){animation-delay:.35s}.type-tile:nth-child(3){animation-delay:.7s}.type-tile:nth-child(4){animation-delay:1.05s}.type-tile:nth-child(5){animation-delay:1.4s}
+    .posts { width:100%; display:grid; gap:8px; }
+    .post { display:flex; justify-content:space-between; align-items:center; gap:10px; border:1px solid var(--anim-border); border-radius:7px; padding:10px; background:var(--anim-panel); font-size:.7rem; }
+    .stamp { font:600 .58rem "JetBrains Mono",monospace; border-radius:4px; padding:4px 6px; }
+    .stamp.true { color:var(--success); border:1px solid var(--success); }
+    .stamp.false { color:var(--danger); border:1px solid var(--danger); animation:shake 2.4s ease-in-out infinite; }
+    .value-flow,.story-flow,.fail-flow { width:100%; display:flex; align-items:center; justify-content:center; gap:10px; }
+    .flow-box { flex:1; min-width:0; min-height:92px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:7px; text-align:center; border:1px solid var(--anim-border); border-radius:8px; padding:8px; background:var(--anim-panel); color:var(--ink); font-size:.65rem; }
+    .flow-box .mono { font-size:.56rem; color:var(--primary); }
+    .flow-arrow { font:600 1rem "JetBrains Mono",monospace; color:var(--primary); animation:nudge 1.2s ease-in-out infinite; }
+    .raw-dot { display:inline-block; width:7px; height:7px; border-radius:2px; margin:2px; background:var(--anim-border); animation:pulse 1.4s infinite alternate; }
+    .minute { width:100%; display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
+    .minute-card { border:1px solid var(--anim-border); border-radius:8px; background:var(--anim-panel); padding:12px 8px; text-align:center; animation:typeCycle 3s infinite; }
+    .minute-card:nth-child(2){animation-delay:.4s}.minute-card:nth-child(3){animation-delay:.8s}
+    .minute-card b { display:block; font:600 clamp(.8rem,2.5vw,1.15rem) "JetBrains Mono",monospace; color:var(--primary); margin-bottom:5px; }
+    .minute-card span { font-size:.62rem; color:var(--muted); }
+    .worked { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin:14px 0 18px; }
+    .worked-card { border:1px solid var(--hairline); border-radius:9px; padding:11px; background:var(--surface); font-size:.8rem; line-height:1.5; }
+    .worked-card b { display:block; font:600 .65rem "JetBrains Mono",monospace; color:var(--primary); margin-bottom:4px; }
+    .worked-anim { grid-column:1/-1; display:flex; align-items:center; gap:8px; padding:10px; border:1px solid var(--hairline); border-radius:9px; background:var(--surface); overflow:hidden; }
+    .worked-node { flex:1; min-width:0; padding:8px 5px; border:1px solid var(--anim-border); border-radius:6px; background:var(--canvas); text-align:center; font:600 .59rem "JetBrains Mono",monospace; color:var(--ink); animation:typeCycle 3s infinite; }
+    .worked-node:nth-child(3) { animation-delay:.45s; }
+    .worked-node:nth-child(5) { animation-delay:.9s; }
+    .fail-token { flex:1; padding:12px 8px; border:1px solid var(--anim-border); border-radius:8px; background:var(--anim-panel); text-align:center; font:.62rem "JetBrains Mono",monospace; color:var(--ink); }
+    .fail-token.bad { border-color:var(--danger); animation:shake 2.2s infinite; }
+    .fail-token.good { border-color:var(--success); }
+    .big-arrow { color:var(--danger); font:600 1rem "JetBrains Mono",monospace; }
+    .system-title { position:absolute; top:10px; left:12px; font:600 .62rem "JetBrains Mono",monospace; color:var(--muted); letter-spacing:.04em; }
+    .train-grid { width:100%; padding:18px 16px 42px; display:grid; grid-template-columns:1fr 1fr; gap:14px; align-items:start; }
+    .train-column { min-width:0; display:grid; gap:8px; }
+    .species-label { display:flex; align-items:center; justify-content:space-between; gap:8px; color:var(--ink); font:600 .7rem "JetBrains Mono",monospace; letter-spacing:.035em; }
+    .species-label span { color:var(--primary); }
+    .specimen-pair { display:grid; grid-template-columns:1fr 1fr; gap:7px; }
+    .specimen { min-width:0; position:relative; overflow:hidden; border:1px solid var(--anim-border); border-radius:9px; background:var(--photo-bg); box-shadow:inset 0 0 0 1px var(--hairline); }
+    .specimen img { width:100%; height:auto; display:block; object-fit:cover; max-height:240px; }
+    .specimen.single { width:min(430px,calc(100% - 28px)); margin:20px auto 42px; }
+    .specimen.single img { max-height:280px; }
+    .photo-caption { position:absolute; left:8px; right:8px; bottom:8px; color:var(--caption-fg); background:var(--caption-bg); border:1px solid var(--hairline); border-radius:6px; padding:5px 8px; box-shadow:var(--shadow); font:600 .64rem "JetBrains Mono",monospace; line-height:1.35; }
+    .feature-row { display:flex; flex-wrap:wrap; gap:5px; }
+    .feat-chip { padding:4px 7px; border:1px solid var(--anim-border); border-radius:999px; background:var(--anim-panel); color:var(--ink); font:600 .58rem "JetBrains Mono",monospace; }
+    .image-credit { grid-column:1/-1; color:var(--muted); font-size:.6rem; line-height:1.4; text-align:center; }
+    .unseen-debrief { width:min(620px,calc(100% - 28px)); display:grid; grid-template-columns:1fr auto 1fr; align-items:center; gap:12px; padding:22px; border:1px solid var(--anim-border); border-radius:10px; background:var(--anim-panel); animation:fadeUp .55s var(--ease); }
+    .debrief-box { min-height:110px; display:grid; place-items:center; text-align:center; gap:5px; padding:12px; border:1px solid var(--anim-border); border-radius:8px; color:var(--ink); }
+    .debrief-box b { font:600 .68rem "JetBrains Mono",monospace; color:var(--primary); }
+    .debrief-box span { font-size:.78rem; line-height:1.4; }
+    @keyframes fadeUp { from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none} }
+    @keyframes stackIn { 0%,10%{opacity:0;transform:translateY(-30px)}30%,75%{opacity:1;transform:none}100%{opacity:0} }
+    @keyframes packet { to{transform:translateX(520px)} }
+    @keyframes typeCycle { 0%,100%{opacity:.45;transform:scale(.96)}30%,65%{opacity:1;transform:scale(1);border-color:var(--primary)} }
+    @keyframes shake { 0%,80%,100%{transform:none}85%{transform:translateX(-3px)}90%{transform:translateX(3px)}95%{transform:translateX(-2px)} }
+    @keyframes nudge { 50%{transform:translateX(4px)} }
+    @keyframes pulse { to{opacity:.3;transform:scale(.75)} }
+    @media (prefers-reduced-motion:reduce) { *,*::before,*::after { animation-duration:.01ms!important; animation-iteration-count:1!important; transition-duration:.01ms!important; } }
+    @media (max-width:620px) {
+      .v-stage { grid-template-columns:70px 1fr; gap:10px; padding:20px 12px 42px; }
+      .v-mark { font-size:3.8rem; } .visual { padding-left:10px; } .worked { grid-template-columns:1fr; }
+      .minute-card { padding:9px 4px; } .value-flow,.story-flow,.fail-flow { gap:5px; } .flow-arrow,.big-arrow { font-size:.75rem; }
+      .train-grid { padding:14px 10px 42px; gap:9px; } .specimen-pair { grid-template-columns:1fr; }
+    }
+    @media (max-width:390px) {
+      .app { width:calc(100% - 20px); padding:18px 0 32px; } .content,.intro,.summary { padding-left:14px; padding-right:14px; }
+      .stage { padding:12px; } .scene { min-height:300px; } .v-stage { grid-template-columns:1fr; align-content:start; gap:6px; }
+      .v-mark { font-size:2.6rem; text-align:left; } .visual { border-left:0; border-top:1px solid var(--anim-border); padding:12px 0 0; height:185px; }
+      .recap-item { grid-template-columns:72px 1fr; } .score-grid { grid-template-columns:1fr; }
+      .flow-box { padding:6px 3px; font-size:.58rem; } .type-tile { font-size:.5rem; } .minute-card span { font-size:.52rem; }
+      .train-grid { grid-template-columns:1fr; } .specimen-pair { grid-template-columns:1fr 1fr; }
+      .unseen-debrief { grid-template-columns:1fr; gap:7px; padding:12px; } .unseen-debrief .flow-arrow { transform:rotate(90deg); }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <div class="header-top">
+        <div class="theme-toggle" role="group" aria-label="Colour theme">
+          <button type="button" id="lightBtn" aria-pressed="true">Light</button>
+          <button type="button" id="darkBtn" aria-pressed="false">Dark</button>
+        </div>
+        <div class="progress-wrap">
+          <div class="progress-label" id="progressText">Ready</div>
+          <div class="progress-bar" aria-hidden="true"><div class="progress-fill" id="progressFill"></div></div>
+        </div>
+      </div>
+      <div><p class="eyebrow">EDB Booklet 1 · Unit 2</p><h1>Big Data and the 5Vs</h1></div>
+      <nav class="jump-nav" id="jumpNav" aria-label="Jump to a section"></nav>
+    </header>
+
+    <main class="panel">
+      <section class="intro" id="intro">
+        <h2>Big Data and the 5Vs</h2>
+        <p>Big data is used by machine learning to <strong>train AI models</strong>. The trained models derive useful <strong>Value</strong> from all that data.</p>
+        <p>The <strong>5Vs</strong> help us describe big data: Volume, Velocity, Variety, Veracity, and Value.</p>
+        <div class="chips" aria-label="The five Vs">
+          <span class="chip">VOLUME</span><span class="chip">VELOCITY</span><span class="chip">VARIETY</span><span class="chip">VERACITY</span><span class="chip">VALUE</span>
+        </div>
+        <div class="nav"><span></span><button class="btn btn-primary" id="startBtn" type="button">Start exploring</button></div>
+      </section>
+
+      <section id="mainScreen" class="hidden">
+        <div class="stage">
+          <div class="stage-title"><span class="badge"><strong id="sectionCode">01</strong><span id="sectionName">Volume</span></span></div>
+          <div class="scene" id="scene" aria-live="polite"></div>
+        </div>
+        <div class="content">
+          <h2 class="section-title" id="sectionTitle"></h2>
+          <div class="definition" id="definition"></div>
+          <p class="section-body" id="sectionBody"></p>
+          <div id="extra"></div>
+          <div id="taskArea" class="hidden">
+            <div class="step-pills" id="pills"></div>
+            <h3 class="question" id="question"></h3>
+            <p class="hint" id="hint"></p>
+            <div class="choices" id="choices"></div>
+            <div class="explain" id="explain">
+              <span class="verdict" id="verdict"></span>
+              <h3 id="explainTitle"></h3>
+              <p id="explainBody"></p>
+            </div>
+          </div>
+          <div class="nav">
+            <button class="btn btn-ghost" id="backBtn" type="button">Back</button>
+            <button class="btn btn-primary" id="nextBtn" type="button">Next</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="summary hidden" id="summary">
+        <h2>Summary</h2>
+        <p>Use the five Vs to explain what big data is like and why it matters to an AI system.</p>
+        <div class="recap-list">
+          <div class="recap-item"><b>VOLUME</b><span>The amount of data.</span></div>
+          <div class="recap-item"><b>VELOCITY</b><span>How quickly data is created, transmitted, and collected.</span></div>
+          <div class="recap-item"><b>VARIETY</b><span>The different types and forms of data.</span></div>
+          <div class="recap-item"><b>VERACITY</b><span>The quality, accuracy, and reliability of data.</span></div>
+          <div class="recap-item"><b>VALUE</b><span>Useful information gained from big data.</span></div>
+        </div>
+        <div class="score-grid">
+          <div class="score-card"><span>First-try correct</span><strong id="scoreCorrect">0</strong></div>
+          <div class="score-card"><span>Total questions</span><strong>14</strong></div>
+          <div class="score-card"><span>Accuracy</span><strong id="scorePct">0%</strong></div>
+        </div>
+        <p>Your score covers Task 2, the unseen-data mini-game, and Task 3. Restart to practise with newly shuffled choices.</p>
+        <div class="nav"><button class="btn btn-ghost" id="reviewBtn" type="button">Review from start</button><button class="btn btn-primary" id="restartBtn" type="button">Restart</button></div>
+      </section>
+    </main>
+    <footer class="note">Based on EDB Booklet 1 Unit 2 · Task 2–3 — Big Data and the 5Vs by Valtorta College</footer>
+  </div>
+
+  <script>
+    (function () {
+      "use strict";
+      const TOTAL = 8, TOTAL_QUESTIONS = 14;
+      const $ = (id) => document.getElementById(id);
+      const els = {
+        intro:$("intro"), main:$("mainScreen"), summary:$("summary"), scene:$("scene"),
+        code:$("sectionCode"), name:$("sectionName"), title:$("sectionTitle"), definition:$("definition"), body:$("sectionBody"),
+        extra:$("extra"), task:$("taskArea"), pills:$("pills"), question:$("question"), hint:$("hint"), choices:$("choices"),
+        explain:$("explain"), verdict:$("verdict"), explainTitle:$("explainTitle"), explainBody:$("explainBody"),
+        back:$("backBtn"), next:$("nextBtn"), progress:$("progressFill"), progressText:$("progressText")
+      };
+      let index = 0, taskStep = 0, firstTry = 0, unseenCorrect = 0;
+      const attempted = {};
+
+      function shuffle(a) {
+        const b = a.slice();
+        for (let i=b.length-1;i>0;i--) { const j=Math.floor(Math.random()*(i+1)); [b[i],b[j]]=[b[j],b[i]]; }
+        return b;
+      }
+      function caption(text) { return `<div class="scene-caption">${text}</div>`; }
+      function vFrame(letter, inside, cap) {
+        return `<div class="v-stage"><div class="v-mark">${letter}</div><div class="visual">${inside}</div></div>${caption(cap)}`;
+      }
+      function renderVolume() {
+        els.scene.innerHTML = vFrame("V", `<div class="stack"><span class="count">231.4M + 1.7M + 500h</span>
+          <span class="data-block">MAIL</span><span class="data-block">POST</span><span class="data-block">VIDEO</span>
+          <span class="data-block">MAIL</span><span class="data-block">POST</span><span class="data-block">VIDEO</span></div>`,
+          "More emails, posts, and video blocks keep stacking: a large volume of data.");
+      }
+      function renderVelocity() {
+        els.scene.innerHTML = vFrame("V", `<div class="stream"><span class="packet">MAIL</span><span class="packet">POST</span><span class="packet">VIDEO</span><span class="packet">MAIL</span><span class="packet">POST</span></div>`,
+          "Data is created, transmitted, and collected at high speed in one internet minute.");
+      }
+      function renderVariety() {
+        els.scene.innerHTML = vFrame("V", `<div class="type-grid"><div class="type-tile">IMAGE</div><div class="type-tile">VIDEO</div><div class="type-tile">TEXT</div><div class="type-tile">SPEECH</div><div class="type-tile">METEOROLOGICAL<br>DATA</div></div>`,
+          "Different forms cycle through the dataset: media, speech, clicks, location, and weather.");
+      }
+      function renderVeracity() {
+        els.scene.innerHTML = vFrame("V", `<div class="posts"><div class="post"><span>Official weather warning</span><b class="stamp true">RELIABLE</b></div><div class="post"><span>Reposted claim — no source</span><b class="stamp false">UNRELIABLE</b></div><div class="post"><span>Verified traffic sensor</span><b class="stamp true">RELIABLE</b></div></div>`,
+          "Online data may be true, false, inaccurate, or incomplete. Veracity is not guaranteed.");
+      }
+      function renderValue() {
+        els.scene.innerHTML = vFrame("V", `<div class="value-flow"><div class="flow-box"><span class="mono">RAW DATA</span><div>${"<i class='raw-dot'></i>".repeat(12)}</div><span>mail · posts · video</span></div><span class="flow-arrow">→</span><div class="flow-box"><span class="mono">AI MODEL</span><strong>find patterns</strong></div><span class="flow-arrow">→</span><div class="flow-box"><span class="mono">USEFUL</span><strong>ad preferences</strong><strong>market trends</strong></div></div>`,
+          "Raw big data becomes useful insight: this is the Value produced by analysis.");
+      }
+      function minuteRecap() {
+        return `<div class="minute"><div class="minute-card"><b>231.4 million</b><span>EMAILS</span></div><div class="minute-card"><b>1.7 million</b><span>FACEBOOK CONTENT ITEMS</span></div><div class="minute-card"><b>500 hours</b><span>YOUTUBE VIDEO</span></div></div>`;
+      }
+      function renderTask2Scene(system, final) {
+        const isCar = system === "Self-driving car";
+        const left = isCar ? "IMAGES · VIDEOS" : "SPEECH · GESTURE";
+        const mid = final ? (isCar ? "HI-RES + LAMPPOSTS" : "AUTO-CORRECT NAMES") : "AI MODEL";
+        const right = isCar ? "SAFER DRIVING" : "ROUTE PLAN";
+        els.scene.innerHTML = `<span class="system-title">${system.toUpperCase()}</span><div class="v-stage" style="grid-template-columns:1fr"><div class="visual" style="border:0;padding:0">
+          <div class="story-flow"><div class="flow-box"><span class="mono">VARIETY</span><strong>${left}</strong></div><span class="flow-arrow">→</span><div class="flow-box"><span class="mono">${final?"VERACITY":"LEARN"}</span><strong>${mid}</strong></div><span class="flow-arrow">→</span><div class="flow-box"><span class="mono">VALUE</span><strong>${right}</strong></div></div>
+          </div></div>${caption(final ? "Better data quality strengthens the system’s useful result." : "Different data forms feed the model, which produces a useful result.")}`;
+      }
+      function renderTask3Scene(fixed) {
+        els.scene.innerHTML = `<span class="system-title">${fixed?"RETRAINED MODEL":"FIVE CLASSIFICATION RESULTS"}</span><div class="v-stage" style="grid-template-columns:1fr"><div class="visual" style="border:0;padding:0">
+          ${fixed ? `<div class="story-flow"><div class="flow-box"><span class="mono">MORE VARIETY</span><strong>breeds · postures · angles</strong></div><span class="flow-arrow">→</span><div class="flow-box"><span class="mono">ADD CLASS</span><strong>labelled human faces</strong></div><span class="flow-arrow">→</span><div class="flow-box"><span class="mono">RETRAIN</span><strong>higher accuracy</strong></div></div>`
+          : `<div class="fail-flow"><div class="fail-token good">1<br>CAT → CAT</div><div class="fail-token good">2<br>DOG → DOG</div><div class="fail-token bad">3<br>DOG → CAT</div><div class="fail-token good">4<br>DOG → DOG</div><div class="fail-token bad">5<br>HUMAN → CAT</div></div>`}
+          </div></div>${caption(fixed ? "More training volume and variety, including human faces, improve the model." : "Two wrong labels reveal gaps in the training data.")}`;
+      }
+      function photoCard(src, alt, captionText) {
+        const captionOverlay = captionText ? `<div class="photo-caption">${captionText}</div>` : "";
+        return `<div class="specimen${captionText ? " single" : ""}"><img src="${encodeURI(src)}" alt="${alt}" loading="lazy" />${captionOverlay}</div>`;
+      }
+      function renderUnseenTraining() {
+        els.scene.innerHTML=`<div class="train-grid">
+          <div class="train-column"><div class="species-label"><span>TRAIN A</span>FLYING SQUIRREL</div><div class="specimen-pair">${photoCard("../F1 AI assets/img/train-flying-squirrel-1.jpg","Flying Squirrel training photo, perched view")}${photoCard("../F1 AI assets/img/train-flying-squirrel-2.jpg","Second Flying Squirrel training photo")}</div><div class="feature-row"><span class="feat-chip">BUSHY TAIL</span><span class="feat-chip">LARGE DARK EYES</span><span class="feat-chip">FURRY MEMBRANE</span></div></div>
+          <div class="train-column"><div class="species-label"><span>TRAIN B</span>SUGAR GLIDER</div><div class="specimen-pair">${photoCard("../F1 AI assets/img/train-sugar-glider-1.jpg","Sugar Glider training photo")}${photoCard("../F1 AI assets/img/test-sugar-face.jpg","Sugar Glider training photo with a clear face")}</div><div class="feature-row"><span class="feat-chip">FACE STRIPE</span><span class="feat-chip">THINNER TAIL</span><span class="feat-chip">MARSUPIAL LOOK</span></div></div>
+          <p class="image-credit">Training/test photos: Wikimedia Commons (CC)./p>
+          </div>${caption("TRAINING SET · Both animals can glide and may look similar to beginners.")}`;
+      }
+      function renderUnseenSpecimen(item) {
+        els.scene.innerHTML=photoCard(item.image,item.alt,item.caption);
+      }
+      function renderUnseenDebrief() {
+        els.scene.innerHTML=`<div class="unseen-debrief"><div class="debrief-box"><b>HUMAN CLASSIFIER</b><span>Unfamiliar angle or hidden clue<br>→ uncertainty and errors</span></div><span class="flow-arrow">→</span><div class="debrief-box"><b>ML CLASSIFIER</b><span>Unseen data differs from training<br>→ uncertainty and errors</span></div></div>${caption("The feeling you just had is the problem Task 3 explores with Cat and Dog images.")}`;
+      }
+
+      const sections = [
+        {code:"01",name:"Volume",title:"Volume: how much data?",definition:"“Volume refers to the amount of data.”",body:"In one internet minute in 2022, people sent <strong>231.4 million emails</strong>, shared <strong>1.7 million pieces of Facebook content</strong>, and uploaded <strong>500 hours of YouTube video</strong>. Those huge quantities demonstrate Volume.",render:renderVolume},
+        {code:"02",name:"Velocity",title:"Velocity: how fast does it arrive?",definition:"“Velocity refers to the speed at which data is created, transmitted and collected.”",body:"The internet-minute figures are not daily totals: they happen in only sixty seconds. Messages, posts, and video are produced and moved continuously, giving the data high Velocity.",render:renderVelocity},
+        {code:"03",name:"Variety",title:"Variety: many forms of data",definition:"“Variety refers to the different types and forms of data, e.g. images, video, text, speech.”",body:"Emails and posts contain text and images; YouTube carries video, audio, and speech. Other systems may collect clicks, location, and meteorological data. Big data is rarely just one data type.",render:renderVariety},
+        {code:"04",name:"Veracity",title:"Veracity: can the data be trusted?",definition:"“Veracity refers to the quality, accuracy and reliability of the data.”",body:"A massive, fast dataset is not automatically trustworthy. Social posts can be inaccurate, duplicated, misleading, or false. AI needs reliable sources, careful labels, and checks to improve Veracity.",render:renderVeracity},
+        {code:"05",name:"Value",title:"Value: useful information from data",definition:"“Value refers to the getting useful information and value from big data.”",body:"A trained model can turn raw activity into useful information, such as advertising preferences or market trends. The recap below maps one internet minute to all five Vs.",render:renderValue,extra:`<div class="definition" style="border-left-color:var(--success)">“One minute on the Internet (2022)”</div>${minuteRecap()}<div class="recap-list"><div class="recap-item"><b>VOLUME</b><span>A huge amount is produced.</span></div><div class="recap-item"><b>VELOCITY</b><span>It is created, transmitted, and collected in only one minute.</span></div><div class="recap-item"><b>VARIETY</b><span>Email, Facebook content, and YouTube video have different forms.</span></div><div class="recap-item"><b>VERACITY</b><span>The quality, accuracy, and reliability of online content are not guaranteed.</span></div><div class="recap-item"><b>VALUE</b><span>Analysis can reveal useful preferences and trends.</span></div></div>`},
+        {code:"06",name:"Task 2",title:"Task 2 — Variety, Value, and Veracity",definition:"For each AI system, describe Variety, Value, and how to improve Veracity.",body:"First study the worked example, then complete three steps for a self-driving car and three for an urban-navigation chatbot.",type:"task2"},
+        {code:"07",name:"Unseen data",title:"Flying Squirrel vs Sugar Glider",definition:"A classifier learns patterns from training examples, then applies those patterns to new, unseen data.",body:"Study Flying Squirrel and Sugar Glider photos, then classify four deliberately confusing unseen images. Both animals can glide and may look similar to beginners, especially when pose, age, or visual style changes.",type:"unseen"},
+        {code:"08",name:"Task 3",title:"Task 3 — Teachable Machine",definition:"A model classifies Cat or Dog. Its five results are Cat, Dog, Cat, Dog, Cat — with errors on photos 3 and 5.",body:"Diagnose the wrong labels, then choose how better training data can raise accuracy.",type:"task3"}
+      ];
+
+      const task2Steps = [
+        {system:"Self-driving car",field:"Variety",q:"Which description best shows the Variety of data for recognizing objects while auto-driving?",correct:"Images of different objects on the road; videos of the vehicle’s view while driving",wrong:["Input speech asking for directions; input gesture for location and traffic","Search logs, movie preferences, and viewing histories"],explain:"The car learns from both still images and videos showing many road objects and driving situations."},
+        {system:"Self-driving car",field:"Value",q:"What useful Value should this system produce?",correct:"Assist driving and avoid accidents",wrong:["Help route-planning for users","Recommend movies that match a viewer’s preferences"],explain:"Recognising vehicles, pedestrians, signs, and hazards supports safer automatic driving."},
+        {system:"Self-driving car",field:"Improve Veracity",q:"Which action would best improve the quality and reliability of its data?",correct:"Capture images with high resolutions; combine images from self-driving cars with smart lampposts to improve road and road-side object detection",wrong:["Auto-correct errors in input text, especially street and building names","Use views and watch duration to confirm a viewer’s real preferences"],explain:"High-resolution images preserve detail, while combining car and smart-lamppost views provides stronger evidence about road-side objects."},
+        {system:"Chatbot",field:"Variety",q:"Which description best shows the Variety of data for an urban-navigation chatbot?",correct:"Input speech asking for directions; input gesture (pointing on-screen) for location and traffic",wrong:["Images of different objects on the road; videos of the vehicle’s view while driving","Search logs, movie preferences, and viewing histories"],explain:"The chatbot accepts different forms of input: spoken language and an on-screen pointing gesture."},
+        {system:"Chatbot",field:"Value",q:"What useful Value should this system produce?",correct:"Help route-planning for users",wrong:["Assist driving and avoid accidents","Recommend movies that match a viewer’s preferences"],explain:"It turns the user’s request and indicated location into useful navigation support."},
+        {system:"Chatbot",field:"Improve Veracity",q:"Which action would best improve the quality and reliability of its input?",correct:"Auto-correct errors in input text, especially street and building names",wrong:["Capture images with high resolutions and combine car images with smart-lamppost images","Use views and watch duration to confirm a viewer’s real preferences"],explain:"Correct street and building names are essential for reliable route searches and directions."}
+      ];
+      const unseenSteps = [
+        {field:"Specimen 1",image:"../F1 AI assets/img/test-flying-glide.jpg",alt:"Flying Squirrel gliding with its membrane spread",caption:"UNSEEN 1 · MID-GLIDE",q:"Which animal is shown in this mid-glide photo?",correct:"Flying Squirrel",explain:"This is a Flying Squirrel. Its membrane is fully spread in a glide pose, a view that was rare in the perched training photos, so its familiar outline looks different."},
+        {field:"Specimen 2",image:"../F1 AI assets/img/train-sugar-glider-2.jpg",alt:"Sugar Glider hanging upside down",caption:"UNSEEN 2 · UPSIDE DOWN",q:"Which animal is shown upside down?",correct:"Sugar Glider",explain:"This is a Sugar Glider. The upside-down pose hides the familiar face stripe and upright posture seen in training, making the usual clues harder to recognise."},
+        {field:"Specimen 3",image:"../F1 AI assets/img/飛鼠.png",alt:"Stylised Momonga cartoon based on a Japanese flying squirrel",caption:"UNSEEN 3 · CARTOON",q:"Which animal is this stylised character based on?",correct:"Flying Squirrel",explain:"This is a Flying Squirrel. The cartoon is out-of-distribution compared with photo training: the character is based on a Japanese flying squirrel (momonga), not a Sugar Glider. Its cute meme look may tempt many students to choose Sugar Glider."},
+        {field:"Specimen 4",image:"../F1 AI assets/img/test-sugar-close.jpg",alt:"Close-up of a baby Sugar Glider",caption:"UNSEEN 4 · BABY CLOSE-UP",q:"Which animal is this baby or juvenile?",correct:"Sugar Glider",explain:"This is a Sugar Glider. Its baby or juvenile proportions and close-up view differ from the adult training photos, so learned visual patterns do not transfer perfectly."}
+      ];
+      const task3Steps = [
+        {field:"Q1a",q:"What went wrong on photo 3, and why?",correct:"A dog was classified as a cat; the volume and variety of training data may not have modelled this kind of image sufficiently well",wrong:["A cat was classified as a dog because human faces were missing","A human was classified as a cat because street names were misspelled"],explain:"Photo 3 is a dog, but the model outputs Cat. More examples of breeds, postures, and viewing angles may be needed."},
+        {field:"Q1b",q:"What went wrong on photo 5, and why?",correct:"A human face was classified as a cat; the training-data variety was limited to cats and dogs, not humans",wrong:["A dog was classified as a cat because the image travelled too slowly","A cat was classified as a dog because there were too many labelled classes"],explain:"The model never learned a Human class, so an unfamiliar human face was forced into Cat or Dog."},
+        {field:"Q2a",q:"How should the training images be improved to address photo 3?",correct:"Add more training images covering different breeds, postures, and angles",wrong:["Delete unusual dog images so every example looks alike","Upload the same dog image many times without changing its angle"],explain:"More volume helps, but useful variety matters too: include many breeds, body positions, backgrounds, and camera angles."},
+        {field:"Q2b",q:"How should training be improved to address photo 5?",correct:"Add labelled human faces, then retrain with cats, dogs, and human faces",wrong:["Rename every human-face image as Cat and retrain","Keep only Cat and Dog classes and reduce the number of examples"],explain:"A labelled Human class expands the model’s variety so it can learn to distinguish humans from cats and dogs."}
+      ];
+
+      function show(which) {
+        els.intro.classList.toggle("hidden",which!=="intro"); els.main.classList.toggle("hidden",which!=="main"); els.summary.classList.toggle("hidden",which!=="summary");
+      }
+      function updateProgress() {
+        els.progress.style.width = `${((index+1)/TOTAL)*100}%`; els.progressText.textContent = `Section ${index+1} of ${TOTAL}`;
+      }
+      function updateJumpNav(active) {
+        $("jumpNav").querySelectorAll(".jump-btn").forEach((button,i)=>button.classList.toggle("active",i===active));
+      }
+      function loadSection(i) {
+        index=i; taskStep=0; const s=sections[i]; show("main"); updateProgress();
+        updateJumpNav(i);
+        els.code.textContent=s.code; els.name.textContent=s.name; els.title.textContent=s.title; els.definition.innerHTML=s.definition; els.body.innerHTML=s.body;
+        els.extra.innerHTML=s.extra||""; els.task.classList.add("hidden"); els.explain.classList.remove("show"); els.back.disabled=false; els.next.disabled=false;
+        els.next.textContent=i===sections.length-1?"See summary":"Next";
+        if (s.type==="task2") setupTask2(); else if(s.type==="unseen") setupUnseen(); else if(s.type==="task3") setupTask3(); else s.render();
+      }
+      function workedExample() {
+        return `<div class="definition" style="border-left-color:var(--warning)">Worked example — Movie recommendation systems</div>
+          <div class="worked"><div class="worked-card"><b>VARIETY</b>Search logs, movie preferences, and viewing histories</div>
+          <div class="worked-card"><b>VALUE</b>Recommend movies that match a viewer’s preferences</div>
+          <div class="worked-card"><b>IMPROVE VERACITY</b>Use actual views and watch duration to check whether a preference is genuine</div>
+          <div class="worked-card"><b>DATA STORY</b>Search logs + preferences → recommendation; views + watch duration improve reliability</div>
+          <div class="worked-anim" aria-label="Movie recommendation data story"><span class="worked-node">SEARCH LOGS<br>+ PREFERENCES</span><span class="flow-arrow">→</span><span class="worked-node">VIEWS +<br>WATCH TIME</span><span class="flow-arrow">→</span><span class="worked-node">MOVIE<br>RECOMMENDATIONS</span></div></div>`;
+      }
+      function setupTask2() {
+        els.extra.innerHTML=workedExample(); els.task.classList.remove("hidden"); loadQuestion(task2Steps,"task2");
+      }
+      function unseenPills(active) {
+        const labels=["TRAINING","1","2","3","4","DEBRIEF"];
+        els.pills.innerHTML=labels.map((label,i)=>`<button type="button" class="step-pill ${i<active?"done":i===active?"active":""}" data-step="${i}">${label}</button>`).join("");
+        els.pills.querySelectorAll(".step-pill").forEach(button=>button.addEventListener("click",()=>{taskStep=Number(button.dataset.step);loadUnseenStep();}));
+      }
+      function setupUnseen() {
+        els.extra.innerHTML=""; els.task.classList.remove("hidden"); taskStep=0;
+        loadUnseenStep();
+      }
+      function loadUnseenStep() {
+        els.explain.classList.remove("show");
+        els.next.textContent="Next";
+        if(taskStep>=1&&taskStep<=4){loadUnseenQuestion();return;}
+        if(taskStep===5){showUnseenDebrief();return;}
+        renderUnseenTraining(); unseenPills(0); els.explain.classList.remove("show");
+        els.question.textContent="Study the training set";
+        els.hint.textContent="Study these examples carefully. In a moment you will classify new images. Some will look different from what you studied — just like unseen test data for a machine-learning model.";
+        els.choices.innerHTML="";
+        const start=document.createElement("button"); start.type="button"; start.className="choice primary-choice"; start.textContent="Start classifying";
+        start.addEventListener("click",()=>{taskStep=1;loadUnseenQuestion();}); els.choices.appendChild(start);
+      }
+      function showUnseenDebrief() {
+        unseenPills(5); renderUnseenDebrief(); els.choices.innerHTML="";
+        els.question.textContent="Unseen data changes the challenge";
+        els.hint.textContent=`Your first-try result was ${unseenCorrect} out of 4. A new pose, age, or visual style can make a familiar class feel unfamiliar.`;
+        els.verdict.textContent="Mini-game complete"; els.verdict.className="verdict";
+        els.explainTitle.textContent="This is how a model can fail on unseen data";
+        els.explainBody.textContent="A machine-learning model can only build patterns from its training examples. Task 3 shows the same problem with Cat and Dog images, then asks how more varied training data could reduce errors.";
+        els.explain.classList.add("show");
+      }
+      function loadUnseenQuestion() {
+        const item=unseenSteps[taskStep-1]; els.explain.classList.remove("show"); unseenPills(taskStep);
+        renderUnseenSpecimen(item); els.question.textContent=item.q;
+        els.hint.textContent=`Classification ${taskStep} of 4. Use the training examples, then make your best decision.`;
+        els.choices.innerHTML="";
+        ["Flying Squirrel","Sugar Glider"].forEach(name=>{
+          const b=document.createElement("button"); b.type="button"; b.className="choice"; b.textContent=name;
+          b.addEventListener("click",()=>chooseUnseen(b,name===item.correct,item)); els.choices.appendChild(b);
+        });
+      }
+      function chooseUnseen(button,ok,item) {
+        const key=`unseen-${taskStep}`;
+        if(!attempted[key]) { attempted[key]=true; if(ok) { firstTry++; unseenCorrect++; } }
+        [...els.choices.children].forEach(b=>{b.disabled=true;if(b.textContent===item.correct)b.classList.add("correct");});
+        if(!ok)button.classList.add("wrong");
+        els.verdict.textContent=ok?"Correct":"Wrong — this was difficult unseen data";
+        els.verdict.className=`verdict${ok?"":" partial"}`;
+        els.explainTitle.textContent=`Answer: ${item.correct}`;
+        els.explainBody.textContent=item.explain; els.explain.classList.add("show");
+        els.next.disabled=false;
+      }
+      function setupTask3() {
+        els.extra.innerHTML=`<div class="link-note">Optional teacher demo: <a href="https://teachablemachine.withgoogle.com/models/SwW-TMXKY/" target="_blank" rel="noopener noreferrer">Teachable Machine model</a>. The quiz works without a network connection.</div>`;
+        els.task.classList.remove("hidden"); renderTask3Scene(false); loadQuestion(task3Steps,"task3");
+      }
+      function loadQuestion(steps,taskId) {
+        const item=steps[taskStep]; els.explain.classList.remove("show");
+        els.next.textContent=index===sections.length-1&&taskStep===steps.length-1?"See summary":"Next";
+        els.pills.innerHTML=steps.map((x,i)=>`<button type="button" class="step-pill ${i<taskStep?"done":i===taskStep?"active":""}" data-step="${i}">${taskId==="task2"?`${i+1}/6 · ${x.system}`:x.field}</button>`).join("");
+        els.pills.querySelectorAll(".step-pill").forEach(button=>button.addEventListener("click",()=>{taskStep=Number(button.dataset.step);loadQuestion(steps,taskId);}));
+        els.question.textContent=item.q; els.hint.textContent=`Question ${taskStep+1} of ${steps.length}. Choose the best description.`; els.choices.innerHTML="";
+        shuffle([{text:item.correct,ok:true},...item.wrong.map(text=>({text,ok:false}))]).forEach(opt=>{
+          const b=document.createElement("button"); b.type="button"; b.className="choice"; b.textContent=opt.text;
+          b.addEventListener("click",()=>choose(b,opt.ok,item,steps,taskId)); els.choices.appendChild(b);
+        });
+        if(taskId==="task2") renderTask2Scene(item.system,false);
+      }
+      function choose(button,ok,item,steps,taskId) {
+        const key=`${taskId}-${taskStep}`; if(!attempted[key]) { attempted[key]=true; if(ok) firstTry++; }
+        [...els.choices.children].forEach(b=>{b.disabled=true;if(b.textContent===item.correct)b.classList.add("correct");});
+        if(!ok)button.classList.add("wrong");
+        els.verdict.textContent=ok?"Correct":"Not quite — review the answer"; els.verdict.className=`verdict${ok?"":" partial"}`;
+        els.explainTitle.textContent=`${item.field} explained`; els.explainBody.innerHTML=`<strong>${item.correct}.</strong> ${item.explain}`; els.explain.classList.add("show");
+        if(taskId==="task2")renderTask2Scene(item.system,true); else if(taskStep>=1)renderTask3Scene(true);
+        els.next.disabled=false;
+      }
+      function showSummary() {
+        show("summary"); els.progress.style.width="100%"; els.progressText.textContent="Complete";
+        updateJumpNav(sections.length);
+        $("scoreCorrect").textContent=String(firstTry); $("scorePct").textContent=`${Math.round(firstTry/TOTAL_QUESTIONS*100)}%`;
+      }
+      function reset() { firstTry=0; unseenCorrect=0; Object.keys(attempted).forEach(k=>delete attempted[k]); taskStep=0; }
+      const jumpLabels=["Vol","Vel","Var","Ver","Val","Task2","Unseen","Task3","Summary"];
+      $("jumpNav").innerHTML=jumpLabels.map((label,i)=>`<button type="button" class="jump-btn" data-jump="${i}">${label}</button>`).join("");
+      $("jumpNav").querySelectorAll(".jump-btn").forEach(button=>button.addEventListener("click",()=>{
+        const target=Number(button.dataset.jump); target===sections.length?showSummary():loadSection(target);
+      }));
+      $("startBtn").addEventListener("click",()=>{reset();loadSection(0);});
+      els.next.addEventListener("click",()=>{
+        const type=sections[index].type;
+        if(type==="task2"&&taskStep<task2Steps.length-1){taskStep++;loadQuestion(task2Steps,"task2");return;}
+        if(type==="task3"&&taskStep<task3Steps.length-1){taskStep++;loadQuestion(task3Steps,"task3");return;}
+        if(type==="unseen"&&taskStep<5){taskStep++;loadUnseenStep();return;}
+        index===sections.length-1?showSummary():loadSection(index+1);
+      });
+      els.back.addEventListener("click",()=>{
+        const type=sections[index].type;
+        if((type==="task2"||type==="task3"||type==="unseen")&&taskStep>0){
+          taskStep--;
+          if(type==="task2")loadQuestion(task2Steps,"task2"); else if(type==="task3")loadQuestion(task3Steps,"task3"); else loadUnseenStep();
+          return;
+        }
+        if(index===0){show("intro");updateJumpNav(-1);els.progress.style.width="0";els.progressText.textContent="Ready";}else loadSection(index-1);
+      });
+      $("restartBtn").addEventListener("click",()=>{reset();loadSection(0);});
+      $("reviewBtn").addEventListener("click",()=>{reset();show("intro");updateJumpNav(-1);els.progress.style.width="0";els.progressText.textContent="Ready";});
+      function theme(t) {
+        const next=t==="dark"?"dark":"light"; document.documentElement.setAttribute("data-theme",next);
+        try{localStorage.setItem("f1-ai-theme",next);}catch(e){}
+        $("lightBtn").setAttribute("aria-pressed",next==="light"); $("darkBtn").setAttribute("aria-pressed",next==="dark");
+      }
+      $("lightBtn").addEventListener("click",()=>theme("light")); $("darkBtn").addEventListener("click",()=>theme("dark"));
+      theme(document.documentElement.getAttribute("data-theme"));
+    })();
+  </script>
+</body>
+</html>

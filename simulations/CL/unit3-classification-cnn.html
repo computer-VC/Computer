@@ -1,0 +1,1324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Unit 3 — Classification &amp; CNN</title>
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem("f2-ai-theme");
+        document.documentElement.setAttribute("data-theme", t === "dark" ? "dark" : "light");
+      } catch (e) { document.documentElement.setAttribute("data-theme", "light"); }
+    })();
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet" />
+  <style>
+:root, [data-theme="light"] {
+  --canvas: #ffffff;
+  --surface: #f7f6f3;
+  --ink: #37352f;
+  --body: #4f4d47;
+  --muted: #787774;
+  --primary: #2383e2;
+  --primary-active: #1a6fc1;
+  --success: #0f7b3f;
+  --warning: #cb6800;
+  --danger: #d44c47;
+  --hairline: rgba(55, 53, 47, 0.09);
+  --radius: 10px;
+  --ease: cubic-bezier(0.16, 1, 0.3, 1);
+  --shadow: 0 1px 2px rgba(55, 53, 47, 0.04), 0 4px 12px rgba(55, 53, 47, 0.06);
+  --toggle-bg: #ffffff;
+  --toggle-border: rgba(55, 53, 47, 0.14);
+  --caption-bg: rgba(255, 255, 255, 0.96);
+  --caption-fg: #37352f;
+  --anim-bg: #f7f6f3;
+  --anim-panel: #ffffff;
+  --anim-soft: #e8e6e1;
+  --anim-soft-2: #ddd9d2;
+  --anim-border: #c5c1b8;
+}
+
+[data-theme="dark"] {
+  --canvas: #202020;
+  --surface: #151515;
+  --ink: #f1f0ec;
+  --body: #cfcbc4;
+  --muted: #9a968e;
+  --primary: #5ba8f5;
+  --primary-active: #7bb8f7;
+  --success: #3dcf7a;
+  --warning: #e0a04a;
+  --danger: #f07171;
+  --hairline: rgba(255, 255, 255, 0.1);
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.35), 0 4px 14px rgba(0, 0, 0, 0.28);
+  --toggle-bg: #202020;
+  --toggle-border: rgba(255, 255, 255, 0.14);
+  --caption-bg: rgba(32, 32, 32, 0.96);
+  --caption-fg: #f1f0ec;
+  --anim-bg: #1a1a1a;
+  --anim-panel: #262626;
+  --anim-soft: #333333;
+  --anim-soft-2: #3d3d3d;
+  --anim-border: #555555;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  min-height: 100vh;
+  min-height: 100dvh;
+  font-family: Inter, system-ui, sans-serif;
+  color: var(--body);
+  background: var(--surface);
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+button, a { font: inherit; }
+button:focus-visible, a:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+.app {
+  width: min(880px, calc(100% - 28px));
+  margin: 0 auto;
+  padding: 28px 0 40px;
+}
+
+header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 20px;
+}
+
+.header-top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  margin-bottom: 4px;
+}
+
+.theme-toggle {
+  display: inline-flex;
+  border: 1px solid var(--toggle-border);
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--toggle-bg);
+}
+
+.theme-toggle button {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 8px 12px;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.theme-toggle button[aria-pressed="true"] {
+  background: var(--primary);
+  color: #fff;
+}
+
+.eyebrow, .mono {
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+}
+
+.eyebrow {
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+  font-weight: 500;
+  margin-bottom: 6px;
+}
+
+h1, h2 { font-family: "Cormorant Garamond", Georgia, serif; color: var(--ink); }
+h1 { font-size: clamp(1.85rem, 4.5vw, 2.45rem); line-height: 1.15; }
+
+.progress-wrap { min-width: 160px; width: min(220px, 100%); }
+.progress-label { font-size: 0.8rem; color: var(--muted); margin-bottom: 8px; text-align: right; }
+.progress-bar { height: 3px; background: var(--hairline); overflow: hidden; }
+.progress-fill { height: 100%; width: 0; background: var(--primary); transition: width 0.36s var(--ease); }
+
+.jump-nav {
+  width: 100%;
+  display: flex;
+  gap: 7px;
+  overflow-x: auto;
+  padding: 2px 1px 7px;
+  scrollbar-width: thin;
+}
+
+.jump-btn {
+  flex: 0 0 auto;
+  border: 1px solid var(--hairline);
+  border-radius: 999px;
+  background: var(--canvas);
+  color: var(--muted);
+  padding: 6px 10px;
+  font: 600 0.66rem "JetBrains Mono", monospace;
+  cursor: pointer;
+}
+
+.jump-btn:hover { color: var(--primary); border-color: var(--primary); }
+.jump-btn.active { color: #fff; background: var(--primary); border-color: var(--primary); }
+
+.panel {
+  background: var(--canvas);
+  border: 1px solid var(--hairline);
+  border-radius: 12px;
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+
+.hidden { display: none !important; }
+
+footer.note {
+  margin-top: 14px;
+  color: var(--muted);
+  font-size: 0.78rem;
+  text-align: center;
+}
+
+
+.intro, .summary { padding: 28px 22px; }
+.intro h2, .summary h2, .section-title {
+  font-size: clamp(1.4rem, 3vw, 1.75rem);
+  margin-bottom: 10px;
+  line-height: 1.2;
+}
+
+.intro p, .summary p, .section-body {
+  line-height: 1.65;
+  margin-bottom: 12px;
+  font-size: 0.95rem;
+}
+
+strong { color: var(--ink); }
+
+.chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 17px 0 21px; }
+.chip {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 6px 10px;
+  border: 1px solid var(--hairline);
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--ink);
+}
+
+.stage {
+  padding: 18px;
+  border-bottom: 1px solid var(--hairline);
+  background: var(--surface);
+}
+
+.badge {
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+  padding: 4px 10px;
+  border: 1px solid var(--hairline);
+  border-radius: 999px;
+  font-size: 0.78rem;
+  color: var(--muted);
+  background: var(--canvas);
+  margin-bottom: 12px;
+}
+
+.badge strong { font-family: "JetBrains Mono", monospace; }
+
+.scene {
+  width: 100%;
+  min-height: 300px;
+  border: 1px solid var(--hairline);
+  border-radius: 10px;
+  background: var(--anim-bg);
+  position: relative;
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+}
+
+.scene-caption {
+  position: absolute;
+  z-index: 8;
+  left: 10px;
+  bottom: 8px;
+  max-width: 92%;
+  color: var(--caption-fg);
+  background: var(--caption-bg);
+  border: 1px solid var(--hairline);
+  border-radius: 6px;
+  padding: 4px 8px;
+  box-shadow: var(--shadow);
+  font-size: 0.7rem;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.content { padding: 20px 18px 18px; }
+
+.definition {
+  border-left: 3px solid var(--primary);
+  padding: 10px 12px;
+  margin: 12px 0 15px;
+  background: var(--surface);
+  color: var(--ink);
+  line-height: 1.55;
+  font-size: 0.92rem;
+}
+
+.definition::before {
+  content: "DEFINITION";
+  display: block;
+  font: 600 0.62rem "JetBrains Mono", monospace;
+  color: var(--primary);
+  letter-spacing: 0.05em;
+  margin-bottom: 5px;
+}
+
+.example-box {
+  border: 1px solid var(--hairline);
+  border-radius: 9px;
+  padding: 12px;
+  margin: 14px 0 4px;
+  background: var(--surface);
+  font-size: 0.88rem;
+  line-height: 1.55;
+}
+
+.example-box b {
+  display: block;
+  font: 600 0.65rem "JetBrains Mono", monospace;
+  color: var(--primary);
+  margin-bottom: 5px;
+  letter-spacing: 0.04em;
+}
+
+.nav {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 17px;
+}
+
+.btn {
+  border: 0;
+  border-radius: 8px;
+  padding: 10px 16px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: 0.18s ease;
+}
+
+.btn:hover:not(:disabled) { transform: translateY(-1px); }
+.btn-primary { color: #fff; background: var(--primary); margin-left: auto; }
+.btn-primary:hover:not(:disabled) { background: var(--primary-active); }
+.btn-ghost { color: var(--muted); background: transparent; border: 1px solid var(--hairline); }
+
+.recap-list { display: grid; gap: 7px; margin: 15px 0 18px; }
+.recap-item {
+  display: grid;
+  grid-template-columns: 118px 1fr;
+  gap: 10px;
+  padding: 9px 10px;
+  border-bottom: 1px solid var(--hairline);
+  font-size: 0.85rem;
+  line-height: 1.45;
+}
+.recap-item b {
+  font-family: "JetBrains Mono", monospace;
+  color: var(--primary);
+  font-size: 0.68rem;
+}
+
+.frame {
+  width: 100%;
+  min-height: 300px;
+  padding: 22px 18px 44px;
+  display: grid;
+  place-items: center;
+}
+
+.arrow {
+  font: 600 1.05rem "JetBrains Mono", monospace;
+  color: var(--primary);
+  animation: nudge 1.2s ease-in-out infinite;
+}
+
+.pipe {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  width: 100%;
+}
+
+.pipe-step {
+  flex: 1;
+  min-width: 90px;
+  max-width: 140px;
+  padding: 10px 8px;
+  border: 1px solid var(--anim-border);
+  border-radius: 8px;
+  background: var(--anim-panel);
+  text-align: center;
+  font: 600 0.55rem "JetBrains Mono", monospace;
+  color: var(--ink);
+  line-height: 1.35;
+  opacity: 0.45;
+}
+
+.pipe-step.on {
+  opacity: 1;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--primary) 20%, transparent);
+  animation: pulseGlow 1.8s ease-in-out infinite;
+}
+
+.pipe-step b {
+  display: block;
+  color: var(--primary);
+  font-size: 0.5rem;
+  margin-bottom: 4px;
+}
+
+.flow-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  width: min(520px, 100%);
+}
+
+.node {
+  min-width: 100px;
+  padding: 12px 10px;
+  border: 1px solid var(--anim-border);
+  border-radius: 10px;
+  background: var(--anim-panel);
+  text-align: center;
+  font: 600 0.62rem "JetBrains Mono", monospace;
+  color: var(--ink);
+}
+
+.node .mono {
+  display: block;
+  color: var(--primary);
+  font-size: 0.52rem;
+  margin-bottom: 4px;
+}
+
+.node.on {
+  border-color: var(--primary);
+  animation: pulseGlow 1.8s ease-in-out infinite;
+}
+
+.compare {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  width: min(520px, 100%);
+}
+
+.cmp {
+  border: 1px solid var(--anim-border);
+  border-radius: 8px;
+  background: var(--anim-panel);
+  padding: 10px;
+  font-size: 0.68rem;
+  line-height: 1.45;
+  color: var(--ink);
+}
+
+.cmp .mono {
+  display: block;
+  color: var(--primary);
+  margin-bottom: 6px;
+  font-size: 0.58rem;
+}
+
+.pair-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin: 12px 0;
+}
+
+.pair-card {
+  border: 1px solid var(--hairline);
+  border-radius: 8px;
+  padding: 10px;
+  background: var(--surface);
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+
+.pair-card b {
+  display: block;
+  font: 600 0.62rem "JetBrains Mono", monospace;
+  color: var(--primary);
+  margin-bottom: 5px;
+}
+
+@keyframes nudge { 50% { transform: translateX(4px); } }
+@keyframes pulseGlow {
+  0%, 100% { box-shadow: 0 0 0 2px color-mix(in srgb, var(--primary) 18%, transparent); }
+  50% { box-shadow: 0 0 0 5px color-mix(in srgb, var(--primary) 10%, transparent); }
+}
+
+@media (max-width: 560px) {
+  .compare, .pair-grid, .recap-item { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 390px) {
+  .app { width: calc(100% - 20px); padding: 18px 0 32px; }
+  .content, .intro, .summary { padding-left: 14px; padding-right: 14px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .arrow, .pipe-step.on, .node.on { animation: none !important; }
+}
+
+</style>
+  <style>
+    /* classification classes */
+    .class-row {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      flex-wrap: wrap;
+      width: min(420px, 100%);
+    }
+    .class-card {
+      width: 90px;
+      padding: 12px 8px;
+      border: 1px solid var(--anim-border);
+      border-radius: 10px;
+      background: var(--anim-panel);
+      text-align: center;
+      font: 600 0.55rem "JetBrains Mono", monospace;
+      color: var(--ink);
+      opacity: 0.45;
+      transition: opacity 0.3s;
+    }
+    .class-card.on {
+      opacity: 1;
+      border-color: var(--primary);
+      animation: pulseGlow 1.8s ease-in-out infinite;
+    }
+    .class-emoji { font-size: 2rem; display: block; margin-bottom: 6px; }
+
+    /* pipeline */
+    .cnn-pipe { width: min(520px, 100%); }
+
+    /* feature compare bird zebra */
+    .feature-stage { width: min(480px, 100%); display: grid; gap: 10px; }
+    .feature-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    .feature-animal {
+      border: 1px solid var(--anim-border);
+      border-radius: 10px;
+      background: var(--anim-panel);
+      padding: 12px 10px;
+      text-align: center;
+    }
+    .feature-animal .emoji { font-size: 2.2rem; display: block; margin-bottom: 8px; }
+    .feature-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+      justify-content: center;
+      margin-top: 6px;
+    }
+    .feature-tag {
+      padding: 3px 7px;
+      border-radius: 999px;
+      border: 1px solid var(--anim-border);
+      font: 600 0.48rem "JetBrains Mono", monospace;
+      color: var(--ink);
+      opacity: 0;
+      animation: tagIn 0.5s ease forwards;
+    }
+    .feature-animal.bird .feature-tag { border-color: var(--primary); color: var(--primary); }
+    .feature-animal.zebra .feature-tag { border-color: var(--warning); color: var(--warning); }
+    .feature-tag:nth-child(1) { animation-delay: 0.2s; }
+    .feature-tag:nth-child(2) { animation-delay: 0.5s; }
+    .feature-tag:nth-child(3) { animation-delay: 0.8s; }
+    .feature-tag:nth-child(4) { animation-delay: 1.1s; }
+
+    /* hand-code difficulty */
+    .code-wall {
+      width: min(400px, 100%);
+      padding: 14px;
+      border: 1px solid var(--anim-border);
+      border-radius: 10px;
+      background: var(--anim-panel);
+      font: 600 0.52rem "JetBrains Mono", monospace;
+      color: var(--danger);
+      line-height: 1.6;
+      position: relative;
+      overflow: hidden;
+    }
+    .code-line {
+      opacity: 0;
+      animation: codeReveal 4s ease-in-out infinite;
+    }
+    .code-line:nth-child(1) { animation-delay: 0s; }
+    .code-line:nth-child(2) { animation-delay: 0.6s; }
+    .code-line:nth-child(3) { animation-delay: 1.2s; }
+    .code-line:nth-child(4) { animation-delay: 1.8s; }
+    .code-x {
+      position: absolute;
+      right: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 2.5rem;
+      color: var(--danger);
+      opacity: 0;
+      animation: xFlash 4s ease-in-out infinite 2.2s;
+    }
+
+    /* VGG-style CNN architecture (feature learning) */
+    .vgg-wrap {
+      width: min(560px, 100%);
+      border: 1px solid var(--anim-border);
+      border-radius: 12px;
+      background: var(--anim-panel);
+      padding: 8px 6px 6px;
+      overflow: hidden;
+    }
+    .vgg-svg {
+      display: block;
+      width: 100%;
+      height: auto;
+      aspect-ratio: 720 / 280;
+    }
+    .vgg-svg .title {
+      font: 700 14px Inter, system-ui, sans-serif;
+      fill: var(--ink);
+    }
+    .vgg-svg .dim {
+      font: 600 8px "JetBrains Mono", monospace;
+      fill: var(--muted);
+      text-anchor: middle;
+    }
+    .vgg-svg .feat {
+      font: 700 9px Inter, system-ui, sans-serif;
+      fill: #2383e2;
+      text-anchor: middle;
+      opacity: 0;
+    }
+    .vgg-svg .feat.f0 { animation: featPop 10s linear infinite; animation-delay: 0.8s; }
+    .vgg-svg .feat.f1 { animation: featPop 10s linear infinite; animation-delay: 2.4s; }
+    .vgg-svg .feat.f2 { animation: featPop 10s linear infinite; animation-delay: 4.2s; }
+    .vgg-svg .feat.f3 { animation: featPop 10s linear infinite; animation-delay: 6s; }
+    .vgg-svg .feat.f4 { animation: featPop 10s linear infinite; animation-delay: 7.6s; }
+    @keyframes featPop {
+      0%, 6%, 100% { opacity: 0; }
+      10%, 18% { opacity: 1; }
+      24% { opacity: 0.25; }
+    }
+    .vgg-svg .block { opacity: 0.35; }
+    .vgg-svg .block.b0 { animation: blockOn 10s linear infinite; animation-delay: 0.6s; }
+    .vgg-svg .block.b1 { animation: blockOn 10s linear infinite; animation-delay: 2.2s; }
+    .vgg-svg .block.b2 { animation: blockOn 10s linear infinite; animation-delay: 4s; }
+    .vgg-svg .block.b3 { animation: blockOn 10s linear infinite; animation-delay: 5.8s; }
+    .vgg-svg .block.b4 { animation: blockOn 10s linear infinite; animation-delay: 7.4s; }
+    @keyframes blockOn {
+      0%, 5%, 100% { opacity: 0.32; filter: none; }
+      10%, 22% {
+        opacity: 1;
+        filter: drop-shadow(0 0 4px rgba(35,131,226,0.45));
+      }
+      30% { opacity: 0.7; }
+    }
+    .vgg-svg .flow {
+      fill: #2383e2;
+      opacity: 0;
+      animation: vggFlow 10s linear infinite;
+    }
+    .vgg-svg .flow.p0 { animation-delay: 0.4s; }
+    .vgg-svg .flow.p1 { animation-delay: 2s; }
+    .vgg-svg .flow.p2 { animation-delay: 3.8s; }
+    .vgg-svg .flow.p3 { animation-delay: 5.6s; }
+    .vgg-svg .flow.p4 { animation-delay: 7.2s; }
+    @keyframes vggFlow {
+      0%, 4%, 100% { opacity: 0; }
+      8%, 14% { opacity: 1; }
+      20% { opacity: 0; }
+    }
+    .vgg-svg .out-chip {
+      font: 700 11px "JetBrains Mono", monospace;
+      fill: #2f9e6b;
+      text-anchor: middle;
+      opacity: 0;
+      animation: outChip 10s linear infinite;
+    }
+    @keyframes outChip {
+      0%, 78%, 100% { opacity: 0; }
+      84%, 96% { opacity: 1; }
+    }
+    .vgg-svg .legend {
+      font: 600 8px Inter, system-ui, sans-serif;
+      fill: var(--muted);
+    }
+    [data-theme="dark"] .vgg-wrap { background: #1c1c1c; }
+
+    .cnn-learn {
+      width: min(560px, 100%);
+      margin-top: 8px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      font: 600 0.55rem "JetBrains Mono", monospace;
+      color: var(--ink);
+    }
+    .cnn-learn .arrow { color: var(--primary); }
+    .cnn-learn b { color: var(--primary); }
+
+    .cnn-roles {
+      width: min(560px, 100%);
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
+      margin-top: 10px;
+    }
+    @media (max-width: 560px) {
+      .cnn-roles { grid-template-columns: 1fr; }
+      .feature-row { grid-template-columns: 1fr; }
+    }
+    .cnn-role {
+      border: 1px solid var(--anim-border);
+      border-radius: 8px;
+      background: var(--anim-panel);
+      padding: 8px 8px;
+      text-align: left;
+    }
+    .cnn-role.conv { border-top: 3px solid #7eb6e8; }
+    .cnn-role.pool { border-top: 3px solid #e89a9a; }
+    .cnn-role.fc { border-top: 3px solid #8fd4a8; }
+    .cnn-role b {
+      display: block;
+      font: 700 0.5rem "JetBrains Mono", monospace;
+      margin-bottom: 4px;
+      letter-spacing: 0.02em;
+    }
+    .cnn-role.conv b { color: #3a7fc4; }
+    .cnn-role.pool b { color: #c45a5a; }
+    .cnn-role.fc b { color: #2f9e6b; }
+    .cnn-role span {
+      display: block;
+      font: 500 0.52rem Inter, system-ui, sans-serif;
+      color: var(--ink);
+      line-height: 1.4;
+    }
+
+    /* lower / higher-level features (PPT / Fig 3.9) */
+    .levels-stage {
+      width: min(560px, 100%);
+      display: grid;
+      gap: 10px;
+    }
+    .levels-fig {
+      border: 1px solid var(--anim-border);
+      border-radius: 10px;
+      overflow: hidden;
+      background: #0d0d0d;
+    }
+    .levels-cols {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 2px;
+      padding: 6px 4px 0;
+      background: #111;
+    }
+    .levels-cols span {
+      text-align: center;
+      font: 700 0.42rem "JetBrains Mono", monospace;
+      color: #9ec9ef;
+      line-height: 1.25;
+      padding-bottom: 4px;
+    }
+    .levels-cols span em {
+      display: block;
+      font-style: normal;
+      font-weight: 600;
+      color: #888;
+      font-size: 0.38rem;
+    }
+    .levels-cols .in { color: #fff; }
+    .levels-cols .lo { color: #6eb0ef; }
+    .levels-cols .hi { color: #7dcea0; }
+    .levels-fig img {
+      display: block;
+      width: 100%;
+      height: auto;
+    }
+    .levels-note {
+      font: 500 0.5rem Inter, system-ui, sans-serif;
+      color: var(--muted);
+      text-align: center;
+      line-height: 1.35;
+    }
+    .levels-compare {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+    @media (max-width: 560px) {
+      .levels-compare { grid-template-columns: 1fr; }
+      .feature-row { grid-template-columns: 1fr; }
+      .levels-cols span { font-size: 0.36rem; }
+    }
+    .levels-card {
+      border: 1px solid var(--anim-border);
+      border-radius: 8px;
+      background: var(--anim-panel);
+      padding: 8px 9px;
+    }
+    .levels-card.lo { border-top: 3px solid #3a7fc4; }
+    .levels-card.hi { border-top: 3px solid #2f9e6b; }
+    .levels-card b {
+      display: block;
+      font: 700 0.5rem "JetBrains Mono", monospace;
+      margin-bottom: 4px;
+    }
+    .levels-card.lo b { color: #3a7fc4; }
+    .levels-card.hi b { color: #2f9e6b; }
+    .levels-card span {
+      display: block;
+      font: 500 0.52rem Inter, system-ui, sans-serif;
+      color: var(--ink);
+      line-height: 1.4;
+    }
+    .levels-decide {
+      text-align: center;
+      padding: 8px 10px;
+      border-radius: 8px;
+      border: 1px solid color-mix(in srgb, var(--success) 45%, var(--anim-border));
+      background: color-mix(in srgb, var(--success) 10%, var(--anim-panel));
+      font: 600 0.55rem "JetBrains Mono", monospace;
+      color: var(--success);
+    }
+
+    @keyframes tagIn { to { opacity: 1; } }
+    @keyframes codeReveal {
+      0%, 15% { opacity: 0; }
+      20%, 45% { opacity: 1; }
+      50%, 100% { opacity: 0.3; }
+    }
+    @keyframes xFlash {
+      0%, 40% { opacity: 0; transform: translateY(-50%) scale(0.5); }
+      50%, 70% { opacity: 1; transform: translateY(-50%) scale(1); }
+      80%, 100% { opacity: 0; }
+    }
+    @keyframes resultPop {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.03); }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .class-card.on,
+      .vgg-svg .block, .vgg-svg .feat, .vgg-svg .flow, .vgg-svg .out-chip {
+        animation: none !important;
+      }
+      .vgg-svg .block, .vgg-svg .feat, .vgg-svg .out-chip { opacity: 1; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app" id="app"></div>
+  <script>
+(function () {
+  "use strict";
+
+  function $(id) {
+    return document.getElementById(id);
+  }
+
+  function caption(text) {
+    return `<div class="scene-caption">${text}</div>`;
+  }
+
+  function applyTheme(theme) {
+    const next = theme === "dark" ? "dark" : "light";
+    document.documentElement.setAttribute("data-theme", next);
+    try {
+      localStorage.setItem("f2-ai-theme", next);
+    } catch (e) {}
+    const light = $("lightBtn");
+    const dark = $("darkBtn");
+    if (light) light.setAttribute("aria-pressed", next === "light" ? "true" : "false");
+    if (dark) dark.setAttribute("aria-pressed", next === "dark" ? "true" : "false");
+  }
+
+  function initTheme() {
+    let t = "light";
+    try {
+      const saved = localStorage.getItem("f2-ai-theme");
+      if (saved === "dark" || saved === "light") t = saved;
+    } catch (e) {}
+    applyTheme(t);
+    $("lightBtn") && $("lightBtn").addEventListener("click", () => applyTheme("light"));
+    $("darkBtn") && $("darkBtn").addEventListener("click", () => applyTheme("dark"));
+  }
+
+  function mount(config) {
+    const sections = config.sections || [];
+    const jumpLabels = config.jumpLabels || sections.map((s) => s.name);
+    const summaryItems = (config.summary && config.summary.items) || [];
+    let index = 0;
+
+    const root = $("app");
+    if (!root) return;
+
+    root.innerHTML = `
+      <header>
+        <div class="header-top">
+          <div class="theme-toggle" role="group" aria-label="Colour theme">
+            <button type="button" id="lightBtn" aria-pressed="true">Light</button>
+            <button type="button" id="darkBtn" aria-pressed="false">Dark</button>
+          </div>
+          <div class="progress-wrap">
+            <div class="progress-label" id="progressText">Ready</div>
+            <div class="progress-bar" aria-hidden="true"><div class="progress-fill" id="progressFill"></div></div>
+          </div>
+        </div>
+        <div>
+          <p class="eyebrow">${config.eyebrow || ""}</p>
+          <h1>${config.title || ""}</h1>
+        </div>
+        <nav class="jump-nav" id="jumpNav" aria-label="Jump to a section"></nav>
+      </header>
+
+      <main class="panel">
+        <section class="intro" id="intro">
+          <h2>${(config.intro && config.intro.h2) || ""}</h2>
+          <p>${(config.intro && config.intro.p) || ""}</p>
+          <div class="chips" aria-label="Topics">${(config.intro && config.intro.chips || [])
+            .map((c) => `<span class="chip">${c}</span>`)
+            .join("")}</div>
+          <div class="nav"><span></span><button class="btn btn-primary" id="startBtn" type="button">Start exploring</button></div>
+        </section>
+
+        <section id="mainScreen" class="hidden">
+          <div class="stage">
+            <span class="badge"><strong id="sectionCode">01</strong><span id="sectionName"></span></span>
+            <div class="scene" id="scene" aria-live="polite"></div>
+          </div>
+          <div class="content">
+            <h2 class="section-title" id="sectionTitle"></h2>
+            <div class="definition" id="definition"></div>
+            <p class="section-body" id="sectionBody"></p>
+            <div id="extra"></div>
+            <div class="nav">
+              <button class="btn btn-ghost" id="backBtn" type="button">Back</button>
+              <button class="btn btn-primary" id="nextBtn" type="button">Next</button>
+            </div>
+          </div>
+        </section>
+
+        <section class="summary hidden" id="summary">
+          <h2>${(config.summary && config.summary.title) || "Learning summary"}</h2>
+          <p>${(config.summary && config.summary.p) || ""}</p>
+          <div class="recap-list">
+            ${summaryItems
+              .map((it) => `<div class="recap-item"><b>${it.b}</b><span>${it.span}</span></div>`)
+              .join("")}
+          </div>
+          <div class="nav">
+            <button class="btn btn-ghost" id="reviewBtn" type="button">Review from start</button>
+            <button class="btn btn-primary" id="restartBtn" type="button">Restart</button>
+          </div>
+        </section>
+      </main>
+      <footer class="note">Based on EDB Booklet 2 Unit 3.2–3.4 · Image Classification &amp; CNN (Figure 3.9) by Valtorta College</footer>
+    `;
+
+    initTheme();
+
+    const els = {
+      intro: $("intro"),
+      main: $("mainScreen"),
+      summary: $("summary"),
+      scene: $("scene"),
+      code: $("sectionCode"),
+      name: $("sectionName"),
+      title: $("sectionTitle"),
+      definition: $("definition"),
+      body: $("sectionBody"),
+      extra: $("extra"),
+      back: $("backBtn"),
+      next: $("nextBtn"),
+      progress: $("progressFill"),
+      progressText: $("progressText"),
+      jumpNav: $("jumpNav")
+    };
+
+    function show(which) {
+      els.intro.classList.toggle("hidden", which !== "intro");
+      els.main.classList.toggle("hidden", which !== "main");
+      els.summary.classList.toggle("hidden", which !== "summary");
+    }
+
+    function updateProgress() {
+      els.progress.style.width = `${((index + 1) / sections.length) * 100}%`;
+      els.progressText.textContent = `Section ${index + 1} of ${sections.length}`;
+    }
+
+    function updateJumpNav(active) {
+      els.jumpNav.querySelectorAll(".jump-btn").forEach((b, i) => {
+        b.classList.toggle("active", i === active);
+      });
+    }
+
+    function loadSection(i) {
+      index = i;
+      const s = sections[i];
+      show("main");
+      updateProgress();
+      updateJumpNav(i);
+      els.code.textContent = s.code;
+      els.name.textContent = s.name;
+      els.title.textContent = s.title;
+      els.definition.innerHTML = s.definition;
+      els.body.innerHTML = s.body;
+      els.extra.innerHTML = s.extra || "";
+      els.next.textContent = i === sections.length - 1 ? "See summary" : "Next";
+      if (typeof s.render === "function") s.render(els.scene, caption);
+    }
+
+    function showSummary() {
+      show("summary");
+      els.progress.style.width = "100%";
+      els.progressText.textContent = "Complete";
+      updateJumpNav(sections.length);
+    }
+
+    const allLabels = jumpLabels.concat([(config.summary && config.summary.jump) || "Sum"]);
+    els.jumpNav.innerHTML = allLabels
+      .map((label, i) => `<button type="button" class="jump-btn" data-jump="${i}">${label}</button>`)
+      .join("");
+
+    els.jumpNav.querySelectorAll(".jump-btn").forEach((button) => {
+      button.addEventListener("click", () => {
+        const t = Number(button.dataset.jump);
+        if (t === sections.length) showSummary();
+        else loadSection(t);
+      });
+    });
+
+    $("startBtn").addEventListener("click", () => loadSection(0));
+    els.next.addEventListener("click", () =>
+      index === sections.length - 1 ? showSummary() : loadSection(index + 1)
+    );
+    els.back.addEventListener("click", () => {
+      if (index === 0) {
+        show("intro");
+        updateJumpNav(-1);
+        els.progress.style.width = "0";
+        els.progressText.textContent = "Ready";
+      } else loadSection(index - 1);
+    });
+    $("restartBtn").addEventListener("click", () => loadSection(0));
+    $("reviewBtn").addEventListener("click", () => {
+      show("intro");
+      updateJumpNav(-1);
+      els.progress.style.width = "0";
+      els.progressText.textContent = "Ready";
+    });
+  }
+
+  window.F2Lesson = { mount, caption, applyTheme };
+})();
+
+</script>
+  <script>
+    (function () {
+      var bird = "../F2 AI assets/img/bluebird-sq.png";
+      var featLevels = "../F2 AI assets/img/cnn-feature-levels.png";
+
+      F2Lesson.mount({
+        eyebrow: "EDB Booklet 2 · Unit 3.2–3.4",
+        title: "Image Classification &amp; CNN",
+        intro: {
+          h2: "From pixel numbers to fruit labels",
+          p: "Once an image is numbers, AI must decide <strong>what it shows</strong>. Image classification picks one label from pre-defined classes. CNNs learn features automatically — no hand-written “if beak then bird” rules.",
+          chips: ["CLASSIFICATION", "FEATURES", "CNN", "FILTERS", "PIPELINE"]
+        },
+        jumpLabels: ["Classes", "Pipeline", "Features", "Hand-code", "CNN", "Levels"],
+        sections: [
+          {
+            code: "01",
+            name: "Classes",
+            title: "What is image classification?",
+            definition: "Image classification assigns an input image to one category from a fixed set of pre-defined classes — for example apple, orange, or banana.",
+            body: "The model receives a photo and must output <strong>one label</strong>. It does not describe the scene or locate objects — it answers a single question: <strong>“Which class is this?”</strong> Booklet 2 uses fruit classes as the classroom example.",
+            extra: `<div class="example-box"><b>PRE-DEFINED CLASSES</b>The developer lists the allowed labels before training. The model cannot invent “pineapple” if it was not in the class list.</div>`,
+            render: function (scene, caption) {
+              scene.innerHTML = `<div class="frame"><div class="class-row">
+                <div class="class-card"><span class="class-emoji">🍎</span>APPLE</div>
+                <div class="class-card on"><span class="class-emoji">🍊</span>ORANGE</div>
+                <div class="class-card"><span class="class-emoji">🍌</span>BANANA</div>
+              </div>
+              <p style="margin-top:14px;text-align:center;font:600 0.58rem 'JetBrains Mono',monospace;color:var(--primary)">INPUT → pick ONE class</p></div>` + caption("Three pre-defined classes — the model must choose exactly one.");
+            }
+          },
+          {
+            code: "02",
+            name: "Pipeline",
+            title: "The classification pipeline",
+            definition: "The basic pipeline is: digital image in → machine learning model processes pixel values → predicted class label out.",
+            body: "No magic in the middle — a trained model runs numbers through learned weights and returns the <strong>highest-confidence class</strong>. The same pipeline scales from three fruit types to thousands of categories.",
+            extra: `<div class="example-box"><b>BOOKLET 2 FLOW</b>Image (numbers) → Model (learned patterns) → Class (apple / orange / banana)</div>`,
+            render: function (scene, caption) {
+              scene.innerHTML = `<div class="frame"><div class="cnn-pipe pipe">
+                <div class="pipe-step on"><b>IN</b>IMAGE<br>pixel grid</div>
+                <span class="arrow">→</span>
+                <div class="pipe-step on"><b>MODEL</b>learned<br>weights</div>
+                <span class="arrow">→</span>
+                <div class="pipe-step on"><b>OUT</b>CLASS<br>label</div>
+              </div></div>` + caption("Image → model → class: the core classification pipeline lights up step by step.");
+            }
+          },
+          {
+            code: "03",
+            name: "Features",
+            title: "How humans classify — spotting features",
+            definition: "Humans recognise objects by noticing distinctive features — shapes, colours, textures, and parts. A bird has a beak and wings; a zebra has stripes and four legs.",
+            body: "You do not count pixels — you notice <strong>beak, wings, stripes, legs</strong>. Features are the visual clues that separate one category from another. The challenge for AI: can we write those clues as code?",
+            extra: `<div class="compare"><div class="cmp"><span class="mono">BIRD</span>Beak · wings · feathers · two legs</div><div class="cmp"><span class="mono">ZEBRA</span>Stripes · four legs · no wings · mane</div></div>`,
+            render: function (scene, caption) {
+              scene.innerHTML = `<div class="frame"><div class="feature-stage"><div class="feature-row">
+                <div class="feature-animal bird">
+                  <span class="emoji">🐦</span>
+                  <span class="mono">BIRD</span>
+                  <div class="feature-list">
+                    <span class="feature-tag">beak</span>
+                    <span class="feature-tag">wings</span>
+                    <span class="feature-tag">feathers</span>
+                    <span class="feature-tag">2 legs</span>
+                  </div>
+                </div>
+                <div class="feature-animal zebra">
+                  <span class="emoji">🦓</span>
+                  <span class="mono">ZEBRA</span>
+                  <div class="feature-list">
+                    <span class="feature-tag">stripes</span>
+                    <span class="feature-tag">4 legs</span>
+                    <span class="feature-tag">no wings</span>
+                    <span class="feature-tag">mane</span>
+                  </div>
+                </div>
+              </div></div></div>` + caption("Feature tags animate in — how humans tell bird from zebra.");
+            }
+          },
+          {
+            code: "04",
+            name: "Hand-code",
+            title: "Why hand-coding features is hard",
+            definition: "Manually writing rules for every visual feature (edge angles, stripe counts, beak curvature) does not scale. Lighting, rotation, and background variation break brittle hand-crafted rules.",
+            body: "You might try: <em>“if stripe_count &gt; 5 then zebra”</em>. But shadows, partial views, and unusual poses break the rule. Real images have <strong>millions of pixel combinations</strong> — no team can list every feature by hand.",
+            extra: `<div class="example-box"><b>BOOKLET 2 POINT</b>Human features make sense to us, but encoding them for every object, angle, and lighting condition is impractical. We need machines that <strong>learn features from data</strong>.</div>`,
+            render: function (scene, caption) {
+              scene.innerHTML = `<div class="frame"><div class="code-wall">
+                <div class="code-line">if (stripes &gt; 5 &amp;&amp; legs == 4) → zebra</div>
+                <div class="code-line">if (has_beak &amp;&amp; wings &amp;&amp; legs == 2) → bird</div>
+                <div class="code-line">if (colour == orange &amp;&amp; round) → orange</div>
+                <div class="code-line">// 10,000 more rules… still fails on new photos</div>
+                <span class="code-x">✕</span>
+              </div></div>` + caption("Hand-written rules collapse — too many edge cases for manual coding.");
+            }
+          },
+          {
+            code: "05",
+            name: "CNN",
+            title: "CNN architecture — learning features layer by layer",
+            definition: "A CNN stacks convolution (filters), pooling (shrink), and fully connected layers. Early layers learn simple features (edges, colours); deeper layers combine them into shapes and object parts — then the final layers pick a class label.",
+            body: "Watch the bluebird photo flow through a <strong>VGG-style CNN</strong>. Blue blocks = <strong>convolution</strong> (learn features). Red = <strong>max pooling</strong> (smaller maps). Green = <strong>fully connected</strong> (decide the class). The face of each block gets smaller while depth grows — spatial detail → abstract features.",
+            extra: `<div class="example-box"><b>EXAMPLE</b>Edges → colours / textures → shapes (wing, beak) → “this is a bird”. Features are learned from data, not hand-coded.</div>`,
+            render: function (scene, caption) {
+              // Isometric volume helper: front + top + side faces
+              function vol(x, y, w, h, d, fillF, fillT, fillS, cls) {
+                var f = [
+                  [x, y], [x + w, y], [x + w, y + h], [x, y + h]
+                ];
+                var t = [
+                  [x, y], [x + d * 0.55, y - d * 0.32],
+                  [x + w + d * 0.55, y - d * 0.32], [x + w, y]
+                ];
+                var s = [
+                  [x + w, y], [x + w + d * 0.55, y - d * 0.32],
+                  [x + w + d * 0.55, y + h - d * 0.32], [x + w, y + h]
+                ];
+                function poly(pts, fill) {
+                  return '<polygon class="' + cls + '" fill="' + fill + '" points="' +
+                    pts.map(function (p) { return p[0] + "," + p[1]; }).join(" ") + '"/>';
+                }
+                return '<g class="block ' + cls + '">' + poly(t, fillT) + poly(s, fillS) + poly(f, fillF) + "</g>";
+              }
+
+              var blueF = "#9ec9ef", blueT = "#c5dff6", blueS = "#6ea8d8";
+              var redF = "#efb0b0", redT = "#f6d0d0", redS = "#d88888";
+              var greenF = "#9ed9b4", greenT = "#c5ebd4", greenS = "#6cbc8a";
+
+              // Simplified VGG-like stages (classroom-readable)
+              var blocks =
+                // Conv-1 group (tall, thin depth)
+                vol(95, 95, 22, 110, 28, blueF, blueT, blueS, "b0") +
+                vol(118, 95, 22, 110, 28, blueF, blueT, blueS, "b0") +
+                vol(145, 118, 18, 70, 22, redF, redT, redS, "b0") +
+                // Conv-2
+                vol(175, 108, 20, 90, 34, blueF, blueT, blueS, "b1") +
+                vol(196, 108, 20, 90, 34, blueF, blueT, blueS, "b1") +
+                vol(225, 128, 16, 55, 24, redF, redT, redS, "b1") +
+                // Conv-3
+                vol(255, 120, 16, 75, 42, blueF, blueT, blueS, "b2") +
+                vol(272, 120, 16, 75, 42, blueF, blueT, blueS, "b2") +
+                vol(289, 120, 16, 75, 42, blueF, blueT, blueS, "b2") +
+                vol(315, 138, 14, 45, 28, redF, redT, redS, "b2") +
+                // Conv-4/5 deeper
+                vol(345, 130, 12, 58, 52, blueF, blueT, blueS, "b3") +
+                vol(358, 130, 12, 58, 52, blueF, blueT, blueS, "b3") +
+                vol(371, 130, 12, 58, 52, blueF, blueT, blueS, "b3") +
+                vol(395, 148, 12, 32, 36, redF, redT, redS, "b3") +
+                // FC bars
+                vol(445, 155, 95, 10, 14, greenF, greenT, greenS, "b4") +
+                vol(445, 172, 95, 10, 14, greenF, greenT, greenS, "b4") +
+                vol(470, 190, 55, 10, 14, greenF, greenT, greenS, "b4");
+
+              var dims =
+                '<text class="dim" x="120" y="230">224×224×64</text>' +
+                '<text class="dim" x="200" y="230">112×112×128</text>' +
+                '<text class="dim" x="280" y="230">56×56×256</text>' +
+                '<text class="dim" x="365" y="230">14×14×512</text>' +
+                '<text class="dim" x="500" y="230">FC → class</text>';
+
+              var feats =
+                '<text class="feat f0" x="120" y="78">edges · colour</text>' +
+                '<text class="feat f1" x="200" y="78">textures</text>' +
+                '<text class="feat f2" x="280" y="78">shapes</text>' +
+                '<text class="feat f3" x="365" y="78">bird parts</text>' +
+                '<text class="feat f4" x="500" y="78">label</text>';
+
+              var flows =
+                '<circle class="flow p0" cx="88" cy="150" r="3.5"/>' +
+                '<circle class="flow p1" cx="168" cy="150" r="3.5"/>' +
+                '<circle class="flow p2" cx="248" cy="150" r="3.5"/>' +
+                '<circle class="flow p3" cx="338" cy="150" r="3.5"/>' +
+                '<circle class="flow p4" cx="430" cy="168" r="3.5"/>';
+
+              scene.innerHTML =
+                '<div class="frame">' +
+                  '<div class="vgg-wrap" aria-hidden="true">' +
+                    '<svg class="vgg-svg" viewBox="0 0 720 280" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">' +
+                      '<text class="title" x="12" y="22">CNN learns features (VGG-style)</text>' +
+                      '<rect x="12" y="100" width="64" height="64" rx="6" fill="#111" stroke="#2383e2" stroke-width="1.5"/>' +
+                      '<image href="' + bird + '" xlink:href="' + bird + '" x="14" y="102" width="60" height="60" preserveAspectRatio="xMidYMid slice"/>' +
+                      '<text class="dim" x="44" y="180">INPUT</text>' +
+                      blocks + dims + feats + flows +
+                      '<text class="out-chip" x="500" y="255">BIRD · 96%</text>' +
+                      '<rect x="560" y="18" width="10" height="10" fill="#9ec9ef" rx="2"/>' +
+                      '<text class="legend" x="574" y="27">Conv + ReLU</text>' +
+                      '<rect x="560" y="34" width="10" height="10" fill="#efb0b0" rx="2"/>' +
+                      '<text class="legend" x="574" y="43">Max pool</text>' +
+                      '<rect x="560" y="50" width="10" height="10" fill="#9ed9b4" rx="2"/>' +
+                      '<text class="legend" x="574" y="59">FC + ReLU</text>' +
+                    '</svg>' +
+                  '</div>' +
+                  '<div class="cnn-learn">' +
+                    '<span>PHOTO</span><span class="arrow">→</span>' +
+                    '<span>EDGES</span><span class="arrow">→</span>' +
+                    '<span>TEXTURES</span><span class="arrow">→</span>' +
+                    '<span>SHAPES</span><span class="arrow">→</span>' +
+                    '<span>PARTS</span><span class="arrow">→</span>' +
+                    '<span><b>BIRD</b></span>' +
+                  '</div>' +
+                  '<div class="cnn-roles">' +
+                    '<div class="cnn-role conv"><b>CONV (+ ReLU)</b><span>Filters slide over the image and learn features. Early: edges &amp; colour. Deeper: shapes &amp; bird parts.</span></div>' +
+                    '<div class="cnn-role pool"><b>MAX POOLING</b><span>Shrinks the map (e.g. 224→112). Keeps the strongest signals — less space, more abstract.</span></div>' +
+                    '<div class="cnn-role fc"><b>FULLY CONNECTED</b><span>Flattens feature maps into a vector and scores classes — highest score wins (bird).</span></div>' +
+                  '</div>' +
+                '</div>' +
+                caption("Blue = learn features · Red = shrink · Green = decide class. Features get richer left → right.");
+            }
+          },
+          {
+            code: "06",
+            name: "Levels",
+            title: "Lower-level vs higher-level features",
+            definition: "Earlier convolutional layers look for features in a smaller region of the image (lower-level features). Later convolutional layers look for features in a larger region (higher-level features).",
+            body: "Figure 3.9 (from Booklet 2) shows four photos (bird, peacock, zebra…) after <strong>one randomly selected filter</strong> from each of: <strong>Layer 2 → 5 → 9 → 13 → 17</strong>. Early columns still show fine texture; later columns become abstract shapes the CNN uses to score <strong>bird vs zebra</strong>.",
+            extra: `<div class="example-box"><b>EXAMPLE</b>Row 2 · Layer 2: peacock-tail texture (lower-level). Row 4 · Layer 13: zebra-head shape (higher-level). Then probabilities, e.g. bird 97% / zebra 3%.</div>`,
+            render: function (scene, caption) {
+              scene.innerHTML = `<div class="frame"><div class="levels-stage">
+                <div class="levels-fig">
+                  <div class="levels-cols" aria-hidden="true">
+                    <span class="in">INPUT<em>photo</em></span>
+                    <span class="lo">LAYER 2<em>1 filter</em></span>
+                    <span class="lo">LAYER 5<em>1 filter</em></span>
+                    <span class="lo">LAYER 9<em>1 filter</em></span>
+                    <span class="hi">LAYER 13<em>1 filter</em></span>
+                    <span class="hi">LAYER 17<em>1 filter</em></span>
+                  </div>
+                  <img src="` + featLevels + `" alt="Fig 3.9: features from layer 2, 5, 9, 13, 17 — one filter each" width="900" height="577" />
+                </div>
+                <p class="levels-note">Each feature column = <strong>one randomly selected filter</strong> from that layer (Booklet Fig 3.9).</p>
+                <div class="levels-compare">
+                  <div class="levels-card lo">
+                    <b>LOWER-LEVEL · e.g. LAYER 2</b>
+                    <span>Smaller region · fine detail. Example: row 2, col Layer 2 → peacock-tail texture.</span>
+                  </div>
+                  <div class="levels-card hi">
+                    <b>HIGHER-LEVEL · e.g. LAYER 13</b>
+                    <span>Larger region · abstract shape. Example: row 4, col Layer 13 → zebra-head shape.</span>
+                  </div>
+                </div>
+                <div class="levels-decide">MANY LEVELS → PROBABILITIES → BIRD or ZEBRA</div>
+              </div></div>` + caption("Columns: Input · Layer 2 · 5 · 9 · 13 · 17 — each feature column is one filter from that layer.");
+            }
+          }
+        ],
+        summary: {
+          title: "Unit 3.2–3.4 learning summary",
+          p: "Image classification assigns one label from pre-defined classes. Humans use features; CNNs learn filters automatically — from lower-level edges to higher-level object parts — then output class probabilities.",
+          jump: "Sum",
+          items: [
+            { b: "CLASSES", span: "Pre-defined labels — apple, orange, banana." },
+            { b: "PIPELINE", span: "Image in → model → class out." },
+            { b: "FEATURES", span: "Humans spot beaks and stripes — hard to code by hand." },
+            { b: "CNN", span: "VGG-style stack: Conv learns features → Pool shrinks → FC picks the class." },
+            { b: "LEVELS", span: "Earlier layers = lower-level; later layers = higher-level → bird vs zebra." }
+          ]
+        }
+      });
+    })();
+  </script>
+  </body>
+</html>
