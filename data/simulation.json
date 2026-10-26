@@ -108,5 +108,357 @@
         "screenshotUrl": "screenshots/input-output.png",
         "createdAt": "2025-12-28",
         "updatedAt": "2025-12-28"
+    },
+    {
+        "id": "unit1-ai-or-not",
+        "category": {
+            "en-US": "CL",
+            "zh-HK": "CL"
+        },
+        "title": {
+            "en-US": "Unit 1 Task 2 — AI or Not AI?",
+            "zh-HK": "Unit 1 Task 2 — AI or Not AI?"
+        },
+        "description": {
+            "en-US": "Decide whether each scenario uses AI, with animated explanations.",
+            "zh-HK": "Decide whether each scenario uses AI, with animated explanations."
+        },
+        "contributor": [
+            "TC Yan"
+        ],
+        "simulationUrl": "simulations/CL/unit1-task2-ai-or-not.html",
+        "screenshotUrl": "screenshots/unit1-task2-ai-or-not.png",
+        "createdAt": "2026-09-08",
+        "updatedAt": "2026-09-08"
+    },
+    {
+        "id": "unit1-ai-functionalities",
+        "category": {
+            "en-US": "CL",
+            "zh-HK": "CL"
+        },
+        "title": {
+            "en-US": "Unit 1 Task 3 — AI Functionalities",
+            "zh-HK": "Unit 1 Task 3 — AI Functionalities"
+        },
+        "description": {
+            "en-US": "Match common features that are and are not AI applications.",
+            "zh-HK": "Match common features that are and are not AI applications."
+        },
+        "contributor": [
+            "TC Yan"
+        ],
+        "simulationUrl": "simulations/CL/unit1-task3-ai-functionalities.html",
+        "screenshotUrl": "screenshots/unit1-task3-ai-functionalities.png",
+        "createdAt": "2026-09-08",
+        "updatedAt": "2026-09-08"
+    },
+    {
+        "id": "unit1-limitations",
+        "category": {
+            "en-US": "CL",
+            "zh-HK": "CL"
+        },
+        "title": {
+            "en-US": "Unit 1 Task 4 — Limitations of AI",
+            "zh-HK": "Unit 1 Task 4 — Limitations of AI"
+        },
+        "description": {
+            "en-US": "Explore where AI breaks down and why those limits matter.",
+            "zh-HK": "Explore where AI breaks down and why those limits matter."
+        },
+        "contributor": [
+            "TC Yan"
+        ],
+        "simulationUrl": "simulations/CL/unit1-task4-limitations.html",
+        "screenshotUrl": "screenshots/unit1-task4-limitations.png",
+        "createdAt": "2026-09-08",
+        "updatedAt": "2026-09-08"
+    },
+    {
+        "id": "unit1-chatbot-components",
+        "category": {
+            "en-US": "CL",
+            "zh-HK": "CL"
+        },
+        "title": {
+            "en-US": "Unit 1 Task 5 — Chatbot Components",
+            "zh-HK": "Unit 1 Task 5 — Chatbot Components"
+        },
+        "description": {
+            "en-US": "Unpack the pieces that make a chatbot work.",
+            "zh-HK": "Unpack the pieces that make a chatbot work."
+        },
+        "contributor": [
+            "TC Yan"
+        ],
+        "simulationUrl": "simulations/CL/unit1-task5-chatbot-components.html",
+        "screenshotUrl": "screenshots/unit1-task5-chatbot-components.png",
+        "createdAt": "2026-09-08",
+        "updatedAt": "2026-09-08"
+    },
+    {
+        "id": "unit1-recommendation",
+        "category": {
+            "en-US": "CL",
+            "zh-HK": "CL"
+        },
+        "title": {
+            "en-US": "Unit 1 Task 6 — Recommendation Systems",
+            "zh-HK": "Unit 1 Task 6 — Recommendation Systems"
+        },
+        "description": {
+            "en-US": "See how preference data turns into suggestions.",
+            "zh-HK": "See how preference data turns into suggestions."
+        },
+        "contributor": [
+            "TC Yan"
+        ],
+        "simulationUrl": "simulations/CL/unit1-task6-recommendation.html",
+        "screenshotUrl": "screenshots/unit1-task6-recommendation.png",
+        "createdAt": "2026-09-08",
+        "updatedAt": "2026-09-08"
+    },
+    {
+        "id": "unit2-ipo-framework",
+        "category": {
+            "en-US": "CL",
+            "zh-HK": "CL"
+        },
+        "title": {
+            "en-US": "Unit 2 Task 1 — IPO Framework & AI Systems",
+            "zh-HK": "Unit 2 Task 1 — IPO Framework & AI Systems"
+        },
+        "description": {
+            "en-US": "Animated walkthrough of Input, Process, and Output in AI.",
+            "zh-HK": "Animated walkthrough of Input, Process, and Output in AI."
+        },
+        "contributor": [
+            "TC Yan"
+        ],
+        "simulationUrl": "simulations/CL/unit2-ipo-framework-task1.html",
+        "screenshotUrl": "screenshots/unit2-ipo-framework-task1.png",
+        "createdAt": "2026-09-08",
+        "updatedAt": "2026-09-08"
+    },
+    {
+        "id": "unit2-5vs-big-data",
+        "category": {
+            "en-US": "CL",
+            "zh-HK": "CL"
+        },
+        "title": {
+            "en-US": "Unit 2 Task 2 & 3 — Big Data and the 5Vs",
+            "zh-HK": "Unit 2 Task 2 & 3 — Big Data and the 5Vs"
+        },
+        "description": {
+            "en-US": "Volume, Velocity, Variety, Veracity, Value, plus practice tasks.",
+            "zh-HK": "Volume, Velocity, Variety, Veracity, Value, plus practice tasks."
+        },
+        "contributor": [
+            "TC Yan"
+        ],
+        "simulationUrl": "simulations/CL/unit2-5vs-big-data-task2-3.html",
+        "screenshotUrl": "screenshots/unit2-5vs-big-data-task2-3.png",
+        "createdAt": "2026-09-08",
+        "updatedAt": "2026-09-08"
+    },
+    {
+        "id": "unit3-ethical-principles",
+        "category": {
+            "en-US": "CL",
+            "zh-HK": "CL"
+        },
+        "title": {
+            "en-US": "Unit 3 — AI Ethical Principles",
+            "zh-HK": "Unit 3 — AI Ethical Principles"
+        },
+        "description": {
+            "en-US": "Ethics plus Transparency, Fairness, Beneficence, Responsibility, and Privacy.",
+            "zh-HK": "Ethics plus Transparency, Fairness, Beneficence, Responsibility, and Privacy."
+        },
+        "contributor": [
+            "TC Yan"
+        ],
+        "simulationUrl": "simulations/CL/unit3-ai-ethical-principles.html",
+        "screenshotUrl": "screenshots/unit3-ai-ethical-principles.png",
+        "createdAt": "2026-09-08",
+        "updatedAt": "2026-09-08"
+    },
+    {
+        "id": "unit5-tts-pipeline",
+        "category": {
+            "en-US": "CL",
+            "zh-HK": "CL"
+        },
+        "title": {
+            "en-US": "Unit 5 — Text-to-Speech Pipeline",
+            "zh-HK": "Unit 5 — Text-to-Speech Pipeline"
+        },
+        "description": {
+            "en-US": "From linguistic hierarchy through phonemes, prosody, waveform, and evaluation.",
+            "zh-HK": "From linguistic hierarchy through phonemes, prosody, waveform, and evaluation."
+        },
+        "contributor": [
+            "TC Yan"
+        ],
+        "simulationUrl": "simulations/CL/unit5-tts-pipeline.html",
+        "screenshotUrl": "screenshots/unit5-tts-pipeline.png",
+        "createdAt": "2026-09-08",
+        "updatedAt": "2026-09-08"
+    },
+    {
+        "id": "unit7-sense-reason-act",
+        "category": {
+            "en-US": "CL",
+            "zh-HK": "CL"
+        },
+        "title": {
+            "en-US": "Unit 7 — Sense, Reason, Act",
+            "zh-HK": "Unit 7 — Sense, Reason, Act"
+        },
+        "description": {
+            "en-US": "Robot loop and skill-based, rule-based, and knowledge-based reasoning.",
+            "zh-HK": "Robot loop and skill-based, rule-based, and knowledge-based reasoning."
+        },
+        "contributor": [
+            "TC Yan"
+        ],
+        "simulationUrl": "simulations/CL/unit7-sense-reason-act.html",
+        "screenshotUrl": "screenshots/unit7-sense-reason-act.png",
+        "createdAt": "2026-09-08",
+        "updatedAt": "2026-09-08"
+    },
+    {
+        "id": "unit1-ann",
+        "category": {
+            "en-US": "CL",
+            "zh-HK": "CL"
+        },
+        "title": {
+            "en-US": "Unit 1 — Artificial Neural Networks",
+            "zh-HK": "Unit 1 — Artificial Neural Networks"
+        },
+        "description": {
+            "en-US": "Brain neuron relay, perceptron, layers, and DNN signal flow.",
+            "zh-HK": "Brain neuron relay, perceptron, layers, and DNN signal flow."
+        },
+        "contributor": [
+            "TC Yan"
+        ],
+        "simulationUrl": "simulations/CL/unit1-ann.html",
+        "screenshotUrl": "screenshots/unit1-ann.png",
+        "createdAt": "2026-09-08",
+        "updatedAt": "2026-09-08"
+    },
+    {
+        "id": "unit3-pixels-rgb",
+        "category": {
+            "en-US": "CL",
+            "zh-HK": "CL"
+        },
+        "title": {
+            "en-US": "Unit 3 — Pixels & RGB Numbers",
+            "zh-HK": "Unit 3 — Pixels & RGB Numbers"
+        },
+        "description": {
+            "en-US": "Zoom into pixels and split colour into R, G, B tables.",
+            "zh-HK": "Zoom into pixels and split colour into R, G, B tables."
+        },
+        "contributor": [
+            "TC Yan"
+        ],
+        "simulationUrl": "simulations/CL/unit3-pixels-rgb.html",
+        "screenshotUrl": "screenshots/unit3-pixels-rgb.png",
+        "createdAt": "2026-09-08",
+        "updatedAt": "2026-09-08"
+    },
+    {
+        "id": "unit3-classification-cnn",
+        "category": {
+            "en-US": "CL",
+            "zh-HK": "CL"
+        },
+        "title": {
+            "en-US": "Unit 3 — Classification & CNN",
+            "zh-HK": "Unit 3 — Classification & CNN"
+        },
+        "description": {
+            "en-US": "Human features vs CNN filters — image classification pipeline in motion.",
+            "zh-HK": "Human features vs CNN filters — image classification pipeline in motion."
+        },
+        "contributor": [
+            "TC Yan"
+        ],
+        "simulationUrl": "simulations/CL/unit3-classification-cnn.html",
+        "screenshotUrl": "screenshots/unit3-classification-cnn.png",
+        "createdAt": "2026-09-08",
+        "updatedAt": "2026-09-08"
+    },
+    {
+        "id": "unit4-word-embeddings",
+        "category": {
+            "en-US": "CL",
+            "zh-HK": "CL"
+        },
+        "title": {
+            "en-US": "Unit 4 — Word Embeddings",
+            "zh-HK": "Unit 4 — Word Embeddings"
+        },
+        "description": {
+            "en-US": "Words as vectors — near meanings cluster; relations show as angles.",
+            "zh-HK": "Words as vectors — near meanings cluster; relations show as angles."
+        },
+        "contributor": [
+            "TC Yan"
+        ],
+        "simulationUrl": "simulations/CL/unit4-word-embeddings.html",
+        "screenshotUrl": "screenshots/unit4-word-embeddings.png",
+        "createdAt": "2026-09-08",
+        "updatedAt": "2026-09-08"
+    },
+    {
+        "id": "unit1-cnn-convolution",
+        "category": {
+            "en-US": "CL",
+            "zh-HK": "CL"
+        },
+        "title": {
+            "en-US": "Unit 1 — Why Convolution Finds Features (Stamp)",
+            "zh-HK": "Unit 1 — Why Convolution Finds Features (Stamp)"
+        },
+        "description": {
+            "en-US": "A filter is a stamp: slide it over patches to extract features, then read the notebook of finds.",
+            "zh-HK": "A filter is a stamp: slide it over patches to extract features, then read the notebook of finds."
+        },
+        "contributor": [
+            "TC Yan"
+        ],
+        "simulationUrl": "simulations/CL/unit1-cnn-convolution.html",
+        "screenshotUrl": "screenshots/unit1-cnn-convolution.png",
+        "createdAt": "2026-09-18",
+        "updatedAt": "2026-09-18"
+    },
+    {
+        "id": "unit2-simulation-sl-rl",
+        "category": {
+            "en-US": "CL",
+            "zh-HK": "CL"
+        },
+        "title": {
+            "en-US": "Unit 2 — Simulation, SL and RL",
+            "zh-HK": "Unit 2 — Simulation, SL and RL"
+        },
+        "description": {
+            "en-US": "Simulation ↔ AI loop, same-road SL vs RL, and why we train a self-driving car in a sim.",
+            "zh-HK": "Simulation ↔ AI loop, same-road SL vs RL, and why we train a self-driving car in a sim."
+        },
+        "contributor": [
+            "TC Yan"
+        ],
+        "simulationUrl": "simulations/CL/unit2-simulation-sl-rl.html",
+        "screenshotUrl": "screenshots/unit2-simulation-sl-rl.png",
+        "createdAt": "2026-09-18",
+        "updatedAt": "2026-09-18"
     }
-] 
+]
