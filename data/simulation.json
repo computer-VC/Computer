@@ -438,27 +438,5 @@
         "screenshotUrl": "screenshots/unit1-cnn-convolution.png",
         "createdAt": "2026-09-18",
         "updatedAt": "2026-09-18"
-    },
-    {
-        "id": "unit2-simulation-sl-rl",
-        "category": {
-            "en-US": "CL",
-            "zh-HK": "CL"
-        },
-        "title": {
-            "en-US": "Unit 2 — Simulation, SL and RL",
-            "zh-HK": "Unit 2 — Simulation, SL and RL"
-        },
-        "description": {
-            "en-US": "Simulation ↔ AI loop, same-road SL vs RL, and why we train a self-driving car in a sim.",
-            "zh-HK": "Simulation ↔ AI loop, same-road SL vs RL, and why we train a self-driving car in a sim."
-        },
-        "contributor": [
-            "TC Yan"
-        ],
-        "simulationUrl": "simulations/CL/unit2-simulation-sl-rl.html",
-        "screenshotUrl": "screenshots/unit2-simulation-sl-rl.png",
-        "createdAt": "2026-09-18",
-        "updatedAt": "2026-09-18"
     }
 ]
